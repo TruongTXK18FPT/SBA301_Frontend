@@ -1,0 +1,79 @@
+.personality-types {
+  padding: 2rem;
+  background: linear-gradient(145deg, #1f1f2f, #2c2c3f);
+  border-radius: 20px;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+  color: white;
+}
+
+.personality-types h2 {
+  text-align: center;
+  margin-bottom: 2rem;
+  font-size: 2rem;
+  font-weight: bold;
+  letter-spacing: 1px;
+  color: #f5f6fa;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+.types-grid {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+}
+
+.type-card {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 15px;
+  padding: 1.5rem;
+  transition: all 0.3s ease-in-out;
+  text-align: center;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+  transform-style: preserve-3d;
+}
+
+.type-card:hover {
+  transform: translateY(-8px);
+}
+
+.type-icon {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+}
+
+.type-card h3 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.type-card p {
+  font-size: 0.95rem;
+  opacity: 0.85;
+  line-height: 1.4;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .personality-types {
+    padding: 1rem;
+  }
+
+  .type-card {
+    padding: 1.2rem;
+  }
+
+  .type-icon {
+    font-size: 2rem;
+  }
+
+  .type-card h3 {
+    font-size: 1rem;
+  }
+
+  .type-card p {
+    font-size: 0.85rem;
+  }
+}
