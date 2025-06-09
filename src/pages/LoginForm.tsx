@@ -1,14 +1,21 @@
-import React, { useState } from 'react';
-import { FaGoogle, FaGithub, FaFacebook, FaEnvelope, FaLock } from 'react-icons/fa';
-import { useNavigate } from 'react-router-dom';
-import Button from '../components/Button';
-import Alert from '../components/Alert';
-import '../styles/LoginForm.css';
-import Login from '../assets/Login.mp4';
+import React, { useState } from "react";
+import {
+  FaGoogle,
+  FaGithub,
+  FaFacebook,
+  FaEnvelope,
+  FaLock,
+} from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
+import Button from "../components/Button";
+import Alert from "../components/Alert";
+import "../styles/LoginForm.css";
+import Login from "../assets/Login.mp4";
+import OAuthConfig from "../configurations/configuration";
 
 const LoginPage: React.FC = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
   const navigate = useNavigate();
@@ -27,7 +34,9 @@ const LoginPage: React.FC = () => {
     setIsLoading(false);
   };
 
-  const handleSocialLogin = async (provider: 'google' | 'github' | 'facebook') => {
+  const handleSocialLogin = async (
+    provider: "google" | "github" | "facebook"
+  ) => {
     try {
       // Implement social login logic here
       // For example:
@@ -38,14 +47,33 @@ const LoginPage: React.FC = () => {
     }
   };
 
+  const handleGoogleLogin = async () => {
+    try {
+      const callbackUrl = OAuthConfig.redirectUri;
+      const authUrl = OAuthConfig.authUri;
+      const googleClientId = OAuthConfig.clientId;
+
+      const targetUrl = `${authUrl}?redirect_uri=${encodeURIComponent(
+        callbackUrl
+      )}&response_type=code&client_id=${googleClientId}&scope=openid%20email%20profile`;
+
+      console.log(targetUrl);
+
+      window.location.href = targetUrl;
+    } catch (error) {
+      console.error("Google login failed:", error);
+      setShowAlert(true);
+    }
+  };
+
   return (
     <div className="login-container">
       <video autoPlay muted loop className="login-background">
         <source src={Login} type="video/mp4" />
       </video>
-      
+
       <div className="login-overlay" />
-      
+
       <div className="login-form-container animate-slide-up">
         <div className="login-header">
           <h1 className="login-title animate-fade-in">Chào Mừng Trở Lại</h1>
@@ -76,7 +104,10 @@ const LoginPage: React.FC = () => {
             <div className="input-highlight" />
           </div>
 
-          <div className="form-group animate-slide-right" style={{ animationDelay: '0.1s' }}>
+          <div
+            className="form-group animate-slide-right"
+            style={{ animationDelay: "0.1s" }}
+          >
             <input
               type="password"
               placeholder="Mật khẩu"
@@ -88,7 +119,10 @@ const LoginPage: React.FC = () => {
             <div className="input-highlight" />
           </div>
 
-          <div className="form-options animate-fade-in" style={{ animationDelay: '0.2s' }}>
+          <div
+            className="form-options animate-fade-in"
+            style={{ animationDelay: "0.2s" }}
+          >
             <label className="remember-me">
               <input type="checkbox" />
               <span>Ghi nhớ đăng nhập</span>
@@ -104,13 +138,16 @@ const LoginPage: React.FC = () => {
             size="lg"
             isLoading={isLoading}
             className="login-button animate-scale-up"
-            style={{ animationDelay: '0.3s' }}
+            style={{ animationDelay: "0.3s" }}
           >
             Đăng Nhập
           </Button>
         </form>
 
-        <div className="social-login animate-fade-in" style={{ animationDelay: '0.4s' }}>
+        <div
+          className="social-login animate-fade-in"
+          style={{ animationDelay: "0.4s" }}
+        >
           <div className="divider">
             <span>Hoặc đăng nhập với</span>
           </div>
@@ -120,7 +157,7 @@ const LoginPage: React.FC = () => {
               variant="outline"
               size="md"
               icon={<FaGoogle />}
-              onClick={() => handleSocialLogin('google')}
+              onClick={handleGoogleLogin}
               className="social-button google animate-hover"
             >
               Google
@@ -129,7 +166,7 @@ const LoginPage: React.FC = () => {
               variant="outline"
               size="md"
               icon={<FaGithub />}
-              onClick={() => handleSocialLogin('github')}
+              onClick={() => handleSocialLogin("github")}
               className="social-button github animate-hover"
             >
               GitHub
@@ -138,7 +175,7 @@ const LoginPage: React.FC = () => {
               variant="outline"
               size="md"
               icon={<FaFacebook />}
-              onClick={() => handleSocialLogin('facebook')}
+              onClick={() => handleSocialLogin("facebook")}
               className="social-button facebook animate-hover"
             >
               Facebook
@@ -146,7 +183,10 @@ const LoginPage: React.FC = () => {
           </div>
         </div>
 
-        <p className="signup-prompt animate-fade-in" style={{ animationDelay: '0.5s' }}>
+        <p
+          className="signup-prompt animate-fade-in"
+          style={{ animationDelay: "0.5s" }}
+        >
           Chưa có tài khoản? <a href="/signup">Đăng ký ngay</a>
         </p>
       </div>
