@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import {
   FaUserAlt, FaHeart, FaBrain, FaLightbulb, FaHandshake,
-  FaChartLine, FaUsers, FaStar, FaCompass, FaShieldAlt
+  FaChartLine, FaUsers, FaStar, FaCompass, FaShieldAlt, FaBalanceScale
 } from 'react-icons/fa';
 import '../styles/PersonalityTypes.css';
 
@@ -87,7 +87,7 @@ const personalityTypes: PersonalityType[] = [
   }
 ];
 
-const PersonalityTypes: React.FC = () => {
+const PersonalityTypes = () => {
   return (
     <div className="personality-types">
       <h2>10 Kiểu Tính Cách</h2>
@@ -96,10 +96,17 @@ const PersonalityTypes: React.FC = () => {
           <motion.div
             key={type.id}
             className="type-card"
-            whileHover={{ scale: 1.08, boxShadow: `0 10px 20px ${type.color}66` }}
+            animate={{ opacity: 1, y: 0 }}
             initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, type: "spring", bounce: 0.3 }}
+            whileHover={{ 
+              scale: 1.08,
+              boxShadow: `0 10px 20px ${type.color}66`
+            }}
+            transition={{ 
+              duration: 0.4,
+              ease: "easeOut"
+            }}
+            style={{ display: 'flex', flexDirection: 'column' } as any}
           >
             <div className="type-icon" style={{ color: type.color }}>
               {type.icon}

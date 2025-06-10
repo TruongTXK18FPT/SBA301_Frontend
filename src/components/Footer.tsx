@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { FiMap, FiMapPin } from 'react-icons/fi';
 import '../styles/Footer.css';
 import Logo from '../assets/Logo.jpeg';
 
@@ -104,25 +105,26 @@ const Footer = () => {
           <h3>Vị Trí Của Chúng Tôi</h3>
           <div className="map-container">
             <button
-              type="button"
-              aria-pressed={isMapExpanded}
-              className="map-toggle animate-pulse"
+              className="map-toggle"
               onClick={() => setIsMapExpanded(!isMapExpanded)}
-              style={{ outline: 'none' }}
+              aria-label={isMapExpanded ? 'Ẩn bản đồ' : 'Hiện bản đồ'}
             >
-              {isMapExpanded ? 'Ẩn Bản Đồ' : 'Hiện Bản Đồ'}
+              {isMapExpanded ? <FiMapPin /> : <FiMap />}
+              <span>{isMapExpanded ? 'Ẩn Bản Đồ' : 'Hiện Bản Đồ'}</span>
             </button>
-            <iframe
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3918.4842318813793!2d106.80769621533445!3d10.841127792277422!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31752731176b07b1%3A0xb752b24b379bae5e!2s7%20%C4%90.%20D1%2C%20Long%20Th%E1%BA%A1nh%20M%E1%BB%B9%2C%20Th%E1%BB%A7%20%C4%90%E1%BB%A9c%2C%20Th%C3%A0nh%20ph%E1%BB%91%20H%E1%BB%93%20Ch%C3%AD%20Minh%2C%20Vietnam!5e0!3m2!1sen!2s!4v1621234567890"
-              title="Bản Đồ Vị Trí Công Ty"
-              aria-hidden="false"
-              width="100%"
-              height={isMapExpanded ? "400" : "200"}
-              style={{ border: 0 }}
-              allowFullScreen
-              loading="lazy"
-              className="animate-fade-in"
-            />
+            
+            {isMapExpanded && (
+              <iframe
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3918.4842318813793!2d106.80769621533445!3d10.841127792277422!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31752731176b07b1%3A0xb752b24b379bae5e!2s7%20%C4%90.%20D1%2C%20Long%20Th%E1%BA%A1nh%20M%E1%BB%B9%2C%20Th%E1%BB%A7%20%C4%90%E1%BB%A9c%2C%20Th%C3%A0nh%20ph%E1%BB%91%20H%E1%BB%93%20Ch%C3%AD%20Minh%2C%20Vietnam!5e0!3m2!1sen!2s!4v1621234567890"
+                title="Bản Đồ Vị Trí Công Ty"
+                width="100%"
+                height={isMapExpanded ? "400" : "200"}
+                style={{ border: 0 }}
+                allowFullScreen
+                loading="lazy"
+                className="animate-fade-in"
+              />
+            )}
           </div>
         </div>
       </div>

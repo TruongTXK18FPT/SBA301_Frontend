@@ -1,27 +1,18 @@
 .footer {
-  background: linear-gradient(135deg, #1a237e 0%, #0d47a1 100%);
-  color: #ffffff;
-  padding: 4rem 2rem 2rem;
+  background: #1a237e;
+  color: white;
+  padding: 3rem 0;
   position: relative;
-  overflow: hidden;
-}
-
-.footer-gradient {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, #ff6b6b, #4ecdc4, #45b7d1);
-  animation: gradient-shift 8s linear infinite;
+  z-index: 1;
 }
 
 .footer-content {
   max-width: 1200px;
   margin: 0 auto;
+  padding: 0 2rem;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 3rem;
+  gap: 2rem;
 }
 
 .company-info {
@@ -112,31 +103,75 @@
 }
 
 .map-section {
-  transition: all 0.5s ease;
-}
-
-.map-toggle {
-  background: #4ecdc4;
-  color: white;
-  border: none;
-  padding: 0.8rem 1.5rem;
-  border-radius: 25px;
-  cursor: pointer;
-  margin-bottom: 1rem;
-  transition: all 0.3s ease;
-  font-weight: 600;
-}
-
-.map-toggle:hover {
-  background: #45b7d1;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-}
-
-.map-container iframe {
+  position: relative;
+  width: 100%;
+  min-height: 300px;
   border-radius: 12px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-  transition: all 0.5s ease;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.map-container {
+  width: 100%;
+  height: 100%;
+  min-height: 300px;
+}
+
+/* Specific styles for the map button to prevent conflicts */
+.map-toggle-button {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  z-index: 100;
+  background: white;
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #1a237e;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.map-toggle-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.map-toggle-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.map-toggle-button svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Override any conflicting styles */
+.map-toggle-button.btn {
+  background: white !important;
+  border: none !important;
+  color: #1a237e !important;
+  padding: 0.5rem 1rem !important;
+  font-size: 0.9rem !important;
+  line-height: normal !important;
+  height: auto !important;
+}
+
+.map-toggle-button.btn:hover {
+  background: #f5f5f5 !important;
+}
+
+/* Ensure map controls are visible */
+.map-section .gm-style-cc,
+.map-section .gm-style button {
+  z-index: 99 !important;
 }
 
 .social-links {
@@ -250,6 +285,7 @@
   50% { opacity: .7; }
 }
 
+/* Responsive adjustments */
 @media (max-width: 768px) {
   .footer-content {
     grid-template-columns: 1fr;
@@ -261,5 +297,9 @@
   
   .social-links {
     gap: 1rem;
+  }
+
+  .map-section {
+    min-height: 250px;
   }
 }

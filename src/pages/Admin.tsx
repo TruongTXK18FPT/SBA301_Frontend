@@ -5,7 +5,8 @@ import Button from '../components/Button';
 import { 
   FaSearch, FaBell, FaUserCircle, FaPlus, 
   FaUsers, FaQuestionCircle, FaCalendarAlt,
-  FaChartLine, FaCog, FaCrown
+  FaChartLine, FaCog, FaCrown, FaArrowUp,
+  FaChevronDown
 } from 'react-icons/fa';
 import UserManagement from '../components/admin/UserManagement';
 import QuizManagement from '../components/admin/QuizManagement';
@@ -26,10 +27,12 @@ export interface AdminStats {
 type AlertType = 'success' | 'info' | 'warning' | 'error';
 type ActiveView = 'dashboard' | 'users' | 'quizzes' | 'events' | 'analytics' | 'settings' | 
                  'premium' | 'calendar' | 'notifications';
+
 const Admin = () => {
   const [activeView, setActiveView] = useState<ActiveView>('dashboard');
   const [alerts, setAlerts] = useState<Array<{ id: number; type: AlertType; message: string }>>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [showScrollTop, setShowScrollTop] = useState(false);
   const [stats, setStats] = useState<AdminStats>({
     totalUsers: 0,
     activeQuizzes: 0,
@@ -49,18 +52,50 @@ const Admin = () => {
   ];
 
   useEffect(() => {
-    // Simulate loading stats
-    setStats({
+    // Simulate loading stats with counting animation
+    const finalStats = {
       totalUsers: 1234,
       activeQuizzes: 15,
       completedQuizzes: 789,
       pendingEvents: 8,
       revenue: 45600,
       premiumUsers: 342
+    };
+
+    const duration = 2000; // 2 seconds animation
+    const steps = 60; // 60 steps for smooth animation
+    const interval = duration / steps;
+
+    Object.entries(finalStats).forEach(([key, finalValue]) => {
+      let currentStep = 0;
+      const stepValue = finalValue / steps;
+
+      const timer = setInterval(() => {
+        if (currentStep < steps) {
+          setStats(prev => ({
+            ...prev,
+            [key]: Math.round(stepValue * currentStep)
+          }));
+          currentStep++;
+        } else {
+          setStats(prev => ({
+            ...prev,
+            [key]: finalValue
+          }));
+          clearInterval(timer);
+        }
+      }, interval);
     });
 
-    // Simulate notifications
+    // Show scroll to top button on scroll
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 400);
+    };
+
+    window.addEventListener('scroll', handleScroll);
     showAlert('info', 'Welcome to the admin dashboard');
+
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   const showAlert = (type: AlertType, message: string) => {
@@ -71,9 +106,16 @@ const Admin = () => {
     }, 5000);
   };
 
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  };
+
   const renderContent = () => {
     switch (activeView) {
-    case 'users':
+      case 'users':
         return <UserManagement onAlert={showAlert} />;
       case 'quizzes':
         return <QuizManagement onAlert={showAlert} />;
@@ -97,22 +139,34 @@ const Admin = () => {
                 <div className="stat-card">
                   <h3>Total Users</h3>
                   <p className="stat-number">{stats.totalUsers.toLocaleString()}</p>
-                  <div className="stat-trend positive">+12.5%</div>
+                  <div className="stat-trend positive">
+                    <FaChevronDown style={{ transform: 'rotate(180deg)' }} />
+                    +12.5%
+                  </div>
                 </div>
                 <div className="stat-card premium">
                   <h3>Premium Users</h3>
                   <p className="stat-number">{stats.premiumUsers.toLocaleString()}</p>
-                  <div className="stat-trend positive">+15.2%</div>
+                  <div className="stat-trend positive">
+                    <FaChevronDown style={{ transform: 'rotate(180deg)' }} />
+                    +15.2%
+                  </div>
                 </div>
                 <div className="stat-card revenue">
                   <h3>Revenue</h3>
                   <p className="stat-number">${stats.revenue.toLocaleString()}</p>
-                  <div className="stat-trend positive">+18.7%</div>
+                  <div className="stat-trend positive">
+                    <FaChevronDown style={{ transform: 'rotate(180deg)' }} />
+                    +18.7%
+                  </div>
                 </div>
                 <div className="stat-card events">
                   <h3>Pending Events</h3>
                   <p className="stat-number">{stats.pendingEvents}</p>
-                  <div className="stat-trend warning">+2.4%</div>
+                  <div className="stat-trend warning">
+                    <FaChevronDown />
+                    +2.4%
+                  </div>
                 </div>
               </div>
             </section>
@@ -125,13 +179,14 @@ const Admin = () => {
                   { label: 'Add Event', icon: <FaCalendarAlt />, color: 'green' },
                   { label: 'Manage Users', icon: <FaUsers />, color: 'purple' },
                   { label: 'Premium Settings', icon: <FaCrown />, color: 'gold' }
-                ].map((action) => (
+                ].map((action, index) => (
                   <Button
                     key={action.label}
                     variant="outline"
                     size="lg"
                     icon={action.icon}
                     className={`quick-action-btn ${action.color}`}
+                    style={{ animationDelay: `${index * 0.1}s` }}
                     onClick={() => {
                       setActiveView(action.label.toLowerCase().split(' ')[1] as ActiveView);
                       showAlert('info', `Navigating to ${action.label}`);
@@ -148,11 +203,11 @@ const Admin = () => {
   };
 
   return (
- <div className="admin-layout">
-    <Tab 
-      activeTab={activeView}
-      onTabChange={(tabId) => setActiveView(tabId as ActiveView)}
-    />
+    <div className="admin-layout">
+      <Tab 
+        activeTab={activeView}
+        onTabChange={(tabId) => setActiveView(tabId as ActiveView)}
+      />
       
       <main className="admin-main">
         <header className="admin-header">
@@ -177,12 +232,16 @@ const Admin = () => {
                 Create New
               </Button>
 
-              <button className="notification-btn" onClick={() => showAlert('warning', 'You have 3 new notifications')}>
+              <button 
+                className="notification-btn" 
+                onClick={() => showAlert('warning', 'You have 3 new notifications')}
+                title="Notifications"
+              >
                 <FaBell />
                 <span className="notification-badge">3</span>
               </button>
 
-              <button className="profile-btn">
+              <button className="profile-btn" title="Profile">
                 <FaUserCircle />
                 <span>Admin</span>
               </button>
@@ -193,6 +252,16 @@ const Admin = () => {
         <div className="admin-content">
           {renderContent()}
         </div>
+
+        {showScrollTop && (
+          <button
+            className="scroll-top-btn"
+            onClick={scrollToTop}
+            title="Scroll to top"
+          >
+            <FaArrowUp />
+          </button>
+        )}
 
         <div className="admin-alerts">
           {alerts.map(({ id, type, message }) => (

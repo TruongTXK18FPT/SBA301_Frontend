@@ -7,7 +7,9 @@ import {
   FaCalendar, 
   FaBell,
   FaQuestionCircle,
-  FaCrown
+  FaCrown,
+  FaChevronLeft,
+  FaChevronRight
 } from 'react-icons/fa';
 import '../styles/Tab.css';
 import Admin from '../assets/Admin.jpeg'; // Assuming you have an admin icon
@@ -38,21 +40,28 @@ const Tab: React.FC<TabProps> = ({ activeTab: externalActiveTab, onTabChange }) 
     { id: 'settings', icon: <FaCog />, label: 'Settings' },
   ];
 
+  const toggleSidebar = () => {
+    setIsExpanded(!isExpanded);
+  };
+
   return (
     <div className={`admin-tab ${isExpanded ? 'expanded' : 'collapsed'}`}>
       <div className="tab-header">
-        <img 
-          src={Admin} 
-          alt="Admin Logo" 
-          className="admin-logo"
-          loading = "eager"
-        />
+        <div className="logo-container">
+          <img 
+            src={Admin} 
+            alt="Admin Logo" 
+            className="admin-logo"
+            loading="eager"
+          />
+          {isExpanded && <span className="admin-title">Admin Panel</span>}
+        </div>
         <button 
           className="toggle-button"
-          onClick={() => setIsExpanded(!isExpanded)}
-          aria-label={isExpanded? 'Collapse sidebar': 'Expand sidebar'}
+          onClick={toggleSidebar}
+          aria-label={isExpanded ? 'Collapse sidebar' : 'Expand sidebar'}
         >
-          {isExpanded ? '◄' : '►'}
+          {isExpanded ? <FaChevronLeft /> : <FaChevronRight />}
         </button>
       </div>
 
@@ -62,6 +71,7 @@ const Tab: React.FC<TabProps> = ({ activeTab: externalActiveTab, onTabChange }) 
             key={tab.id}
             className={`tab-item ${externalActiveTab === tab.id ? 'active' : ''}`}
             onClick={() => onTabChange(tab.id)}
+            title={!isExpanded ? tab.label : undefined}
           >
             <span className="tab-icon">{tab.icon}</span>
             {isExpanded && (

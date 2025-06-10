@@ -1,13 +1,15 @@
-import React, { useState } from 'react';
-import { FaEdit, FaTrash, FaPlus } from 'react-icons/fa';
+import { useState } from 'react';
+import { FaPlus, FaEdit, FaTrash, FaSearch } from 'react-icons/fa';
 import Button from '../Button';
+import '../../styles/AdminComponents.css';
 
 interface Quiz {
   id: string;
   title: string;
-  description: string;
-  type: 'personality' | 'assessment';
-  question_quantity: number;
+  category: string;
+  questions: number;
+  participants: number;
+  status: 'active' | 'draft' | 'archived';
 }
 
 interface QuizManagementProps {
@@ -15,62 +17,117 @@ interface QuizManagementProps {
 }
 
 const QuizManagement: React.FC<QuizManagementProps> = ({ onAlert }) => {
+  const [searchTerm, setSearchTerm] = useState('');
   const [quizzes] = useState<Quiz[]>([
-    { id: '1', title: 'Personality Test', description: 'Basic personality assessment', type: 'personality', question_quantity: 10 },
-    { id: '2', title: 'IQ Test', description: 'Basic IQ test', type: 'assessment', question_quantity: 20 },
-    { id: '3', title: 'Career Test', description: 'Career guidance test', type: 'personality', question_quantity: 15 },
+    {
+      id: '1',
+      title: 'Personality Type Indicator',
+      category: 'Psychology',
+      questions: 50,
+      participants: 1200,
+      status: 'active'
+    },
+    {
+      id: '2',
+      title: 'Career Path Finder',
+      category: 'Career',
+      questions: 30,
+      participants: 800,
+      status: 'active'
+    },
+    {
+      id: '3',
+      title: 'Leadership Style Assessment',
+      category: 'Professional',
+      questions: 40,
+      participants: 600,
+      status: 'draft'
+    }
   ]);
 
+  const handleCreateQuiz = () => {
+    onAlert('info', 'Create quiz feature coming soon!');
+  };
+
+  const handleEditQuiz = (id: string) => {
+    onAlert('info', `Editing quiz ${id}`);
+  };
+
+  const handleDeleteQuiz = (id: string) => {
+    onAlert('warning', `Are you sure you want to delete quiz ${id}?`);
+  };
+
+  const filteredQuizzes = quizzes.filter(quiz =>
+    quiz.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    quiz.category.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
-    <div className="management-container">
-      <div className="management-header">
-        <h2>Quiz Management</h2>
+    <div className="admin-component">
+      <header className="component-header">
+        <h1>Quiz Management</h1>
         <Button
           variant="primary"
-          size="sm"
+          size="md"
           icon={<FaPlus />}
-          onClick={() => onAlert('info', 'Create quiz feature coming soon')}
+          onClick={handleCreateQuiz}
         >
           Create Quiz
         </Button>
+      </header>
+
+      <div className="search-filters">
+        <div className="search-bar">
+          <FaSearch className="search-icon" />
+          <input
+            type="text"
+            placeholder="Search quizzes..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
       </div>
 
-      <div className="table-container">
-        <table className="management-table">
+      <div className="content-table">
+        <table>
           <thead>
             <tr>
               <th>Title</th>
-              <th>Type</th>
+              <th>Category</th>
               <th>Questions</th>
+              <th>Participants</th>
+              <th>Status</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {quizzes.map((quiz) => (
+            {filteredQuizzes.map((quiz) => (
               <tr key={quiz.id}>
-                <td>{quiz.title}</td>
-                <td><span className={`badge type-${quiz.type}`}>{quiz.type}</span></td>
-                <td>{quiz.question_quantity}</td>
+                <td className="title-cell">{quiz.title}</td>
+                <td>{quiz.category}</td>
+                <td>{quiz.questions}</td>
+                <td>{quiz.participants.toLocaleString()}</td>
+                <td>
+                  <span className={`status-badge ${quiz.status}`}>
+                    {quiz.status.charAt(0).toUpperCase() + quiz.status.slice(1)}
+                  </span>
+                </td>
                 <td>
                   <div className="action-buttons">
                     <Button
-                      variant="outline"
+                      variant="icon"
                       size="sm"
                       icon={<FaEdit />}
-                      onClick={() => onAlert('info', 'Edit quiz feature coming soon')}
-                    >
-                      {null}
-                    </Button>
+                      onClick={() => handleEditQuiz(quiz.id)}
+                      title="Edit Quiz"
+                    />
                     <Button
-                      variant="danger"
+                      variant="icon"
                       size="sm"
                       icon={<FaTrash />}
-                      onClick={() => onAlert('warning', 'Delete quiz feature coming soon')}
-                    >
-                      {/* No children needed for icon-only button */}
-                      {/* Provide empty children to satisfy ButtonProps */}
-                      {null}
-                    </Button>
+                      onClick={() => handleDeleteQuiz(quiz.id)}
+                      title="Delete Quiz"
+                    />
                   </div>
                 </td>
               </tr>
