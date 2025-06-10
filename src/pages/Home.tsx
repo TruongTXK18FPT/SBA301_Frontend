@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import MainSlider from "../components/MainSlider";
 import NewsSlider from "../components/NewsSlider";
 import PersonalityTypes from "../components/PersonalityTypes";
@@ -64,6 +65,11 @@ const Home: React.FC = () => {
   const toggleDarkMode = () => {
     setIsDarkMode((prev) => !prev);
   };
+  const navigate = useNavigate();
+  const handleStartQuiz = () => {
+    // Navigate to the quiz page
+    navigate("/quiz");
+  };
 
   return (
     <div className={`home-container ${isDarkMode ? "dark-mode" : ""}`}>
@@ -107,6 +113,7 @@ const Home: React.FC = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1.1 }}
+            onClick={handleStartQuiz}
           >
             Bắt đầu kiểm tra ngay
           </motion.button>

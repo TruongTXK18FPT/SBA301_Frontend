@@ -39,7 +39,7 @@ const Authenticate: React.FC = () => {
 
   useEffect(() => {
     if (isLoggedin) {
-      navigate("/home");
+      navigate("/");
     }
   }, [isLoggedin, navigate]);
 
