@@ -1,11 +1,11 @@
-import { useState } from "react";
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
-import NavBar from "./components/NavBar";
-import Home from "./pages/Home";
-import "./App.css";
-import Login from "./pages/LoginForm";
-import Admin from "./pages/Admin";
-import Authenticate from "./components/authenticate/Authenticate";
+import { useState } from 'react'
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom'
+import NavBar from './components/NavBar'
+import Home from './pages/Home'
+import './App.css'
+import Login from './pages/LoginForm'
+import Admin from './pages/Admin'
+import Authenticate from './components/authenticate/Authenticate'
 function App() {
   // Example authentication state and logout handler
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -24,6 +24,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="/authenticate" element={<Authenticate />} />
+          {/* Add more routes as needed */}
         </Routes>
       </main>
     </div>
