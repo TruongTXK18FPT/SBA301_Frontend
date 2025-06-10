@@ -5,6 +5,7 @@ import Home from './pages/Home'
 import './App.css'
 import Login from './pages/LoginForm'
 import Admin from './pages/Admin'
+import Quiz from './pages/Quiz'
 import Authenticate from './components/authenticate/Authenticate'
 function App() {
   // Example authentication state and logout handler
@@ -24,6 +25,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="/authenticate" element={<Authenticate />} />
+          <Route path="/quiz" element={<Quiz />} />
           {/* Add more routes as needed */}
         </Routes>
       </main>
