@@ -7,6 +7,8 @@ import Login from './pages/LoginForm'
 import Admin from './pages/Admin'
 import Quiz from './pages/Quiz'
 import Authenticate from './components/authenticate/Authenticate'
+import Register from './pages/Register'
+import ForgotPassword from './pages/ForgotPassword'
 function App() {
   // Example authentication state and logout handler
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -26,6 +28,8 @@ function App() {
           <Route path="/admin" element={<Admin />} />
           <Route path="/authenticate" element={<Authenticate />} />
           <Route path="/quiz" element={<Quiz />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
           {/* Add more routes as needed */}
         </Routes>
       </main>
