@@ -43,7 +43,7 @@ export const logOut = () => {
 export const getProfile = async () => {
   const token = getToken();
   const response = await axios.get(
-    "http://localhost:8080/api/v1/user-service/profile",
+    "http://localhost:8080/api/v1/persona/profiles",
     {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -51,4 +51,22 @@ export const getProfile = async () => {
     }
   );
   return response.data;
+};
+
+export interface UserCreationRequest {
+  username: string;
+  password: string;
+  fullName: string;
+  email: string;
+  phone: string;
+  yob: number;
+  address: string;
+  districtCode: number;
+  provinceCode: number;
+  isParent: boolean;
+}
+
+export const registerUser = async (user: UserCreationRequest): Promise<any> => {
+  const response = await axios.post("http://localhost:8080/api/v1/authenticate/users", user);
+  return response.data.result;
 };

@@ -186,7 +186,7 @@ const LoginPage: React.FC = () => {
           className="signup-prompt animate-fade-in"
           style={{ animationDelay: "0.5s" }}
         >
-          Chưa có tài khoản? <a href="/register">Đăng ký ngay</a>
+          Chưa có tài khoản? <a href="/signup">Đăng ký ngay</a>
         </p>
       </div>
     </div>
