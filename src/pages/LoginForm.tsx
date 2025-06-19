@@ -12,6 +12,9 @@ import Alert from "../components/Alert";
 import "../styles/LoginForm.css";
 import Login from "../assets/Login.mp4";
 import OAuthConfig from "../configurations/configuration";
+import axios from "axios";
+import { setToken } from "../services/localStorageService";
+import { login } from "../services/authService";
 
 const LoginPage: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -24,24 +27,20 @@ const LoginPage: React.FC = () => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      // Here you would implement your actual authentication logic
-      // For example:
-      // await signIn(email, password);
-      // navigate('/dashboard');
+      await login(email, password);
+      navigate("/");
     } catch (error) {
+      console.error("Login error:", error);
       setShowAlert(true);
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   const handleSocialLogin = async (
     provider: "google" | "github" | "facebook"
   ) => {
     try {
-      // Implement social login logic here
-      // For example:
-      // await signInWithProvider(provider);
-      // navigate('/dashboard');
     } catch (error) {
       setShowAlert(true);
     }
@@ -94,8 +93,8 @@ const LoginPage: React.FC = () => {
         <form onSubmit={handleSubmit} className="login-form">
           <div className="form-group animate-slide-right">
             <input
-              type="email"
-              placeholder="Email của bạn"
+              type="text"
+              placeholder="Tên đăng nhập hoặc email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required

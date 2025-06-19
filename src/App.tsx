@@ -1,14 +1,14 @@
-import { useState } from 'react'
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom'
-import NavBar from './components/NavBar'
-import Home from './pages/Home'
-import './App.css'
-import Login from './pages/LoginForm'
-import Admin from './pages/Admin'
-import Quiz from './pages/Quiz'
-import Authenticate from './components/authenticate/Authenticate'
-import Register from './pages/Register'
-import ForgotPassword from './pages/ForgotPassword'
+import { useState } from "react";
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import NavBar from "./components/NavBar";
+import Home from "./pages/Home";
+import "./App.css";
+import Login from "./pages/LoginForm";
+import Admin from "./pages/Admin";
+import Quiz from "./pages/Quiz";
+import Authenticate from "./components/authenticate/Authenticate";
+import Register from "./pages/Register";
+import ForgotPassword from "./pages/ForgotPassword";
 function App() {
   // Example authentication state and logout handler
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -28,8 +28,8 @@ function App() {
           <Route path="/admin" element={<Admin />} />
           <Route path="/authenticate" element={<Authenticate />} />
           <Route path="/quiz" element={<Quiz />} />
-          <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/signup" element={<Register />} />
           {/* Add more routes as needed */}
         </Routes>
       </main>
