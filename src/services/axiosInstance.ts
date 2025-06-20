@@ -42,9 +42,9 @@ instance.interceptors.response.use(
       originalRequest._retry = true;
 
       if (isRefreshing) {
-        return new Promise((resolve, reject) => {
+        return new Promise<string>((resolve, reject) => {
           failedQueue.push({ resolve, reject });
-        }).then((token: string) => {
+        }).then((token) => {
           originalRequest.headers.Authorization = `Bearer ${token}`;
           return axios(originalRequest);
         });

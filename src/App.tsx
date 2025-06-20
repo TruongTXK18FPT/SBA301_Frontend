@@ -29,7 +29,7 @@ function App() {
           <Route path="/authenticate" element={<Authenticate />} />
           <Route path="/quiz" element={<Quiz />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/signup" element={<Register />} />
+          <Route path="/register" element={<Register />} />
           {/* Add more routes as needed */}
         </Routes>
       </main>

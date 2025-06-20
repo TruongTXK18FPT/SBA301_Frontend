@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { FaUser, FaEnvelope, FaLock, FaCalendar, FaPhone, FaMapMarkerAlt } from 'react-icons/fa';
+import { FaUser, FaEnvelope, FaLock, FaCalendar, FaPhone, FaMapMarkerAlt, FaUserTag } from 'react-icons/fa';
 import Alert from '../components/Alert';
 import loginVideo from '../assets/Login.mp4';
 import '../styles/Register.css';
@@ -23,7 +23,8 @@ const Register: React.FC = () => {
     phone: '',
     address: '',
     provinceCode: '',
-    districtCode: ''
+    districtCode: '',
+    role: ''
   });
 
   const [provinces, setProvinces] = useState<LocationData[]>([]);
@@ -300,7 +301,6 @@ const Register: React.FC = () => {
               </select>
             </motion.div>
           </div>
-
           <motion.div 
             className="register-form-group"
             initial={{ opacity: 0, x: -20 }}
@@ -317,7 +317,22 @@ const Register: React.FC = () => {
               required
             />
           </motion.div>
-
+          <motion.div 
+            className="register-form-group-checkbox"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.85 }}
+          >
+            <input
+              type="checkbox"
+              id="role-checkbox"
+              name="role"
+              onChange={(e) => setFormData(prev => ({ ...prev, role: e.target.checked ? 'parent' : 'student' }))}
+              checked={formData.role === 'parent'}
+              className="register-role-checkbox" 
+            />
+            <label htmlFor="role-checkbox" className="register-role-label">Tôi là phụ huynh</label>
+          </motion.div>
           <motion.button
             type="submit"
             className="register-submit-button"
@@ -331,7 +346,6 @@ const Register: React.FC = () => {
             {isLoading ? 'Đang xử lý...' : 'Đăng Ký'}
           </motion.button>
         </form>
-
         <motion.p 
           className="register-footer"
           initial={{ opacity: 0 }}
