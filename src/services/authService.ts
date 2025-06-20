@@ -2,14 +2,11 @@ import axios from "axios";
 import { setToken, removeToken, getToken } from "./localStorageService";
 
 // Login
-export const login = async (
-  username: string,
-  password: string
-): Promise<void> => {
+export const login = async (email: string, password: string): Promise<void> => {
   const response = await axios.post(
     "http://localhost:8080/api/v1/authenticate/auth/token",
     {
-      username,
+      email,
       password,
     }
   );
@@ -67,6 +64,9 @@ export interface UserCreationRequest {
 }
 
 export const registerUser = async (user: UserCreationRequest): Promise<any> => {
-  const response = await axios.post("http://localhost:8080/api/v1/authenticate/users", user);
+  const response = await axios.post(
+    "http://localhost:8080/api/v1/authenticate/users",
+    user
+  );
   return response.data.result;
 };

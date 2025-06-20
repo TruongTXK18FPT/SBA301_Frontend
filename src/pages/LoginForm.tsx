@@ -94,7 +94,7 @@ const LoginPage: React.FC = () => {
           <div className="form-group animate-slide-right">
             <input
               type="text"
-              placeholder="Tên đăng nhập hoặc email"
+              placeholder="Email của bạn"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required

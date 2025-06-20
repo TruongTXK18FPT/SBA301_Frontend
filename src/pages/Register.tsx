@@ -1,10 +1,18 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
-import { FaUser, FaEnvelope, FaLock, FaCalendar, FaPhone, FaMapMarkerAlt, FaUserTag } from 'react-icons/fa';
-import Alert from '../components/Alert';
-import loginVideo from '../assets/Login.mp4';
-import '../styles/Register.css';
+import React, { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useNavigate } from "react-router-dom";
+import {
+  FaUser,
+  FaEnvelope,
+  FaLock,
+  FaCalendar,
+  FaPhone,
+  FaMapMarkerAlt,
+  FaUserTag,
+} from "react-icons/fa";
+import Alert from "../components/Alert";
+import loginVideo from "../assets/Login.mp4";
+import "../styles/Register.css";
 
 interface LocationData {
   code: string;
@@ -15,16 +23,16 @@ const Register: React.FC = () => {
   const navigate = useNavigate();
   const videoRef = useRef<HTMLVideoElement>(null);
   const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-    confirmPassword: '',
-    fullName: '',
-    birthday: '',
-    phone: '',
-    address: '',
-    provinceCode: '',
-    districtCode: '',
-    role: ''
+    email: "",
+    password: "",
+    confirmPassword: "",
+    fullName: "",
+    birthday: "",
+    phone: "",
+    address: "",
+    provinceCode: "",
+    districtCode: "",
+    role: "",
   });
 
   const [provinces, setProvinces] = useState<LocationData[]>([]);
@@ -32,23 +40,23 @@ const Register: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [alert, setAlert] = useState<{
     show: boolean;
-    type: 'success' | 'error';
+    type: "success" | "error";
     message: string;
   }>({
     show: false,
-    type: 'success',
-    message: ''
+    type: "success",
+    message: "",
   });
 
   // Fetch provinces on component mount
   useEffect(() => {
     const fetchProvinces = async () => {
       try {
-        const response = await fetch('https://provinces.open-api.vn/api/p/');
+        const response = await fetch("https://provinces.open-api.vn/api/p/");
         const data = await response.json();
         setProvinces(data.map((p: any) => ({ code: p.code, name: p.name })));
       } catch (error) {
-        console.error('Error fetching provinces:', error);
+        console.error("Error fetching provinces:", error);
       }
     };
     fetchProvinces();
@@ -56,7 +64,7 @@ const Register: React.FC = () => {
 
   useEffect(() => {
     if (videoRef.current) {
-      videoRef.current.play().catch(error => {
+      videoRef.current.play().catch((error) => {
         console.log("Video autoplay failed:", error);
       });
     }
@@ -64,24 +72,28 @@ const Register: React.FC = () => {
 
   // Fetch districts when province changes
   const handleProvinceChange = async (provinceCode: string) => {
-    setFormData(prev => ({ ...prev, provinceCode, districtCode: '' }));
+    setFormData((prev) => ({ ...prev, provinceCode, districtCode: "" }));
     try {
-      const response = await fetch(`https://provinces.open-api.vn/api/p/${provinceCode}?depth=2`);
+      const response = await fetch(
+        `https://provinces.open-api.vn/api/p/${provinceCode}?depth=2`
+      );
       const data = await response.json();
-      setDistricts(data.districts.map((d: any) => ({ code: d.code, name: d.name })));
+      setDistricts(
+        data.districts.map((d: any) => ({ code: d.code, name: d.name }))
+      );
     } catch (error) {
-      console.error('Error fetching districts:', error);
+      console.error("Error fetching districts:", error);
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (formData.password !== formData.confirmPassword) {
       setAlert({
         show: true,
-        type: 'error',
-        message: 'Mật khẩu xác nhận không khớp!'
+        type: "error",
+        message: "Mật khẩu xác nhận không khớp!",
       });
       return;
     }
@@ -90,41 +102,44 @@ const Register: React.FC = () => {
 
     try {
       // Simulate API call - replace with your actual API endpoint
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+
       setAlert({
         show: true,
-        type: 'success',
-        message: 'Đăng ký thành công! Vui lòng kiểm tra email để xác thực tài khoản.'
+        type: "success",
+        message:
+          "Đăng ký thành công! Vui lòng kiểm tra email để xác thực tài khoản.",
       });
 
       setTimeout(() => {
-        navigate('/login');
+        navigate("/login");
       }, 2000);
     } catch (error) {
       setAlert({
         show: true,
-        type: 'error',
-        message: 'Đăng ký thất bại. Vui lòng thử lại sau.'
+        type: "error",
+        message: "Đăng ký thất bại. Vui lòng thử lại sau.",
       });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   return (
     <div className="register-container">
       <div className="register-video-container">
-        <video 
+        <video
           ref={videoRef}
-          autoPlay 
-          muted 
-          loop 
+          autoPlay
+          muted
+          loop
           playsInline
           className="register-video-background"
         >
@@ -134,7 +149,7 @@ const Register: React.FC = () => {
         <div className="register-video-overlay" />
       </div>
 
-      <motion.div 
+      <motion.div
         className="register-content"
         initial={{ opacity: 0, y: 50 }}
         animate={{ opacity: 1, y: 0 }}
@@ -148,13 +163,13 @@ const Register: React.FC = () => {
               type={alert.type}
               message={alert.message}
               duration={5000}
-              onClose={() => setAlert(prev => ({ ...prev, show: false }))}
+              onClose={() => setAlert((prev) => ({ ...prev, show: false }))}
             />
           )}
         </AnimatePresence>
 
         <form onSubmit={handleSubmit} className="register-form">
-          <motion.div 
+          <motion.div
             className="register-form-group"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -171,7 +186,7 @@ const Register: React.FC = () => {
             />
           </motion.div>
 
-          <motion.div 
+          <motion.div
             className="register-form-group"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -188,7 +203,7 @@ const Register: React.FC = () => {
             />
           </motion.div>
 
-          <motion.div 
+          <motion.div
             className="register-form-group"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -205,7 +220,7 @@ const Register: React.FC = () => {
             />
           </motion.div>
 
-          <motion.div 
+          <motion.div
             className="register-form-group"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -222,7 +237,7 @@ const Register: React.FC = () => {
             />
           </motion.div>
 
-          <motion.div 
+          <motion.div
             className="register-form-group"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -238,7 +253,7 @@ const Register: React.FC = () => {
             />
           </motion.div>
 
-          <motion.div 
+          <motion.div
             className="register-form-group"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -256,7 +271,7 @@ const Register: React.FC = () => {
           </motion.div>
 
           <div className="register-location-fields">
-            <motion.div 
+            <motion.div
               className="register-form-group"
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -270,7 +285,7 @@ const Register: React.FC = () => {
                 required
               >
                 <option value="">Chọn tỉnh/thành phố</option>
-                {provinces.map(province => (
+                {provinces.map((province) => (
                   <option key={province.code} value={province.code}>
                     {province.name}
                   </option>
@@ -278,7 +293,7 @@ const Register: React.FC = () => {
               </select>
             </motion.div>
 
-            <motion.div 
+            <motion.div
               className="register-form-group"
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -293,7 +308,7 @@ const Register: React.FC = () => {
                 disabled={!formData.provinceCode}
               >
                 <option value="">Chọn quận/huyện</option>
-                {districts.map(district => (
+                {districts.map((district) => (
                   <option key={district.code} value={district.code}>
                     {district.name}
                   </option>
@@ -301,7 +316,7 @@ const Register: React.FC = () => {
               </select>
             </motion.div>
           </div>
-          <motion.div 
+          <motion.div
             className="register-form-group"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -317,7 +332,7 @@ const Register: React.FC = () => {
               required
             />
           </motion.div>
-          <motion.div 
+          <motion.div
             className="register-form-group-checkbox"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -327,11 +342,18 @@ const Register: React.FC = () => {
               type="checkbox"
               id="role-checkbox"
               name="role"
-              onChange={(e) => setFormData(prev => ({ ...prev, role: e.target.checked ? 'parent' : 'student' }))}
-              checked={formData.role === 'parent'}
-              className="register-role-checkbox" 
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  role: e.target.checked ? "parent" : "student",
+                }))
+              }
+              checked={formData.role === "parent"}
+              className="register-role-checkbox"
             />
-            <label htmlFor="role-checkbox" className="register-role-label">Tôi là phụ huynh</label>
+            <label htmlFor="role-checkbox" className="register-role-label">
+              Tôi là phụ huynh
+            </label>
           </motion.div>
           <motion.button
             type="submit"
@@ -343,10 +365,10 @@ const Register: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.9 }}
           >
-            {isLoading ? 'Đang xử lý...' : 'Đăng Ký'}
+            {isLoading ? "Đang xử lý..." : "Đăng Ký"}
           </motion.button>
         </form>
-        <motion.p 
+        <motion.p
           className="register-footer"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
