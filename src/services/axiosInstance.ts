@@ -23,9 +23,13 @@ const processQueue = (error: any, token: string | null = null) => {
 // Request interceptor: gắn token
 instance.interceptors.request.use(
   (config) => {
-    const token = getToken();
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    if (!config.headers["Skip-Authorization"]) {
+      const token = getToken();
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+    } else {
+      delete config.headers["Skip-Authorization"];
     }
     return config;
   },

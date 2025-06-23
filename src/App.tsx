@@ -9,6 +9,7 @@ import Quiz from "./pages/Quiz";
 import Authenticate from "./components/authenticate/Authenticate";
 import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
+import CompleteProfile from "./pages/CompleteProfile";
 function App() {
   // Example authentication state and logout handler
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -30,6 +31,7 @@ function App() {
           <Route path="/quiz" element={<Quiz />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/complete-profile" element={<CompleteProfile />} />
           {/* Add more routes as needed */}
         </Routes>
       </main>

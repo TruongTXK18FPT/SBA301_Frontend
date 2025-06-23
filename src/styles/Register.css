@@ -290,6 +290,33 @@
   animation: register-spin 1s linear infinite;
 }
 
+.otp-form-container {
+  max-width: 400px;
+  margin: 0 auto;
+  padding: 2rem;
+  border-radius: 16px;
+  background-color: #fff;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.otp-form-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+  color: #ff7a00;
+}
+
+.register-text-button {
+  background: none;
+  border: none;
+  color: #ff7a00;
+  cursor: pointer;
+  font-size: 0.95rem;
+  margin-top: 1rem;
+}
+
+
 /* Form Validation Styles */
 .register-form-group input:invalid:not(:placeholder-shown) {
   border-color: #ff6b6b;

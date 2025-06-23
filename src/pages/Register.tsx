@@ -9,10 +9,13 @@ import {
   FaPhone,
   FaMapMarkerAlt,
   FaUserTag,
+  FaKey,
 } from "react-icons/fa";
 import Alert from "../components/Alert";
 import loginVideo from "../assets/Login.mp4";
 import "../styles/Register.css";
+import { registerUser, resendOtp, verifyOtp } from "../services/authService";
+import Login from "../assets/Login.mp4";
 
 interface LocationData {
   code: string;
@@ -22,6 +25,9 @@ interface LocationData {
 const Register: React.FC = () => {
   const navigate = useNavigate();
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [otp, setOtp] = useState("");
+  const [emailToVerify, setEmailToVerify] = useState("");
+  const [isVerifying, setIsVerifying] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -32,7 +38,7 @@ const Register: React.FC = () => {
     address: "",
     provinceCode: "",
     districtCode: "",
-    role: "",
+    isParent: false,
   });
 
   const [provinces, setProvinces] = useState<LocationData[]>([]);
@@ -101,8 +107,21 @@ const Register: React.FC = () => {
     setIsLoading(true);
 
     try {
-      // Simulate API call - replace with your actual API endpoint
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      const birthDateStr = formData.birthday;
+
+      await registerUser({
+        email: formData.email,
+        password: formData.password,
+        fullName: formData.fullName,
+        phone: formData.phone,
+        birthDate: birthDateStr,
+        address: formData.address,
+        districtCode: parseInt(formData.districtCode),
+        provinceCode: parseInt(formData.provinceCode),
+        isParent: formData.isParent,
+      });
+      setEmailToVerify(formData.email);
+      setIsVerifying(true);
 
       setAlert({
         show: true,
@@ -110,15 +129,30 @@ const Register: React.FC = () => {
         message:
           "Đăng ký thành công! Vui lòng kiểm tra email để xác thực tài khoản.",
       });
+    } catch (error: any) {
+      console.error("Registration error:", error);
 
-      setTimeout(() => {
-        navigate("/login");
-      }, 2000);
-    } catch (error) {
+      const errorCode = error?.response?.data?.code;
+      let errorMessage = "Đăng ký thất bại. Vui lòng thử lại.";
+
+      switch (errorCode) {
+        case 1002:
+          errorMessage = "Email đã được sử dụng.";
+          break;
+        case 1003:
+          errorMessage = "Email không hợp lệ.";
+          break;
+        case 1004:
+          errorMessage = "Mật khẩu không hợp lệ.";
+          break;
+        default:
+          errorMessage = error?.response?.data?.message || errorMessage;
+      }
+
       setAlert({
         show: true,
         type: "error",
-        message: "Đăng ký thất bại. Vui lòng thử lại sau.",
+        message: errorMessage,
       });
     } finally {
       setIsLoading(false);
@@ -130,6 +164,24 @@ const Register: React.FC = () => {
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+  const handleVerifyOtp = async () => {
+    try {
+      await verifyOtp({ email: emailToVerify, otpCode: otp });
+      window.alert("Xác thực thành công!");
+      navigate("/login");
+    } catch (error) {
+      window.alert("Mã OTP không đúng hoặc đã hết hạn.");
+    }
+  };
+
+  const handleResendOtp = async () => {
+    try {
+      await resendOtp(emailToVerify, "VERIFY_EMAIL");
+      window.alert("Đã gửi lại mã OTP!");
+    } catch (error) {
+      window.alert("Không thể gửi lại OTP.");
+    }
   };
 
   return (
@@ -167,207 +219,300 @@ const Register: React.FC = () => {
             />
           )}
         </AnimatePresence>
-
-        <form onSubmit={handleSubmit} className="register-form">
-          <motion.div
-            className="register-form-group"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.1 }}
-          >
-            <FaUser className="register-input-icon" />
-            <input
-              type="text"
-              name="fullName"
-              value={formData.fullName}
-              onChange={handleChange}
-              placeholder="Họ và tên"
-              required
-            />
-          </motion.div>
-
-          <motion.div
-            className="register-form-group"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.2 }}
-          >
-            <FaEnvelope className="register-input-icon" />
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              placeholder="Email"
-              required
-            />
-          </motion.div>
-
-          <motion.div
-            className="register-form-group"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.3 }}
-          >
-            <FaLock className="register-input-icon" />
-            <input
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              placeholder="Mật khẩu"
-              required
-            />
-          </motion.div>
-
-          <motion.div
-            className="register-form-group"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.35 }}
-          >
-            <FaLock className="register-input-icon" />
-            <input
-              type="password"
-              name="confirmPassword"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              placeholder="Xác nhận mật khẩu"
-              required
-            />
-          </motion.div>
-
-          <motion.div
-            className="register-form-group"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.4 }}
-          >
-            <FaCalendar className="register-input-icon" />
-            <input
-              type="date"
-              name="birthday"
-              value={formData.birthday}
-              onChange={handleChange}
-              required
-            />
-          </motion.div>
-
-          <motion.div
-            className="register-form-group"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.5 }}
-          >
-            <FaPhone className="register-input-icon" />
-            <input
-              type="tel"
-              name="phone"
-              value={formData.phone}
-              onChange={handleChange}
-              placeholder="Số điện thoại"
-              required
-            />
-          </motion.div>
-
-          <div className="register-location-fields">
+        {!isVerifying ? (
+          <form onSubmit={handleSubmit} className="register-form">
             <motion.div
               className="register-form-group"
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.6 }}
+              transition={{ delay: 0.1 }}
             >
-              <FaMapMarkerAlt className="register-input-icon" />
-              <select
-                name="provinceCode"
-                value={formData.provinceCode}
-                onChange={(e) => handleProvinceChange(e.target.value)}
+              <FaUser className="register-input-icon" />
+              <input
+                type="text"
+                name="fullName"
+                value={formData.fullName}
+                onChange={handleChange}
+                placeholder="Họ và tên"
                 required
-              >
-                <option value="">Chọn tỉnh/thành phố</option>
-                {provinces.map((province) => (
-                  <option key={province.code} value={province.code}>
-                    {province.name}
-                  </option>
-                ))}
-              </select>
+              />
             </motion.div>
 
             <motion.div
               className="register-form-group"
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.7 }}
+              transition={{ delay: 0.2 }}
             >
-              <FaMapMarkerAlt className="register-input-icon" />
-              <select
-                name="districtCode"
-                value={formData.districtCode}
+              <FaEnvelope className="register-input-icon" />
+              <input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                placeholder="Email"
+                required
+              />
+            </motion.div>
+
+            <motion.div
+              className="register-form-group"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.3 }}
+            >
+              <FaLock className="register-input-icon" />
+              <input
+                type="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                placeholder="Mật khẩu"
+                required
+              />
+            </motion.div>
+
+            <motion.div
+              className="register-form-group"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.35 }}
+            >
+              <FaLock className="register-input-icon" />
+              <input
+                type="password"
+                name="confirmPassword"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                placeholder="Xác nhận mật khẩu"
+                required
+              />
+            </motion.div>
+
+            <motion.div
+              className="register-form-group"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.4 }}
+            >
+              <FaCalendar className="register-input-icon" />
+              <input
+                type="date"
+                name="birthday"
+                value={formData.birthday}
                 onChange={handleChange}
                 required
-                disabled={!formData.provinceCode}
+              />
+            </motion.div>
+
+            <motion.div
+              className="register-form-group"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.5 }}
+            >
+              <FaPhone className="register-input-icon" />
+              <input
+                type="tel"
+                name="phone"
+                value={formData.phone}
+                onChange={handleChange}
+                placeholder="Số điện thoại"
+                required
+              />
+            </motion.div>
+
+            <div className="register-location-fields">
+              <motion.div
+                className="register-form-group"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.6 }}
               >
-                <option value="">Chọn quận/huyện</option>
-                {districts.map((district) => (
-                  <option key={district.code} value={district.code}>
-                    {district.name}
-                  </option>
-                ))}
-              </select>
+                <FaMapMarkerAlt className="register-input-icon" />
+                <select
+                  name="provinceCode"
+                  value={formData.provinceCode}
+                  onChange={(e) => handleProvinceChange(e.target.value)}
+                  required
+                >
+                  <option value="">Chọn tỉnh/thành phố</option>
+                  {provinces.map((province) => (
+                    <option key={province.code} value={province.code}>
+                      {province.name}
+                    </option>
+                  ))}
+                </select>
+              </motion.div>
+
+              <motion.div
+                className="register-form-group"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.7 }}
+              >
+                <FaMapMarkerAlt className="register-input-icon" />
+                <select
+                  name="districtCode"
+                  value={formData.districtCode}
+                  onChange={handleChange}
+                  required
+                  disabled={!formData.provinceCode}
+                >
+                  <option value="">Chọn quận/huyện</option>
+                  {districts.map((district) => (
+                    <option key={district.code} value={district.code}>
+                      {district.name}
+                    </option>
+                  ))}
+                </select>
+              </motion.div>
+            </div>
+            <motion.div
+              className="register-form-group"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.8 }}
+            >
+              <FaMapMarkerAlt className="register-input-icon" />
+              <input
+                type="text"
+                name="address"
+                value={formData.address}
+                onChange={handleChange}
+                placeholder="Địa chỉ chi tiết"
+                required
+              />
+            </motion.div>
+            <motion.div
+              className="register-form-group-checkbox"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.85 }}
+            >
+              <input
+                type="checkbox"
+                id="isParent"
+                name="isParent"
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    isParent: e.target.checked,
+                  }))
+                }
+                checked={formData.isParent}
+                className="register-role-checkbox"
+              />
+              <label htmlFor="isParent" className="register-role-label">
+                Tôi là phụ huynh
+              </label>
+            </motion.div>
+            <motion.button
+              type="submit"
+              className="register-submit-button"
+              disabled={isLoading}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.9 }}
+            >
+              {isLoading ? "Đang xử lý..." : "Đăng Ký"}
+            </motion.button>
+          </form>
+        ) : (
+          <div className="forgot-password-container">
+            <div className="forgot-password-video-container">
+              <video
+                autoPlay
+                muted
+                loop
+                className="forgot-password-video-background"
+              >
+                <source src={Login} type="video/mp4" />
+              </video>
+              <div className="forgot-password-video-overlay" />
+            </div>
+
+            <motion.div
+              className="forgot-password-content"
+              initial={{ opacity: 0, y: 50 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              <h1 className="forgot-password-title">Xác thực Email</h1>
+
+              <AnimatePresence>
+                {alert.show && (
+                  <Alert
+                    type={alert.type}
+                    message={alert.message}
+                    duration={5000}
+                    onClose={() =>
+                      setAlert((prev) => ({ ...prev, show: false }))
+                    }
+                  />
+                )}
+              </AnimatePresence>
+
+              <AnimatePresence mode="wait">
+                <motion.form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    handleVerifyOtp();
+                  }}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                  className="forgot-password-form"
+                >
+                  <motion.div
+                    className="forgot-password-form-group"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2 }}
+                  >
+                    <FaKey className="forgot-password-input-icon" />
+                    <input
+                      type="text"
+                      value={otp}
+                      onChange={(e) => setOtp(e.target.value)}
+                      placeholder="Nhập mã OTP"
+                      maxLength={6}
+                      required
+                      className="forgot-password-otp-input"
+                    />
+                  </motion.div>
+
+                  <motion.button
+                    type="submit"
+                    className="forgot-password-submit-button"
+                    disabled={isLoading}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 }}
+                  >
+                    {isLoading ? "Đang xử lý..." : "Xác nhận"}
+                  </motion.button>
+                  <motion.button
+                    type="button"
+                    className="register-text-button"
+                    onClick={handleResendOtp}
+                    whileHover={{ scale: 1.05 }}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.4 }}
+                  >
+                    Gửi lại mã OTP
+                  </motion.button>
+                </motion.form>
+              </AnimatePresence>
             </motion.div>
           </div>
-          <motion.div
-            className="register-form-group"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.8 }}
-          >
-            <FaMapMarkerAlt className="register-input-icon" />
-            <input
-              type="text"
-              name="address"
-              value={formData.address}
-              onChange={handleChange}
-              placeholder="Địa chỉ chi tiết"
-              required
-            />
-          </motion.div>
-          <motion.div
-            className="register-form-group-checkbox"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.85 }}
-          >
-            <input
-              type="checkbox"
-              id="role-checkbox"
-              name="role"
-              onChange={(e) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  role: e.target.checked ? "parent" : "student",
-                }))
-              }
-              checked={formData.role === "parent"}
-              className="register-role-checkbox"
-            />
-            <label htmlFor="role-checkbox" className="register-role-label">
-              Tôi là phụ huynh
-            </label>
-          </motion.div>
-          <motion.button
-            type="submit"
-            className="register-submit-button"
-            disabled={isLoading}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.9 }}
-          >
-            {isLoading ? "Đang xử lý..." : "Đăng Ký"}
-          </motion.button>
-        </form>
+        )}
+
         <motion.p
           className="register-footer"
           initial={{ opacity: 0 }}
