@@ -4,6 +4,7 @@ import { FaUserCircle, FaSignInAlt, FaSignOutAlt, FaListAlt, FaCalendarAlt, FaCr
 import { motion } from 'framer-motion';
 import '../styles/NavBar.css';
 import Logo from '../assets/Logo.jpeg';
+import { getProfile } from '../services/authService';
 
 interface NavBarProps {
   isAuthenticated: boolean;
@@ -13,6 +14,7 @@ interface NavBarProps {
 const NavBar = ({ isAuthenticated, onLogout }: NavBarProps) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [profile, setProfile] = useState<any>(null);
   const location = useLocation();
 
   useEffect(() => {
@@ -22,6 +24,17 @@ const NavBar = ({ isAuthenticated, onLogout }: NavBarProps) => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Fetch user profile when authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      getProfile()
+        .then(data => setProfile(data))
+        .catch(() => setProfile(null));
+    } else {
+      setProfile(null);
+    }
+  }, [isAuthenticated]);
 
   return (
     <nav className={`navbar ${isScrolled ? 'scrolled' : ''}`}>
@@ -72,9 +85,12 @@ const NavBar = ({ isAuthenticated, onLogout }: NavBarProps) => {
           <div className="nav-section auth-nav">
             {isAuthenticated ? (
               <>
-                <Link to="/profile" className="nav-item profile">
-                  <FaUserCircle />
-                  <span>Thông tin cá nhân</span>
+                <Link to="/profile" className="nav-item profile-avatar" title="Trang cá nhân">
+                  {profile && profile.avatarUrl ? (
+                    <img src={profile.avatarUrl} alt="avatar" className="avatar-img" />
+                  ) : (
+                    <FaUserCircle className="avatar-icon" />
+                  )}
                 </Link>
                 <button onClick={onLogout} className="auth-button logout">
                   <FaSignOutAlt />

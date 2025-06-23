@@ -151,7 +151,28 @@
   transform: translateY(-2px);
   box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
 }
+.profile-avatar {
+  display: flex;
+  align-items: center;
+  margin-right: 12px;
+  cursor: pointer;
+}
 
+.avatar-icon, .avatar-img {
+  font-size: 2rem;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  color: #007bff;
+  object-fit: cover;
+  transition: color 0.2s;
+}
+
+.profile-avatar:hover .avatar-icon,
+.profile-avatar:hover .avatar-img {
+  color: #0056b3;
+  border: 2px solid #0056b3;
+}
 /* Mobile Menu Button */
 .mobile-toggle {
   display: none;
