@@ -70,9 +70,7 @@ const Alert: React.FC<AlertProps> = ({
         clearInterval(interval);
       };
     }
-  }, [duration, onClose]);
-
-  if (!isVisible) return null;
+  }, [duration, onClose]);  if (!isVisible) return null;
 
   return (
     <div className={`alert alert-${type}`} role="alert">

@@ -16,33 +16,70 @@ import axios from "axios";
 import { setToken } from "../services/localStorageService";
 import { login } from "../services/authService";
 
-const LoginPage: React.FC = () => {
-  const [email, setEmail] = useState("");
+interface LoginPageProps {
+  onLoginSuccess?: () => void;
+}
+
+const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [showAlert, setShowAlert] = useState(false);
+  const [alert, setAlert] = useState<{
+    show: boolean;
+    type: "success" | "error";
+    message: string;
+    description?: string;
+  }>({
+    show: false,
+    type: "success",
+    message: "",
+  });
   const navigate = useNavigate();
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    try {
+    setIsLoading(true);    try {
       await login(email, password);
-      navigate("/");
+      
+      // Update authentication state
+      onLoginSuccess?.();
+      
+      // Show success alert
+      setAlert({
+        show: true,
+        type: "success",
+        message: "Đăng nhập thành công!",
+        description: "Đang chuyển hướng đến trang chủ...",
+      });
+
+      // Navigate after showing success message
+      setTimeout(() => {
+        navigate("/");
+      }, 1500);
+      
     } catch (error) {
       console.error("Login error:", error);
-      setShowAlert(true);
+      setAlert({
+        show: true,
+        type: "error",
+        message: "Đăng nhập thất bại",
+        description: "Email hoặc mật khẩu không chính xác",
+      });
     } finally {
       setIsLoading(false);
     }
   };
-
   const handleSocialLogin = async (
     provider: "google" | "github" | "facebook"
   ) => {
     try {
+      // Social login implementation will be added later
+      console.log(`${provider} login not implemented yet`);
     } catch (error) {
-      setShowAlert(true);
+      setAlert({
+        show: true,
+        type: "error",
+        message: "Đăng nhập thất bại",
+        description: "Có lỗi xảy ra khi đăng nhập với mạng xã hội",
+      });
     }
   };
 
@@ -58,10 +95,14 @@ const LoginPage: React.FC = () => {
 
       console.log(targetUrl);
 
-      window.location.href = targetUrl;
-    } catch (error) {
+      window.location.href = targetUrl;    } catch (error) {
       console.error("Google login failed:", error);
-      setShowAlert(true);
+      setAlert({
+        show: true,
+        type: "error",
+        message: "Đăng nhập Google thất bại",
+        description: "Có lỗi xảy ra khi đăng nhập với Google",
+      });
     }
   };
 
@@ -79,14 +120,12 @@ const LoginPage: React.FC = () => {
           <p className="login-subtitle animate-fade-in-delay">
             Đăng nhập để khám phá tính cách của bạn
           </p>
-        </div>
-
-        {showAlert && (
+        </div>        {alert.show && (
           <Alert
-            type="error"
-            message="Đăng nhập thất bại"
-            description="Email hoặc mật khẩu không chính xác"
-            onClose={() => setShowAlert(false)}
+            type={alert.type}
+            message={alert.message}
+            description={alert.description}
+            onClose={() => setAlert(prev => ({ ...prev, show: false }))}
           />
         )}
 

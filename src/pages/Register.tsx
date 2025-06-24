@@ -41,6 +41,12 @@ const Register: React.FC = () => {
     isParent: false,
   });
 
+  const [formErrors, setFormErrors] = useState({
+    password: "",
+    phone: "",
+    birthday: "",
+  });
+
   const [provinces, setProvinces] = useState<LocationData[]>([]);
   const [districts, setDistricts] = useState<LocationData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -91,22 +97,69 @@ const Register: React.FC = () => {
       console.error("Error fetching districts:", error);
     }
   };
+  const validateForm = () => {
+    // Password validation (minimum 8 characters)
+    if (formData.password.length < 8) {
+      setAlert({
+        show: true,
+        type: "error",
+        message: "Mật khẩu phải có ít nhất 8 ký tự!",
+      });
+      return false;
+    }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
+    // Password confirmation validation
     if (formData.password !== formData.confirmPassword) {
       setAlert({
         show: true,
         type: "error",
         message: "Mật khẩu xác nhận không khớp!",
       });
+      return false;
+    }
+
+    // Phone validation (exactly 10 digits)
+    const phoneRegex = /^\d{10}$/;
+    if (!phoneRegex.test(formData.phone)) {
+      setAlert({
+        show: true,
+        type: "error",
+        message: "Số điện thoại phải có đúng 10 chữ số!",
+      });
+      return false;
+    }
+
+    // Age validation (must be over 15 years old)
+    const birthDate = new Date(formData.birthday);
+    const currentDate = new Date(2025, 0, 1); // January 1, 2025
+    const age = currentDate.getFullYear() - birthDate.getFullYear();
+    const monthDiff = currentDate.getMonth() - birthDate.getMonth();
+    
+    const actualAge = monthDiff < 0 || (monthDiff === 0 && currentDate.getDate() < birthDate.getDate()) 
+      ? age - 1 
+      : age;
+
+    if (actualAge < 15) {
+      setAlert({
+        show: true,
+        type: "error",
+        message: "Bạn phải từ 15 tuổi trở lên để đăng ký!",
+      });
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Validate form before submission
+    if (!validateForm()) {
       return;
     }
 
-    setIsLoading(true);
-
-    try {
+    setIsLoading(true);    try {
       const birthDateStr = formData.birthday;
 
       await registerUser({
@@ -121,14 +174,20 @@ const Register: React.FC = () => {
         isParent: formData.isParent,
       });
       setEmailToVerify(formData.email);
-      setIsVerifying(true);
-
+      
+      // Show success alert briefly then switch to OTP verification
       setAlert({
         show: true,
         type: "success",
-        message:
-          "Đăng ký thành công! Vui lòng kiểm tra email để xác thực tài khoản.",
+        message: "Đăng ký thành công! Đang chuyển sang xác thực email...",
       });
+
+      // Clear alert and switch to OTP verification after a short delay
+      setTimeout(() => {
+        setAlert({ show: false, type: "success", message: "" });
+        setIsVerifying(true);
+      }, 1500);
+
     } catch (error: any) {
       console.error("Registration error:", error);
 
@@ -158,29 +217,92 @@ const Register: React.FC = () => {
       setIsLoading(false);
     }
   };
+  const validateField = (name: string, value: string) => {
+    let error = "";
+    
+    switch (name) {
+      case "password":
+        if (value.length > 0 && value.length < 8) {
+          error = "Mật khẩu phải có ít nhất 8 ký tự";
+        }
+        break;
+      case "phone":
+        if (value.length > 0 && !/^\d{10}$/.test(value)) {
+          error = "Số điện thoại phải có đúng 10 chữ số";
+        }
+        break;
+      case "birthday":
+        if (value) {
+          const birthDate = new Date(value);
+          const currentDate = new Date(2025, 0, 1);
+          const age = currentDate.getFullYear() - birthDate.getFullYear();
+          const monthDiff = currentDate.getMonth() - birthDate.getMonth();
+          
+          const actualAge = monthDiff < 0 || (monthDiff === 0 && currentDate.getDate() < birthDate.getDate()) 
+            ? age - 1 
+            : age;
+
+          if (actualAge < 15) {
+            error = "Bạn phải từ 15 tuổi trở lên";
+          }
+        }
+        break;
+    }
+    
+    setFormErrors(prev => ({ ...prev, [name]: error }));
+    return error === "";
+  };
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-  const handleVerifyOtp = async () => {
+    
+    // Real-time validation for specific fields
+    if (["password", "phone", "birthday"].includes(name)) {
+      validateField(name, value);
+    }
+  };const handleVerifyOtp = async () => {
+    setIsLoading(true);
     try {
       await verifyOtp({ email: emailToVerify, otpCode: otp });
-      window.alert("Xác thực thành công!");
-      navigate("/login");
+      setAlert({
+        show: true,
+        type: "success",
+        message: "Xác thực thành công! Đang chuyển hướng đến trang đăng nhập...",
+      });
+      setTimeout(() => {
+        navigate("/login");
+      }, 2000);
     } catch (error) {
-      window.alert("Mã OTP không đúng hoặc đã hết hạn.");
+      setAlert({
+        show: true,
+        type: "error",
+        message: "Mã OTP không đúng hoặc đã hết hạn.",
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleResendOtp = async () => {
+    setIsLoading(true);
     try {
       await resendOtp(emailToVerify, "VERIFY_EMAIL");
-      window.alert("Đã gửi lại mã OTP!");
+      setAlert({
+        show: true,
+        type: "success",
+        message: "Đã gửi lại mã OTP thành công!",
+      });
     } catch (error) {
-      window.alert("Không thể gửi lại OTP.");
+      setAlert({
+        show: true,
+        type: "error",
+        message: "Không thể gửi lại OTP. Vui lòng thử lại.",
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -253,9 +375,7 @@ const Register: React.FC = () => {
                 placeholder="Email"
                 required
               />
-            </motion.div>
-
-            <motion.div
+            </motion.div>            <motion.div
               className="register-form-group"
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -267,9 +387,13 @@ const Register: React.FC = () => {
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
-                placeholder="Mật khẩu"
+                placeholder="Mật khẩu (tối thiểu 8 ký tự)"
                 required
+                className={formErrors.password ? "error" : formData.password.length >= 8 ? "success" : ""}
               />
+              {formErrors.password && (
+                <div className="validation-message error">{formErrors.password}</div>
+              )}
             </motion.div>
 
             <motion.div
@@ -287,9 +411,7 @@ const Register: React.FC = () => {
                 placeholder="Xác nhận mật khẩu"
                 required
               />
-            </motion.div>
-
-            <motion.div
+            </motion.div>            <motion.div
               className="register-form-group"
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -301,11 +423,14 @@ const Register: React.FC = () => {
                 name="birthday"
                 value={formData.birthday}
                 onChange={handleChange}
+                max="2010-12-31" // Maximum date for 15+ years old
                 required
+                className={formErrors.birthday ? "error" : formData.birthday && !formErrors.birthday ? "success" : ""}
               />
-            </motion.div>
-
-            <motion.div
+              {formErrors.birthday && (
+                <div className="validation-message error">{formErrors.birthday}</div>
+              )}
+            </motion.div><motion.div
               className="register-form-group"
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -317,9 +442,15 @@ const Register: React.FC = () => {
                 name="phone"
                 value={formData.phone}
                 onChange={handleChange}
-                placeholder="Số điện thoại"
+                placeholder="Số điện thoại (10 chữ số)"
+                pattern="[0-9]{10}"
+                maxLength={10}
                 required
+                className={formErrors.phone ? "error" : /^\d{10}$/.test(formData.phone) ? "success" : ""}
               />
+              {formErrors.phone && (
+                <div className="validation-message error">{formErrors.phone}</div>
+              )}
             </motion.div>
 
             <div className="register-location-fields">
@@ -419,29 +550,21 @@ const Register: React.FC = () => {
             >
               {isLoading ? "Đang xử lý..." : "Đăng Ký"}
             </motion.button>
-          </form>
-        ) : (
-          <div className="forgot-password-container">
-            <div className="forgot-password-video-container">
-              <video
-                autoPlay
-                muted
-                loop
-                className="forgot-password-video-background"
-              >
-                <source src={Login} type="video/mp4" />
-              </video>
-              <div className="forgot-password-video-overlay" />
-            </div>
-
-            <motion.div
-              className="forgot-password-content"
-              initial={{ opacity: 0, y: 50 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              <h1 className="forgot-password-title">Xác thực Email</h1>
-
+          </form>        ) : (
+          <motion.div
+            className="otp-verification-container"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.3 }}
+          >
+            <div className="otp-card">
+              <div className="otp-header">
+                <h2 className="otp-title">Xác Thực Email</h2>
+                <p className="otp-description">
+                  Chúng tôi đã gửi mã OTP đến email: <strong>{emailToVerify}</strong>
+                </p>
+              </div>
+              
               <AnimatePresence>
                 {alert.show && (
                   <Alert
@@ -454,63 +577,58 @@ const Register: React.FC = () => {
                   />
                 )}
               </AnimatePresence>
-
-              <AnimatePresence mode="wait">
-                <motion.form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    handleVerifyOtp();
-                  }}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 20 }}
-                  className="forgot-password-form"
-                >
-                  <motion.div
-                    className="forgot-password-form-group"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2 }}
-                  >
-                    <FaKey className="forgot-password-input-icon" />
-                    <input
-                      type="text"
-                      value={otp}
-                      onChange={(e) => setOtp(e.target.value)}
-                      placeholder="Nhập mã OTP"
-                      maxLength={6}
-                      required
-                      className="forgot-password-otp-input"
-                    />
-                  </motion.div>
-
+              
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleVerifyOtp();
+                }}
+                className="otp-form"
+              >
+                <div className="otp-input-group">
+                  <FaKey className="otp-input-icon" />
+                  <input
+                    type="text"
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value)}
+                    placeholder="Nhập mã OTP"
+                    maxLength={6}
+                    className="otp-input"
+                    required
+                  />
+                </div>
+                
+                <div className="otp-buttons">
                   <motion.button
                     type="submit"
-                    className="forgot-password-submit-button"
-                    disabled={isLoading}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.3 }}
+                    className="otp-verify-button"
+                    disabled={!otp || otp.length < 6 || isLoading}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                   >
-                    {isLoading ? "Đang xử lý..." : "Xác nhận"}
+                    {isLoading ? "Đang xử lý..." : "Xác Thực"}
                   </motion.button>
+                  
                   <motion.button
                     type="button"
-                    className="register-text-button"
                     onClick={handleResendOtp}
-                    whileHover={{ scale: 1.05 }}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.4 }}
+                    className="otp-resend-button"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                   >
-                    Gửi lại mã OTP
+                    Gửi Lại OTP
                   </motion.button>
-                </motion.form>
-              </AnimatePresence>
-            </motion.div>
-          </div>
+                </div>
+              </form>
+              
+              <button
+                onClick={() => setIsVerifying(false)}
+                className="otp-back-button"
+              >
+                ← Quay Lại Đăng Ký
+              </button>
+            </div>
+          </motion.div>
         )}
 
         <motion.p

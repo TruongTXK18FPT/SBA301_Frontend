@@ -11,7 +11,7 @@ export const login = async (email: string, password: string): Promise<void> => {
     }
   );
 
-  const { token } = response.data;
+  const token  = response.data.result.token;
   setToken(token);
 };
 
@@ -40,7 +40,7 @@ export const logOut = () => {
 export const getProfile = async () => {
   const token = getToken();
   const response = await axios.get(
-    "http://localhost:8080/api/v1/persona/profiles",
+    "http://localhost:8804/profiles",
     {
       headers: {
         Authorization: `Bearer ${token}`,
