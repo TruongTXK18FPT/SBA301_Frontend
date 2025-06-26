@@ -10,7 +10,7 @@ const ChatAi: React.FC = () => {
     const [loading, setLoading] = useState<boolean>(false);
     const [isIdle, setIsIdle] = useState<boolean>(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
-    const idleTimerRef = useRef<NodeJS.Timeout | null>(null);
+    const idleTimerRef = useRef<number | null>(null);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -24,9 +24,9 @@ const ChatAi: React.FC = () => {
     const resetIdleTimer = () => {
         setIsIdle(false);
         if (idleTimerRef.current) {
-            clearTimeout(idleTimerRef.current);
+            window.clearTimeout(idleTimerRef.current);
         }
-        idleTimerRef.current = setTimeout(() => {
+        idleTimerRef.current = window.setTimeout(() => {
             setIsIdle(true);
         }, 60 * 1000); // 1 minute for demo; adjust to 1-5 minutes (e.g., 5 * 60 * 1000 for 5 minutes)
     };
@@ -49,7 +49,7 @@ const ChatAi: React.FC = () => {
         // Cleanup
         return () => {
             if (idleTimerRef.current) {
-                clearTimeout(idleTimerRef.current);
+                window.clearTimeout(idleTimerRef.current);
             }
             window.removeEventListener('mousemove', handleUserActivity);
             window.removeEventListener('keydown', handleUserActivity);
@@ -113,87 +113,90 @@ const ChatAi: React.FC = () => {
         }
     };
 
-    const handleKeyPress = (e: React.KeyboardEvent) => {
+    const handleKeyDown = (e: React.KeyboardEvent) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
             sendMessage();
         }
     };
 
-    const renderSnowflakes = () => {
+    const renderSnowflakes = (): React.ReactElement[] | null => {
         if (!isIdle) return null;
 
-        const snowflakes = [];
+        const snowflakes: React.ReactElement[] = [];
         for (let i = 0; i < 30; i++) {
             const leftPosition = Math.random() * 100;
             const animationDuration = 3 + Math.random() * 3;
             const delay = Math.random() * 3;
             const style = {
                 left: `${leftPosition}%`,
-                animation: `snowfall ${animationDuration}s linear ${delay}s infinite`
+                animation: `chatai-snowfall ${animationDuration}s linear ${delay}s infinite`
             };
-            snowflakes.push(<div key={i} className="snowflake" style={style} />);
+            snowflakes.push(<div key={i} className="chatai-snowflake" style={style} />);
         }
         return snowflakes;
     };
 
     return (
-        <div className="chat-container">
-            <div className="chat-header">
-                <h1>Personality Chat AI</h1>
-                <p>Discover your personality through conversation</p>
-            </div>
-            <div className="chat-messages">
-                {messages.map((msg, index) => (
-                    <div key={index} className={`message ${msg.role}`}>
-                        <div className="message-content">
-                            <span className="role">{msg.role === 'user' ? 'You' : 'AI'}:</span>
-                            <span>{msg.content}</span>
+        <div className="chatai-page">
+            <div className="chatai-container">
+                <div className="chatai-header">
+                    <h1 className="chatai-title">Personality Chat AI</h1>
+                    <p className="chatai-subtitle">Discover your personality through conversation</p>
+                </div>
+                <div className="chatai-messages">
+                    {messages.map((msg, index) => (
+                        <div key={`${msg.role}-${index}-${msg.content.substring(0, 20)}`} className={`chatai-message chatai-${msg.role}`}>
+                            <div className="chatai-message-content">
+                                <span className="chatai-message-role">{msg.role === 'user' ? 'You' : 'AI'}:</span>
+                                <span>{msg.content}</span>
+                            </div>
                         </div>
-                    </div>
-                ))}
-                {loading && <div className="message bot loading">Typing...</div>}
-                {isIdle && (
-                    <div className="idle-animation">
-                        {renderSnowflakes()}
-                        <span className="idle-text">I'm still here, ready to chat!</span>
-                    </div>
-                )}
-                <div ref={messagesEndRef} />
-            </div>
+                    ))}
+                    {loading && <div className="chatai-message chatai-bot chatai-loading">Typing...</div>}
+                    {isIdle && (
+                        <div className="chatai-idle-animation">
+                            {renderSnowflakes()}
+                            <span className="chatai-idle-text">I'm still here, ready to chat!</span>
+                        </div>
+                    )}
+                    <div ref={messagesEndRef} />
+                </div>
             {result && (
-                <div className="result-container">
-                    <h2>Your Personality Result</h2>
-                    <p><strong>Personality Code:</strong> {result.personalityCode}</p>
-                    <p><strong>Nickname:</strong> {result.nickname}</p>
-                    <p><strong>Key Traits:</strong> {result.keyTraits}</p>
-                    <p><strong>Description:</strong> {result.description}</p>
-                    <p><strong>Career Recommendations:</strong> {result.careerRecommendations}</p>
-                    <div className="scores">
-                        <h3>Scores:</h3>
+                <div className="chatai-result-container">
+                    <h2 className="chatai-result-title">Your Personality Result</h2>
+                    <p className="chatai-result-text"><strong>Personality Code:</strong> {result.personalityCode}</p>
+                    <p className="chatai-result-text"><strong>Nickname:</strong> {result.nickname}</p>
+                    <p className="chatai-result-text"><strong>Key Traits:</strong> {result.keyTraits}</p>
+                    <p className="chatai-result-text"><strong>Description:</strong> {result.description}</p>
+                    <p className="chatai-result-text"><strong>Career Recommendations:</strong> {result.careerRecommendations}</p>
+                    <div className="chatai-scores">
+                        <h3 className="chatai-scores-title">Scores:</h3>
                         {Object.entries(result.scores).map(([trait, score]) => (
-                            <p key={trait}>{trait}: {score}</p>
+                            <p key={trait} className="chatai-result-text">{trait}: {score}</p>
                         ))}
                     </div>
                 </div>
             )}
-            <div className="chat-input">
+            <div className="chatai-input">
                 <textarea
+                    className="chatai-textarea"
                     value={input}
                     onChange={handleInputChange}
-                    onKeyPress={handleKeyPress}
+                    onKeyDown={handleKeyDown}
                     placeholder="Type your message..."
                     disabled={loading}
                 />
-                <div className="button-group">
-                    <button className="send-button" onClick={sendMessage} disabled={loading}>
+                <div className="chatai-button-group">
+                    <button className="chatai-button chatai-send-button" onClick={sendMessage} disabled={loading}>
                         ➤
                     </button>
-                    <button onClick={fetchResult} disabled={loading || !sessionId}>
+                    <button className="chatai-button" onClick={fetchResult} disabled={loading || !sessionId}>
                         Get Personality Result
                     </button>
                 </div>
             </div>
+        </div>
         </div>
     );
 };

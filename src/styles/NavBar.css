@@ -100,6 +100,25 @@
   font-weight: 600;
 }
 
+/* Admin Link Styling */
+.nav-item.admin-link {
+  background: rgba(231, 76, 60, 0.1);
+  color: #e74c3c;
+  border: 1px solid rgba(231, 76, 60, 0.2);
+}
+
+.nav-item.admin-link:hover {
+  background: rgba(231, 76, 60, 0.15);
+  color: #c0392b;
+  transform: translateY(-1px);
+}
+
+.nav-item.admin-link.active {
+  background: rgba(231, 76, 60, 0.2);
+  color: #c0392b;
+  font-weight: 600;
+}
+
 /* Auth Buttons */
 .auth-button {
   display: flex;

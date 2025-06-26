@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { FaUserCircle, FaSignInAlt, FaSignOutAlt, FaListAlt, FaCalendarAlt, FaCrown, FaNewspaper } from 'react-icons/fa';
-import { motion } from 'framer-motion';
+import { FaUserCircle, FaSignInAlt, FaSignOutAlt, FaListAlt, FaCalendarAlt, FaCrown, FaNewspaper, FaCog, FaRobot } from 'react-icons/fa';
 import '../styles/NavBar.css';
 import Logo from '../assets/Logo.jpeg';
 import { getProfile } from '../services/authService';
@@ -9,9 +8,10 @@ import { getProfile } from '../services/authService';
 interface NavBarProps {
   isAuthenticated: boolean;
   onLogout: () => void;
+  userRole?: string;
 }
 
-const NavBar = ({ isAuthenticated, onLogout }: NavBarProps) => {
+const NavBar = ({ isAuthenticated, onLogout, userRole }: NavBarProps) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [profile, setProfile] = useState<any>(null);
@@ -46,13 +46,17 @@ const NavBar = ({ isAuthenticated, onLogout }: NavBarProps) => {
         </Link>
 
         {/* Mobile Menu Button */}
-        <div className="mobile-toggle" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
+        <button 
+          className="mobile-toggle" 
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          aria-label="Toggle mobile menu"
+        >
           <div className={`hamburger ${isMobileMenuOpen ? 'active' : ''}`}>
             <span></span>
             <span></span>
             <span></span>
           </div>
-        </div>
+        </button>
 
         {/* Navigation Menu */}
         <div className={`nav-menu ${isMobileMenuOpen ? 'active' : ''}`}>
@@ -79,6 +83,26 @@ const NavBar = ({ isAuthenticated, onLogout }: NavBarProps) => {
               <FaNewspaper />
               <span>Bài Viết</span>
             </Link>
+            {/* ChatAI link - only show for authenticated users */}
+            {isAuthenticated && (
+              <Link 
+                to="/chat-ai" 
+                className={`nav-item ${location.pathname === '/chat-ai' ? 'active' : ''}`}
+              >
+                <FaRobot />
+                <span>Chat AI</span>
+              </Link>
+            )}
+            {/* Admin link - only show for admin users */}
+            {userRole === 'admin' && (
+              <Link 
+                to="/admin" 
+                className={`nav-item admin-link ${location.pathname === '/admin' ? 'active' : ''}`}
+              >
+                <FaCog />
+                <span>Quản Trị</span>
+              </Link>
+            )}
           </div>
 
           {/* Auth Section */}
@@ -86,7 +110,7 @@ const NavBar = ({ isAuthenticated, onLogout }: NavBarProps) => {
             {isAuthenticated ? (
               <>
                 <Link to="/profile" className="nav-item profile-avatar" title="Trang cá nhân">
-                  {profile && profile.avatarUrl ? (
+                  {profile?.avatarUrl ? (
                     <img src={profile.avatarUrl} alt="avatar" className="avatar-img" />
                   ) : (
                     <FaUserCircle className="avatar-icon" />

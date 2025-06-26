@@ -120,7 +120,7 @@ const Home: React.FC = () => {
         </motion.div>
       </motion.section>
 
-      <div className="main-content">
+      <div className="home-main-content">
         <motion.div
           className="main-grid"
           initial={{ opacity: 0, y: 30 }}

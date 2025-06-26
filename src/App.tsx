@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import { Route, Routes } from "react-router-dom";
 import NavBar from "./components/NavBar";
 import ProtectedRoute from "./components/ProtectedRoute";
+import LoadingSpinner from "./components/LoadingSpinner";
 import Home from "./pages/Home";
 import "./App.css";
 import Login from "./pages/LoginForm";
@@ -12,31 +13,74 @@ import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
 import CompleteProfile from "./pages/CompleteProfile";
 import Profile from "./pages/Profile";
+import Event from "./pages/Event";
+
 import { getToken, removeToken } from "./services/localStorageService";
+import { getCurrentUser } from "./services/userService";
 import ChatAi from "./pages/ChatAi";
+
+interface User {
+  id: string;
+  email: string;
+  role: string;
+  fullName?: string;
+}
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  // Check authentication status on app load
+  // Check authentication status and fetch user data on app load
   useEffect(() => {
-    const token = getToken();
-    setIsAuthenticated(!!token);
+    const initializeAuth = async () => {
+      const token = getToken();
+      if (token) {
+        try {
+          const userData = await getCurrentUser();
+          setUser(userData);
+          setIsAuthenticated(true);
+        } catch (error) {
+          console.error("Failed to fetch user data:", error);
+          removeToken();
+          setIsAuthenticated(false);
+          setUser(null);
+        }
+      } else {
+        setIsAuthenticated(false);
+        setUser(null);
+      }
+      setLoading(false);
+    };
+
+    initializeAuth();
   }, []);
 
   const handleLogout = () => {
     removeToken();
     setIsAuthenticated(false);
+    setUser(null);
     window.location.href = "/login";
   };
 
-  const handleLoginSuccess = () => {
-    setIsAuthenticated(true);
+  const handleLoginSuccess = async () => {
+    try {
+      const userData = await getCurrentUser();
+      setUser(userData);
+      setIsAuthenticated(true);
+    } catch (error) {
+      console.error("Failed to fetch user data after login:", error);
+    }
   };
+
+  // Show loading spinner while checking authentication
+  if (loading) {
+    return <LoadingSpinner message="Đang kiểm tra xác thực..." />;
+  }
 
   return (
     <div className="app-container">
-      <NavBar isAuthenticated={isAuthenticated} onLogout={handleLogout} />
+      <NavBar isAuthenticated={isAuthenticated} onLogout={handleLogout} userRole={user?.role} />
       <main className="main-content">
         <Routes>
           <Route path="/" element={<Home />} />
@@ -45,6 +89,7 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/register" element={<Register />} />
           <Route path="/complete-profile" element={<CompleteProfile />} />
+          <Route path="/event" element={<Event />} />
 
           {/* Protected Routes */}
           <Route path="/quiz" element={
@@ -58,7 +103,12 @@ function App() {
             </ProtectedRoute>
           } />
           <Route path="/admin" element={
-            <ProtectedRoute isAuthenticated={isAuthenticated}>
+            <ProtectedRoute 
+              isAuthenticated={isAuthenticated} 
+              userRole={user?.role} 
+              requiredRole="admin"
+              requireExactRole={true}
+            >
               <Admin />
             </ProtectedRoute>
           } />
