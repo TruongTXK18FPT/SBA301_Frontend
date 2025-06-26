@@ -11,6 +11,7 @@ import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
 import CompleteProfile from "./pages/CompleteProfile";
 import Profile from "./pages/Profile";
+import ChatAi from "./pages/ChatAi";
 import { getToken, removeToken } from "./services/localStorageService";
 
 function App() {
@@ -44,6 +45,7 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/complete-profile" element={<CompleteProfile />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/chat-ai" element={<ChatAi />} />
           {/* Add more routes as needed */}
         </Routes>
       </main>
