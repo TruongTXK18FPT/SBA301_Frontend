@@ -98,13 +98,6 @@ const Quiz = () => {
   }, [quizType]);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      navigate('/login', { state: { from: '/quiz' } });
-    }
-  }, [navigate]);
-
-  useEffect(() => {
     if (quizType === 'MBTI') {
       setShowSubmit(Object.keys(mbtiAnswers).length === MBTI_QUESTIONS);
     } else {

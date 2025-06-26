@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import NavBar from "./components/NavBar";
+import ProtectedRoute from "./components/ProtectedRoute";
 import Home from "./pages/Home";
 import "./App.css";
 import Login from "./pages/LoginForm";
@@ -11,8 +12,8 @@ import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
 import CompleteProfile from "./pages/CompleteProfile";
 import Profile from "./pages/Profile";
-import ChatAi from "./pages/ChatAi";
 import { getToken, removeToken } from "./services/localStorageService";
+import ChatAi from "./pages/ChatAi";
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -37,15 +38,38 @@ function App() {
     <div className="app-container">
       <NavBar isAuthenticated={isAuthenticated} onLogout={handleLogout} />
       <main className="main-content">
-        <Routes>          <Route path="/" element={<Home />} />
+        <Routes>
+          <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login onLoginSuccess={handleLoginSuccess} />} />
-          <Route path="/admin" element={<Admin />} />
           <Route path="/authenticate" element={<Authenticate />} />
-          <Route path="/quiz" element={<Quiz />} />          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/register" element={<Register />} />
           <Route path="/complete-profile" element={<CompleteProfile />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/chat-ai" element={<ChatAi />} />
+
+          {/* Protected Routes */}
+          <Route path="/quiz" element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <Quiz />
+            </ProtectedRoute>
+          } />
+          <Route path="/profile" element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <Profile />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin" element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <Admin />
+            </ProtectedRoute>
+          } />
+          <Route path="/chat-ai" element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <ChatAi />
+            </ProtectedRoute>
+          } />
+
+          {/* Public Routes */}
+          
           {/* Add more routes as needed */}
         </Routes>
       </main>
