@@ -1,21 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import "../styles/ChatAi.css";
-import axios from 'axios';
-
-interface Message {
-    role: string;
-    content: string;
-    timestamp?: string;
-}
-
-interface PersonalityResult {
-    personalityCode: string;
-    nickname: string;
-    keyTraits: string;
-    description: string;
-    careerRecommendations: string;
-    scores: { [key: string]: number };
-}
+import { chatAiService, Message, PersonalityResult } from '../services/chatAiService';
 
 const ChatAi: React.FC = () => {
     const [sessionId, setSessionId] = useState<string>('');
@@ -90,15 +75,12 @@ const ChatAi: React.FC = () => {
         setInput('');
 
         try {
-            const response = await axios.post('http://localhost:8080/chat/message', {
-                sessionId,
-                message: input,
-            });
+            const response = await chatAiService.sendMessage(sessionId, input);
 
-            setSessionId(response.data.sessionId);
+            setSessionId(response.sessionId);
             const botMessage: Message = {
                 role: 'bot',
-                content: response.data.botReply,
+                content: response.botReply,
             };
             setMessages((prev) => [...prev, botMessage]);
         } catch (error) {
@@ -118,8 +100,8 @@ const ChatAi: React.FC = () => {
         setLoading(true);
         resetIdleTimer(); // Reset idle state on fetch
         try {
-            const response = await axios.post(`http://localhost:8080/chat/result/${sessionId}`);
-            setResult(response.data);
+            const personalityResult = await chatAiService.fetchPersonalityResult(sessionId);
+            setResult(personalityResult);
         } catch (error) {
             console.error('Error fetching result:', error);
             setMessages((prev) => [
