@@ -10,6 +10,7 @@ interface QuizResultProps {
     careers: string[];
     universities: string[];
   };
+  onRetake?: () => void;
 }
 
 const QuizResult: React.FC<QuizResultProps> = ({ type, result }) => {
