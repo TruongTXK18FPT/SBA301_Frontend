@@ -20,7 +20,8 @@ interface LoginPageProps {
   onLoginSuccess?: () => void;
 }
 
-const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {const [email, setEmail] = useState("");
+const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [alert, setAlert] = useState<{
@@ -36,12 +37,13 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {const [emai
   const navigate = useNavigate();
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);    try {
+    setIsLoading(true);
+    try {
       await login(email, password);
-      
+
       // Update authentication state
       onLoginSuccess?.();
-      
+
       // Show success alert
       setAlert({
         show: true,
@@ -54,7 +56,6 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {const [emai
       setTimeout(() => {
         navigate("/");
       }, 1500);
-      
     } catch (error) {
       console.error("Login error:", error);
       setAlert({
@@ -92,10 +93,12 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {const [emai
       const targetUrl = `${authUrl}?redirect_uri=${encodeURIComponent(
         callbackUrl
       )}&response_type=code&client_id=${googleClientId}&scope=openid%20email%20profile`;
+      onLoginSuccess?.();
 
       console.log(targetUrl);
 
-      window.location.href = targetUrl;    } catch (error) {
+      window.location.href = targetUrl;
+    } catch (error) {
       console.error("Google login failed:", error);
       setAlert({
         show: true,
@@ -120,15 +123,15 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {const [emai
           <p className="login-subtitle animate-fade-in-delay">
             Đăng nhập để khám phá tính cách của bạn
           </p>
-        </div>        {alert.show && (
+        </div>{" "}
+        {alert.show && (
           <Alert
             type={alert.type}
             message={alert.message}
             description={alert.description}
-            onClose={() => setAlert(prev => ({ ...prev, show: false }))}
+            onClose={() => setAlert((prev) => ({ ...prev, show: false }))}
           />
         )}
-
         <form onSubmit={handleSubmit} className="login-form">
           <div className="form-group animate-slide-right">
             <input
@@ -181,7 +184,6 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {const [emai
             Đăng Nhập
           </Button>
         </form>
-
         <div
           className="social-login animate-fade-in"
           style={{ animationDelay: "0.4s" }}
@@ -220,7 +222,6 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {const [emai
             </Button>
           </div>
         </div>
-
         <p
           className="signup-prompt animate-fade-in"
           style={{ animationDelay: "0.5s" }}

@@ -27,17 +27,6 @@ const DarkModeToggle: React.FC<{
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, [lastScrollY]);
-  //Lấy user details from Google API
-  // const navigate = useNavigate();
-  // const [userDetails, setUserDetails] = useState({});
-  // const getUserDetails = async (accessToken: string) => {
-  //   const response = await fetch(
-  //     `https://www.googleapis.com/oauth2/v1/userinfo?alt=json&access_token=${accessToken}`
-  //   );
-  //   const data = await response.json();
-
-  //   setUserDetails(data);
-  // };
 
   return (
     <motion.button
