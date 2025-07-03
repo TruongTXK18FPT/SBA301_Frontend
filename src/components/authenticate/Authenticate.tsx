@@ -1,18 +1,21 @@
 import { useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { setToken } from "../../services/localStorageService";
 import { getCurrentUser } from "../../services/userService";
 import { Box, CircularProgress, Typography } from "@mui/material";
 
-const Authenticate: React.FC = () => {
+interface AuthenticateProps {
+  onLoginSuccess?: () => Promise<void>;
+}
+
+const Authenticate: React.FC<AuthenticateProps> = ({ onLoginSuccess }) => {
   const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
     console.log(window.location.href);
 
     const authCodeRegex = /code=([^&]+)/;
-    const isMatch = window.location.href.match(authCodeRegex);
+    const isMatch = authCodeRegex.exec(window.location.href);
 
     if (isMatch) {
       const authCode = isMatch[1];
@@ -30,12 +33,13 @@ const Authenticate: React.FC = () => {
 
             try {
               const user = await getCurrentUser();
-
-              if (user.noPassword) {
-                navigate("/complete-profile");
-              } else {
-                navigate("/");
+              
+              // Update app authentication state
+              if (onLoginSuccess) {
+                await onLoginSuccess();
               }
+
+              await handleUserRedirect(user, navigate);
             } catch (error) {
               console.error("Lỗi khi lấy thông tin người dùng:", error);
               navigate("/login");
@@ -48,12 +52,11 @@ const Authenticate: React.FC = () => {
         .catch((error) => {
           console.error("Lỗi xác thực Google:", error);
           navigate("/login");
-        })
-        .finally(() => setIsLoading(false));
+        });
     } else {
       navigate("/login");
     }
-  }, [navigate]);
+  }, [navigate, onLoginSuccess]);
 
   return (
     <Box
@@ -70,6 +73,18 @@ const Authenticate: React.FC = () => {
       <Typography>Authenticating...</Typography>
     </Box>
   );
+};
+
+// Helper function to handle user redirection logic
+const handleUserRedirect = async (user: any, navigate: any) => {
+  if (user.noPassword) {
+    // Google login users go directly to profile page to update their info
+    navigate("/profile");
+  } else if (user.role && user.role.toLowerCase() === 'admin') {
+    navigate("/admin");
+  } else {
+    navigate("/");
+  }
 };
 
 export default Authenticate;

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
   import { useNavigate, useParams } from 'react-router-dom';
   import QuizIntro from '../components/quiz/QuizIntro';
   import QuizQuestion from '../components/quiz/QuizQuestion';
-  import DISCQuestion from '../components/quiz/DISCQuestion';
+  import DISCQuestion from '../components/quiz/DiscQuestion';
   import QuizProgress from '../components/quiz/QuizProgress';
   import QuestionList from '../components/quiz/QuestionList';
   import QuizResult from '../components/quiz/QuizResult';

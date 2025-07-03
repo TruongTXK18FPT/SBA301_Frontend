@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import {
   FaUser,
@@ -8,14 +8,12 @@ import {
   FaCalendar,
   FaPhone,
   FaMapMarkerAlt,
-  FaUserTag,
   FaKey,
 } from "react-icons/fa";
 import Alert from "../components/Alert";
 import loginVideo from "../assets/Login.mp4";
 import "../styles/Register.css";
 import { registerUser, resendOtp, verifyOtp } from "../services/authService";
-import Login from "../assets/Login.mp4";
 
 interface LocationData {
   code: string;
@@ -81,6 +79,11 @@ const Register: React.FC = () => {
       });
     }
   }, []);
+
+  // Clear alerts when switching between registration and OTP verification
+  useEffect(() => {
+    setAlert({ show: false, type: "success", message: "" });
+  }, [isVerifying]);
 
   // Fetch districts when province changes
   const handleProvinceChange = async (provinceCode: string) => {
@@ -263,8 +266,11 @@ const Register: React.FC = () => {
     if (["password", "phone", "birthday"].includes(name)) {
       validateField(name, value);
     }
-  };const handleVerifyOtp = async () => {
+  };  const handleVerifyOtp = async () => {
     setIsLoading(true);
+    // Clear any existing alerts first
+    setAlert({ show: false, type: "success", message: "" });
+    
     try {
       await verifyOtp({ email: emailToVerify, otpCode: otp });
       setAlert({
@@ -288,6 +294,9 @@ const Register: React.FC = () => {
 
   const handleResendOtp = async () => {
     setIsLoading(true);
+    // Clear any existing alerts first
+    setAlert({ show: false, type: "success", message: "" });
+    
     try {
       await resendOtp(emailToVerify, "VERIFY_EMAIL");
       setAlert({
@@ -308,6 +317,16 @@ const Register: React.FC = () => {
 
   return (
     <div className="register-container">
+      {/* Floating Alert */}
+      {alert.show && (
+        <Alert
+          type={alert.type}
+          message={alert.message}
+          duration={5000}
+          onClose={() => setAlert((prev) => ({ ...prev, show: false }))}
+        />
+      )}
+
       <div className="register-video-container">
         <video
           ref={videoRef}
@@ -330,17 +349,6 @@ const Register: React.FC = () => {
         transition={{ duration: 0.5 }}
       >
         <h1 className="register-title">Đăng Ký Tài Khoản</h1>
-
-        <AnimatePresence>
-          {alert.show && (
-            <Alert
-              type={alert.type}
-              message={alert.message}
-              duration={5000}
-              onClose={() => setAlert((prev) => ({ ...prev, show: false }))}
-            />
-          )}
-        </AnimatePresence>
         {!isVerifying ? (
           <form onSubmit={handleSubmit} className="register-form">
             <motion.div
@@ -564,19 +572,6 @@ const Register: React.FC = () => {
                   Chúng tôi đã gửi mã OTP đến email: <strong>{emailToVerify}</strong>
                 </p>
               </div>
-              
-              <AnimatePresence>
-                {alert.show && (
-                  <Alert
-                    type={alert.type}
-                    message={alert.message}
-                    duration={5000}
-                    onClose={() =>
-                      setAlert((prev) => ({ ...prev, show: false }))
-                    }
-                  />
-                )}
-              </AnimatePresence>
               
               <form
                 onSubmit={(e) => {

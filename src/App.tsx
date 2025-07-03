@@ -11,7 +11,6 @@ import Quiz from "./pages/Quiz";
 import Authenticate from "./components/authenticate/Authenticate";
 import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
-import CompleteProfile from "./pages/CompleteProfile";
 import Profile from "./pages/Profile";
 import Event from "./pages/Event";
 
@@ -63,13 +62,14 @@ function App() {
     window.location.href = "/login";
   };
 
-  const handleLoginSuccess = async () => {
+  const handleLoginSuccess = async (): Promise<void> => {
     try {
       const userData = await getCurrentUser();
       setUser(userData);
       setIsAuthenticated(true);
     } catch (error) {
       console.error("Failed to fetch user data after login:", error);
+      throw new Error("Failed to fetch user data after login");
     }
   };
 
@@ -85,12 +85,10 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login onLoginSuccess={handleLoginSuccess} />} />
-          <Route path="/authenticate" element={<Authenticate />} />
+          <Route path="/authenticate" element={<Authenticate onLoginSuccess={handleLoginSuccess} />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/complete-profile" element={<CompleteProfile />} />
           <Route path="/event" element={<Event />} />
-
           {/* Protected Routes */}
           <Route path="/quiz" element={
             <ProtectedRoute isAuthenticated={isAuthenticated}>
