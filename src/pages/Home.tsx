@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import MainSlider from "../components/MainSlider";
 import NewsSlider from "../components/NewsSlider";
 import PersonalityTypes from "../components/PersonalityTypes";
@@ -26,17 +27,6 @@ const DarkModeToggle: React.FC<{
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, [lastScrollY]);
-  //Lấy user details from Google API
-  // const navigate = useNavigate();
-  // const [userDetails, setUserDetails] = useState({});
-  // const getUserDetails = async (accessToken: string) => {
-  //   const response = await fetch(
-  //     `https://www.googleapis.com/oauth2/v1/userinfo?alt=json&access_token=${accessToken}`
-  //   );
-  //   const data = await response.json();
-
-  //   setUserDetails(data);
-  // };
 
   return (
     <motion.button
@@ -63,6 +53,11 @@ const Home: React.FC = () => {
 
   const toggleDarkMode = () => {
     setIsDarkMode((prev) => !prev);
+  };
+  const navigate = useNavigate();
+  const handleStartQuiz = () => {
+    // Navigate to the quiz page
+    navigate("/quiz");
   };
 
   return (
@@ -107,13 +102,14 @@ const Home: React.FC = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1.1 }}
+            onClick={handleStartQuiz}
           >
             Bắt đầu kiểm tra ngay
           </motion.button>
         </motion.div>
       </motion.section>
 
-      <div className="main-content">
+      <div className="home-main-content">
         <motion.div
           className="main-grid"
           initial={{ opacity: 0, y: 30 }}

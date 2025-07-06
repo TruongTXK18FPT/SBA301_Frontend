@@ -13,7 +13,7 @@
 
 /* Base Styles */
 .home-container {
-  min-height: 100vh;
+  min-height: 100vh; /* Force the container to be taller than viewport */
   background: #f8fafc;
   color: #1a1a1a;
   transition: all 0.3s ease;
@@ -95,13 +95,13 @@
 }
 
 /* Main Content Area */
-.main-content {
+.home-main-content {
   background: #f8fafc;
   padding: 4rem 2rem;
   min-height: 100vh;
 }
 
-.dark-mode .main-content {
+.dark-mode .home-main-content {
   background: var(--dark-bg);
 }
 

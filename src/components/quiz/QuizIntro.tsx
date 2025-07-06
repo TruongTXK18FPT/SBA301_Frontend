@@ -1,9 +1,11 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { FaBrain, FaUserFriends } from 'react-icons/fa';
+import { Category } from '../../services/quizService';
 
 interface QuizIntroProps {
   onStart: (type: 'DISC' | 'MBTI') => void;
+  availableTypes?: { type: 'MBTI' | 'DISC'; category: Category }[];
 }
 
 const QuizIntro: React.FC<QuizIntroProps> = ({ onStart }) => {

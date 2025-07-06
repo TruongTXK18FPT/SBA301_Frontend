@@ -100,6 +100,25 @@
   font-weight: 600;
 }
 
+/* Admin Link Styling */
+.nav-item.admin-link {
+  background: rgba(231, 76, 60, 0.1);
+  color: #e74c3c;
+  border: 1px solid rgba(231, 76, 60, 0.2);
+}
+
+.nav-item.admin-link:hover {
+  background: rgba(231, 76, 60, 0.15);
+  color: #c0392b;
+  transform: translateY(-1px);
+}
+
+.nav-item.admin-link.active {
+  background: rgba(231, 76, 60, 0.2);
+  color: #c0392b;
+  font-weight: 600;
+}
+
 /* Auth Buttons */
 .auth-button {
   display: flex;
@@ -152,6 +171,91 @@
   box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
 }
 
+/* Profile Avatar - Enhanced Styling */
+.nav-section.auth-nav .profile-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 1rem;
+  cursor: pointer;
+  padding: 0.3rem;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  position: relative;
+  background: linear-gradient(135deg, rgba(52, 152, 219, 0.1), rgba(46, 204, 113, 0.1));
+  border: 2px solid transparent;
+}
+
+.nav-section.auth-nav .profile-avatar:hover {
+  background: linear-gradient(135deg, rgba(52, 152, 219, 0.2), rgba(46, 204, 113, 0.2));
+  transform: scale(1.05);
+  box-shadow: 0 4px 20px rgba(52, 152, 219, 0.4);
+  border: 2px solid rgba(52, 152, 219, 0.3);
+}
+
+.nav-section.auth-nav .profile-avatar:active {
+  transform: scale(0.98);
+}
+
+.nav-section.auth-nav .profile-avatar .avatar-icon {
+  font-size: 2.2rem;
+  width: 40px;
+  height: 40px;
+  color: #3498db;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.nav-section.auth-nav .profile-avatar .avatar-img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #3498db;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.nav-section.auth-nav .profile-avatar:hover .avatar-icon {
+  color: #2980b9;
+  transform: scale(1.1);
+  text-shadow: 0 0 10px rgba(52, 152, 219, 0.5);
+}
+
+.nav-section.auth-nav .profile-avatar:hover .avatar-img {
+  border-color: #2980b9;
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.3), 0 4px 15px rgba(0, 0, 0, 0.2);
+  transform: scale(1.05);
+}
+
+/* Profile Avatar Tooltip Effect */
+.nav-section.auth-nav .profile-avatar::after {
+  content: attr(title);
+  position: absolute;
+  top: 110%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 0.5rem 0.8rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  pointer-events: none;
+  z-index: 1000;
+}
+
+.nav-section.auth-nav .profile-avatar:hover::after {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(5px);
+}
 /* Mobile Menu Button */
 .mobile-toggle {
   display: none;

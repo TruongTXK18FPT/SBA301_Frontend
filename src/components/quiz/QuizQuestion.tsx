@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 interface Option {
   id: number;
   text: string;
+  value?: number; // Add score value (0, 1, 2)
 }
 
 interface MBTIQuestion {
@@ -54,7 +55,7 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({ question, selectedAnswer, o
               <div className={`option-circle ${selectedAnswer === option.text ? 'selected' : ''}`}>
                 <div className={`option-inner ${selectedAnswer === option.text ? 'selected' : ''}`} />
               </div>
-              <span className="option-text">{option.text}</span>
+              <span className="option-text">{option.text}</span> {/* Make sure this displays disagree/neutral/agree */}
             </div>
           </motion.button>
         ))}
