@@ -13,11 +13,15 @@ import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
 import CompleteProfile from "./pages/CompleteProfile";
 import Profile from "./pages/Profile";
-import Event from "./pages/Event";
 
 import { getToken, removeToken } from "./services/localStorageService";
 import { getCurrentUser } from "./services/userService";
 import ChatAi from "./pages/ChatAi";
+import EventPublicLayout from "./components/event/EventPublicLayout";
+import EventPublicDetail from "./components/event/EventPublicDetail";
+import EventForm from "./components/event/EventForm";
+import EventPrivateList from "./components/event/EventPrivateList";
+import EventPrivateDetail from "./components/event/EventPrivateDetail";
 
 interface User {
   id: string;
@@ -89,8 +93,18 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/register" element={<Register />} />
           <Route path="/complete-profile" element={<CompleteProfile />} />
-          <Route path="/event" element={<Event />} />
-
+          <Route path="/events" element={<EventPublicLayout />} />
+          <Route path="/events/:slug" element={<EventPublicDetail />} />
+          <Route path="/organizer/events" element={<EventPrivateList />} />
+          <Route path="/organizer/events/new" element={<EventForm />} />
+          <Route path="/organizer/events/:id" element={<EventPrivateDetail />} />
+          <Route path="/moderator/events" element={<EventPrivateList />} />
+          <Route path="/moderator/events/:id" element={<EventPrivateDetail />} />
+          
+          <Route path="/admin/premium" />
+          <Route path="/admin/premiums/:id" />
+          
+          {/* Public Routes */}
           {/* Protected Routes */}
           <Route path="/quiz" element={
             <ProtectedRoute isAuthenticated={isAuthenticated}>

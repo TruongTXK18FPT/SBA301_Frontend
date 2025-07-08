@@ -63,8 +63,8 @@ const NavBar = ({ isAuthenticated, onLogout, userRole }: NavBarProps) => {
           {/* Main Navigation */}
           <div className="nav-section main-nav">
             <Link 
-              to="/event" 
-              className={`nav-item ${location.pathname === '/event' ? 'active' : ''}`}
+              to="/events" 
+              className={`nav-item ${location.pathname === '/events' ? 'active' : ''}`}
             >
               <FaCalendarAlt />
               <span>Sự Kiện</span>
