@@ -92,7 +92,7 @@ function App() {
           <Route path="/authenticate" element={<Authenticate onLoginSuccess={handleLoginSuccess} />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/complete-profile" element={<CompleteProfile />} />
+          {/* <Route path="/complete-profile" element={<CompleteProfile />} /> */}
           <Route path="/events" element={<EventPublicLayout />} />
           <Route path="/events/:slug" element={<EventPublicDetail />} />
           <Route path="/organizer/events" element={<EventPrivateList />} />

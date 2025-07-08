@@ -100,7 +100,7 @@ const EventForm = () => {
                 formData.append('format', 'json');
 
                 // Try with fetch and proper headers
-                const response = await axios.post('https://freeimage.host/api/1/upload', formData, {
+                const response = await axios.post('https://cors-anywhere.herokuapp.com/https://freeimage.host/api/1/upload', formData, {
                     headers: {
                         'Content-Type': 'multipart/form-data'
                     }
@@ -212,6 +212,7 @@ const EventForm = () => {
 
     // Add ticket to showtime
     const addTicket = (showtimeTempId: string) => {
+        console.log('🎫 Add ticket clicked for showtime:', showtimeTempId);
         const newTicket = {
             tempId: Date.now().toString(),
             name: '',
@@ -224,6 +225,8 @@ const EventForm = () => {
         setEditingTicket(newTicket);
         setEditingShowtimeId(showtimeTempId);
         setShowTicketDialog(true);
+        console.log('🎫 Dialog state set to true, editingTicket:', newTicket);
+        console.log('🎫 showTicketDialog should be:', true);
     };
 
     // Handle editing existing ticket
@@ -235,7 +238,11 @@ const EventForm = () => {
 
     // Save ticket from dialog
     const saveTicket = () => {
-        if (!editingTicket || !editingShowtimeId) return;
+        
+        if (!editingTicket || !editingShowtimeId) {
+            console.log('💾 Missing data, cannot save ticket');
+            return;
+        }
 
         setShowtimes(showtimes.map(st => {
             if (st.tempId === editingShowtimeId) {
@@ -244,15 +251,18 @@ const EventForm = () => {
                     // Update existing ticket
                     const updatedTickets = [...st.tickets];
                     updatedTickets[existingTicketIndex] = editingTicket;
+                    console.log('💾 Updating existing ticket');
                     return { ...st, tickets: updatedTickets };
                 } else {
                     // Add new ticket
+                    console.log('💾 Adding new ticket');
                     return { ...st, tickets: [...st.tickets, editingTicket] };
                 }
             }
             return st;
         }));
 
+        console.log('💾 Closing dialog');
         setShowTicketDialog(false);
         setEditingTicket(null);
         setEditingShowtimeId('');
@@ -588,6 +598,7 @@ const EventForm = () => {
                                                 <div className="tickets-header">
                                                     <h5>Loại vé</h5>
                                                     <button
+                                                        type="button"
                                                         onClick={() => addTicket(showtime.tempId)}
                                                         className="btn btn-success btn-sm"
                                                     >
@@ -810,6 +821,7 @@ const EventForm = () => {
                         <div className="dialog-header">
                             <h3>{editingTicket?.tempId ? 'Chỉnh sửa loại vé' : 'Thêm loại vé mới'}</h3>
                             <button 
+                                type="button"
                                 onClick={cancelTicketDialog}
                                 className="dialog-close"
                             >
@@ -886,12 +898,14 @@ const EventForm = () => {
 
                         <div className="dialog-footer">
                             <button 
+                                type="button"
                                 onClick={cancelTicketDialog}
                                 className="btn btn-outline"
                             >
                                 Hủy
                             </button>
                             <button 
+                                type="button"
                                 onClick={saveTicket}
                                 className="btn btn-primary"
                             >
