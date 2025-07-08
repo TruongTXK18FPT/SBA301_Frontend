@@ -1,5 +1,6 @@
 import axios from "axios";
 import { setToken, removeToken, getToken } from "./localStorageService";
+import { useNavigate } from 'react-router-dom';
 
 // Login
 export const login = async (email: string, password: string): Promise<void> => {
@@ -29,12 +30,22 @@ export const refreshAccessToken = async (): Promise<string> => {
   const { token } = response.data;
   return token;
 };
-
 // Logout – xóa token ở localStorage
-export const logOut = () => {
+export const logOut = async () => {
+  const currentToken = getToken();
+
+
+  try {
+    await axios.post("http://localhost:8080/api/v1/authenticate/auth/logout", {
+      token: currentToken,
+    });
+  } catch (error) {
+    console.error("Logout failed:", error);
+  }
+
   removeToken();
-  window.location.href = "/login"; // Chuyển về login nếu cần
 };
+
 
 // (Tùy chọn) Gọi API test token đang dùng
 export const getProfile = async () => {

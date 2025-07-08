@@ -1,8 +1,5 @@
 import React, { useState } from "react";
-import {
-  FaGoogle,
-  FaKey,
-} from "react-icons/fa";
+import { FaGoogle, FaKey } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import Button from "../components/Button";
 import Alert from "../components/Alert";
@@ -30,13 +27,13 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
     type: "success",
     message: "",
   });
-  
+
   // OTP verification states for unverified accounts
   const [showOtpVerification, setShowOtpVerification] = useState(false);
   const [unverifiedEmail, setUnverifiedEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [otpSent, setOtpSent] = useState(false);
-  
+
   const navigate = useNavigate();
 
   // Auto-send OTP when verification screen is shown
@@ -78,12 +75,12 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
         try {
           const userData = await getCurrentUser();
           const userRole = userData?.role;
-          
+
           console.log("User data after login:", userData);
           console.log("User role for redirect:", userRole);
 
           // Redirect based on user role (case-insensitive)
-          if (userRole && userRole.toLowerCase() === 'admin') {
+          if (userRole && userRole.toLowerCase() === "admin") {
             console.log("Redirecting admin to /admin");
             navigate("/admin");
           } else {
@@ -97,27 +94,28 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
       }, 1500);
     } catch (error: any) {
       console.error("Login error:", error);
-      
+
       // Check if the error is due to unverified account
       const errorCode = error?.response?.data?.code;
-      const errorMessage = error?.response?.data?.message ?? '';
+      const errorMessage = error?.response?.data?.message ?? "";
       const status = error?.response?.status;
-      
+
       console.log("Login Error Details:", {
         status,
         code: errorCode,
         message: errorMessage,
-        email: email
+        email: email,
       });
-      
+
       // Check for unverified account conditions
       if (
-        errorCode === 1006 || // Specific unverified account code
-        errorCode === 1001 || // Account not verified
-        (status === 401 && errorMessage.toLowerCase().includes('not verified')) ||
-        (status === 401 && errorMessage.toLowerCase().includes('chưa xác thực')) ||
-        (status === 401 && errorMessage.toLowerCase().includes('unverified')) ||
-        (status === 401 && errorMessage.toLowerCase().includes('email verification required'))
+        (status === 401 &&
+          errorMessage.toLowerCase().includes("not verified")) ||
+        (status === 401 &&
+          errorMessage.toLowerCase().includes("chưa xác thực")) ||
+        (status === 401 && errorMessage.toLowerCase().includes("unverified")) ||
+        (status === 401 &&
+          errorMessage.toLowerCase().includes("email verification required"))
       ) {
         setUnverifiedEmail(email);
         setShowOtpVerification(true);
@@ -150,7 +148,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
         message: "Xác thực thành công!",
         description: "Bây giờ bạn có thể đăng nhập bình thường",
       });
-      
+
       // Reset states and go back to login form
       setTimeout(() => {
         setShowOtpVerification(false);
@@ -160,18 +158,18 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
       }, 2000);
     } catch (error: any) {
       console.error("OTP verification error:", error);
-      
+
       const errorCode = error?.response?.data?.code;
-      const errorMessage = error?.response?.data?.message ?? '';
-      
+      const errorMessage = error?.response?.data?.message ?? "";
+
       // Check if account is already verified
       if (
         errorCode === 1009 || // Account already verified code
         errorCode === 1007 || // Another possible "already verified" code
-        errorMessage.toLowerCase().includes('already verified') ||
-        errorMessage.toLowerCase().includes('đã được xác thực') ||
-        errorMessage.toLowerCase().includes('already activated') ||
-        errorMessage.toLowerCase().includes('đã kích hoạt')
+        errorMessage.toLowerCase().includes("already verified") ||
+        errorMessage.toLowerCase().includes("đã được xác thực") ||
+        errorMessage.toLowerCase().includes("already activated") ||
+        errorMessage.toLowerCase().includes("đã kích hoạt")
       ) {
         setAlert({
           show: true,
@@ -179,7 +177,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
           message: "Tài khoản đã được xác thực",
           description: "Bạn có thể đăng nhập bình thường",
         });
-        
+
         // Go back to login form since account is already verified
         setTimeout(() => {
           setShowOtpVerification(false);
@@ -271,7 +269,6 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
             onClose={() => setAlert((prev) => ({ ...prev, show: false }))}
           />
         )}
-        
         {!showOtpVerification ? (
           <form onSubmit={handleSubmit} className="login-form">
             <div className="form-group animate-slide-right">
@@ -309,7 +306,14 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
                 <input type="checkbox" />
                 <span>Ghi nhớ đăng nhập</span>
               </label>
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem' }}>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "flex-end",
+                  gap: "0.5rem",
+                }}
+              >
                 <a href="/forgot-password" className="forgot-password">
                   Quên mật khẩu?
                 </a>
@@ -329,12 +333,12 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
                     }
                   }}
                   className="forgot-password"
-                  style={{ 
-                    background: 'none', 
-                    border: 'none', 
+                  style={{
+                    background: "none",
+                    border: "none",
                     padding: 0,
-                    fontSize: '0.9rem',
-                    cursor: 'pointer'
+                    fontSize: "0.9rem",
+                    cursor: "pointer",
                   }}
                 >
                   Xác thực tài khoản?
@@ -358,11 +362,12 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
             <div className="otp-header">
               <h3>Xác Thực Tài Khoản</h3>
               <p>
-                Nhập mã OTP đã được gửi đến email: <strong>{unverifiedEmail}</strong>
+                Nhập mã OTP đã được gửi đến email:{" "}
+                <strong>{unverifiedEmail}</strong>
               </p>
             </div>
-            
-            <form 
+
+            <form
               onSubmit={(e) => {
                 e.preventDefault();
                 handleVerifyOtp();
@@ -382,7 +387,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
                 />
                 <div className="input-highlight" />
               </div>
-              
+
               <Button
                 type="submit"
                 variant="gradient"
@@ -393,7 +398,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
               >
                 Xác Thực
               </Button>
-              
+
               <div className="otp-actions">
                 <Button
                   type="button"
@@ -405,7 +410,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
                 >
                   Gửi Lại OTP
                 </Button>
-                
+
                 <button
                   type="button"
                   onClick={() => {
@@ -422,7 +427,6 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
             </form>
           </div>
         )}
-        
         {!showOtpVerification && (
           <div
             className="social-login animate-fade-in"

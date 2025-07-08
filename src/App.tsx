@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Route, Routes } from "react-router-dom";
+import { Route, Routes, useNavigate } from "react-router-dom";
 import NavBar from "./components/NavBar";
 import ProtectedRoute from "./components/ProtectedRoute";
 import LoadingSpinner from "./components/LoadingSpinner";
@@ -16,11 +16,15 @@ import Profile from "./pages/Profile";
 import { getToken, removeToken } from "./services/localStorageService";
 import { getCurrentUser } from "./services/userService";
 import ChatAi from "./pages/ChatAi";
+<<<<<<< Updated upstream
 import EventPublicLayout from "./components/event/EventPublicLayout";
 import EventPublicDetail from "./components/event/EventPublicDetail";
 import EventForm from "./components/event/EventForm";
 import EventPrivateList from "./components/event/EventPrivateList";
 import EventPrivateDetail from "./components/event/EventPrivateDetail";
+=======
+import { logOut } from "./services/authService";
+>>>>>>> Stashed changes
 
 interface User {
   id: string;
@@ -58,12 +62,18 @@ function App() {
 
     initializeAuth();
   }, []);
-
-  const handleLogout = () => {
-    removeToken();
-    setIsAuthenticated(false);
-    setUser(null);
-    window.location.href = "/login";
+  const navigate = useNavigate();
+  const handleLogout = async () => {
+    try {
+      await logOut();
+    } catch (error) {
+      console.error("Logout failed on backend", error);
+    } finally {
+      removeToken();
+      setIsAuthenticated(false);
+      setUser(null);
+      navigate("/login");
+    }
   };
 
   const handleLoginSuccess = async (): Promise<void> => {
@@ -84,12 +94,22 @@ function App() {
 
   return (
     <div className="app-container">
-      <NavBar isAuthenticated={isAuthenticated} onLogout={handleLogout} userRole={user?.role} />
+      <NavBar
+        isAuthenticated={isAuthenticated}
+        onLogout={handleLogout}
+        userRole={user?.role}
+      />
       <main className="main-content">
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login onLoginSuccess={handleLoginSuccess} />} />
-          <Route path="/authenticate" element={<Authenticate onLoginSuccess={handleLoginSuccess} />} />
+          <Route
+            path="/login"
+            element={<Login onLoginSuccess={handleLoginSuccess} />}
+          />
+          <Route
+            path="/authenticate"
+            element={<Authenticate onLoginSuccess={handleLoginSuccess} />}
+          />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/register" element={<Register />} />
           {/* <Route path="/complete-profile" element={<CompleteProfile />} /> */}
@@ -106,34 +126,46 @@ function App() {
           
           {/* Public Routes */}
           {/* Protected Routes */}
-          <Route path="/quiz" element={
-            <ProtectedRoute isAuthenticated={isAuthenticated}>
-              <Quiz />
-            </ProtectedRoute>
-          } />
-          <Route path="/profile" element={
-            <ProtectedRoute isAuthenticated={isAuthenticated}>
-              <Profile />
-            </ProtectedRoute>
-          } />
-          <Route path="/admin" element={
-            <ProtectedRoute 
-              isAuthenticated={isAuthenticated} 
-              userRole={user?.role} 
-              requiredRole="admin"
-              requireExactRole={true}
-            >
-              <Admin />
-            </ProtectedRoute>
-          } />
-          <Route path="/chat-ai" element={
-            <ProtectedRoute isAuthenticated={isAuthenticated}>
-              <ChatAi />
-            </ProtectedRoute>
-          } />
+          <Route
+            path="/quiz"
+            element={
+              <ProtectedRoute isAuthenticated={isAuthenticated}>
+                <Quiz />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute isAuthenticated={isAuthenticated}>
+                <Profile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute
+                isAuthenticated={isAuthenticated}
+                userRole={user?.role}
+                requiredRole="admin"
+                requireExactRole={true}
+              >
+                <Admin />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/chat-ai"
+            element={
+              <ProtectedRoute isAuthenticated={isAuthenticated}>
+                <ChatAi />
+              </ProtectedRoute>
+            }
+          />
 
           {/* Public Routes */}
-          
+
           {/* Add more routes as needed */}
         </Routes>
       </main>
