@@ -1,10 +1,8 @@
 import React from 'react';
-import { motion } from 'framer-motion';
 
 interface DISCChoice {
-    id: number;
-    text: string;
     trait: 'D' | 'I' | 'S' | 'C';
+    text: string;
 }
 
 interface DISCQuestionSet {
@@ -21,60 +19,79 @@ interface DiscQuestionProps {
 
 const DiscQuestion: React.FC<DiscQuestionProps> = ({ questionSet, selectedAnswer = {}, onAnswer }) => {
     const handleSelection = (trait: 'D' | 'I' | 'S' | 'C', type: 'most' | 'least') => {
-        // Create a new answer object to avoid mutating the original
+        console.log(`DISC ${type} selection: ${trait} for question ${questionSet.id}`);
+        console.log('Current selected answer:', selectedAnswer);
+
         const newAnswer = { ...selectedAnswer };
 
-        // If selecting the same trait that's already selected, unselect it
+        // If selecting the same trait that's already selected for this type, unselect it
         if (newAnswer[type] === trait) {
             delete newAnswer[type];
+            console.log(`Unselected ${type}: ${trait}`);
         } else {
-            // Otherwise, set the new trait
+            // If this trait is selected for the opposite type, clear it first
+            if (type === 'most' && newAnswer.least === trait) {
+                delete newAnswer.least;
+                console.log(`Cleared least selection for trait: ${trait}`);
+            } else if (type === 'least' && newAnswer.most === trait) {
+                delete newAnswer.most;
+                console.log(`Cleared most selection for trait: ${trait}`);
+            }
+
+            // Set the new selection
             newAnswer[type] = trait;
+            console.log(`Selected ${type}: ${trait}`);
         }
 
-        // Call the parent's onAnswer function with the new answer
+        console.log('New answer:', newAnswer);
         onAnswer(questionSet.id, newAnswer);
     };
 
     return (
-        <motion.div
-            className="disc-question-set"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.3 }}
-        >
-            <div className="disc-question-title">{questionSet.content}</div>
-            <p className="disc-instruction">For each row, select one statement that is most like you and one that is least like you</p>
+        <div className="disc-question-set">
+            <h2 className="question-text">{questionSet.content}</h2>
+            <p className="disc-instruction">
+                For each row, select one statement that is <strong>most like you</strong> and one that is <strong>least like you</strong>
+            </p>
 
             <div className="disc-choices">
-                {questionSet.options.map((choice, index) => (
-                    <motion.div
-                        key={index}
-                        className="disc-choice"
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: index * 0.1 }}
-                    >
-                        <span className="choice-text">{choice.text}</span>
-                        <div className="choice-buttons">
-                            <button
-                                className={`choice-button most ${selectedAnswer.most === choice.trait ? 'selected' : ''}`}
-                                onClick={() => handleSelection(choice.trait, 'most')}
-                            >
-                                Most
-                            </button>
-                            <button
-                                className={`choice-button least ${selectedAnswer.least === choice.trait ? 'selected' : ''}`}
-                                onClick={() => handleSelection(choice.trait, 'least')}
-                            >
-                                Least
-                            </button>
+                {questionSet.options.map((choice, index) => {
+                    const isMostSelected = selectedAnswer.most === choice.trait;
+                    const isLeastSelected = selectedAnswer.least === choice.trait;
+
+                    console.log(`DISC Option ${index + 1}: trait="${choice.trait}", most=${isMostSelected}, least=${isLeastSelected}`);
+
+                    return (
+                        <div key={index} className="disc-choice">
+                            <span className="choice-text">
+                                <strong>{index + 1}.</strong> {choice.text}
+                            </span>
+                            <div className="choice-buttons">
+                                <button
+                                    className={`choice-button most ${isMostSelected ? 'selected' : ''}`}
+                                    onClick={() => handleSelection(choice.trait, 'most')}
+                                    disabled={false} // Remove any disabled logic
+                                >
+                                    Most
+                                </button>
+                                <button
+                                    className={`choice-button least ${isLeastSelected ? 'selected' : ''}`}
+                                    onClick={() => handleSelection(choice.trait, 'least')}
+                                    disabled={false} // Remove any disabled logic
+                                >
+                                    Least
+                                </button>
+                            </div>
                         </div>
-                    </motion.div>
-                ))}
+                    );
+                })}
             </div>
-        </motion.div>
+
+            {/* Debug info */}
+            <div style={{ marginTop: '1rem', fontSize: '0.8rem', color: '#666', display: 'none' }}>
+                Current selections: Most = {selectedAnswer.most || 'None'}, Least = {selectedAnswer.least || 'None'}
+            </div>
+        </div>
     );
 };
 
