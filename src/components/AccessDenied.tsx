@@ -24,10 +24,10 @@ const AccessDenied: React.FC<AccessDeniedProps> = ({
 
   const getRoleDisplayName = (role: string) => {
     const roleNames = {
-      admin: 'Quản trị viên',
-      eventmanager: 'Quản lý sự kiện',
-      parent: 'Phụ huynh',
-      student: 'Học sinh'
+      ADMIN: 'Quản trị viên',
+      EVENTMANAGER: 'Quản lý sự kiện',
+      PARENT: 'Phụ huynh',
+      STUDENT: 'Học sinh'
     };
     return roleNames[role as keyof typeof roleNames] || role;
   };

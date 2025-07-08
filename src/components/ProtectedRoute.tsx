@@ -38,21 +38,44 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   };
 
   const checkRoleAccess = (userRole: string, requiredRole: string | string[]): boolean => {
+    // Normalize roles to lowercase for comparison
+    const normalizedUserRole = userRole?.toLowerCase();
+    
+    console.log("ProtectedRoute - Role check:", {
+      userRole,
+      normalizedUserRole,
+      requiredRole,
+      requireExactRole
+    });
+    
     // If requiredRole is an array, check if user role is in the array
     if (Array.isArray(requiredRole)) {
-      return requiredRole.includes(userRole);
+      const hasAccess = requiredRole.some(role => role.toLowerCase() === normalizedUserRole);
+      console.log("Array role check result:", hasAccess);
+      return hasAccess;
     }
+
+    const normalizedRequiredRole = requiredRole.toLowerCase();
 
     // If requireExactRole is true, check for exact match
     if (requireExactRole) {
-      return userRole === requiredRole;
+      const hasAccess = normalizedUserRole === normalizedRequiredRole;
+      console.log("Exact role check result:", hasAccess);
+      return hasAccess;
     }
 
     // Otherwise, check role hierarchy (higher roles can access lower role pages)
-    const userRoleLevel = roleHierarchy[userRole as keyof typeof roleHierarchy] || 0;
-    const requiredRoleLevel = roleHierarchy[requiredRole as keyof typeof roleHierarchy] || 0;
+    const userRoleLevel = roleHierarchy[normalizedUserRole as keyof typeof roleHierarchy] || 0;
+    const requiredRoleLevel = roleHierarchy[normalizedRequiredRole as keyof typeof roleHierarchy] || 0;
     
-    return userRoleLevel >= requiredRoleLevel;
+    const hasAccess = userRoleLevel >= requiredRoleLevel;
+    console.log("Hierarchy role check:", {
+      userRoleLevel,
+      requiredRoleLevel,
+      hasAccess
+    });
+    
+    return hasAccess;
   };
 
   // Check role access
