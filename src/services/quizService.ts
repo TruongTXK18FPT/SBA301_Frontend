@@ -379,44 +379,6 @@ class QuizService {
   async getQuizResult(resultId: number): Promise<QuizResult> {
     return this.fetchAPI<QuizResult>(`/quiz-results/${resultId}`);
   }
-
-  // Get all quizzes with questions for admin management
-  async getAllQuizzesWithQuestions(): Promise<Quiz[]> {
-    try {
-      const allQuizzes = await this.fetchAPI<Quiz[]>('/quiz', {}, this.DEFAULT_CACHE_TTL);
-      
-      // For each quiz, fetch its questions
-      const quizzesWithQuestions = await Promise.all(
-        allQuizzes.map(async (quiz) => {
-          try {
-            const questions = await this.getQuestionsByQuizId(quiz.id);
-            return {
-              ...quiz,
-              questions: questions,
-              questionCount: questions.length
-            };
-          } catch (error) {
-            console.warn(`Failed to fetch questions for quiz ${quiz.id}:`, error);
-            return {
-              ...quiz,
-              questions: [],
-              questionCount: 0
-            };
-          }
-        })
-      );
-      
-      return quizzesWithQuestions;
-    } catch (error) {
-      console.error('Failed to fetch all quizzes with questions:', error);
-      throw new Error('Failed to load quizzes with questions');
-    }
-  }
-
-  // Get all quizzes (simple version for listing)
-  async getAllQuizzes(): Promise<Quiz[]> {
-    return this.fetchAPI<Quiz[]>('/quiz', {}, this.DEFAULT_CACHE_TTL);
-  }
 }
 
 const quizService = new QuizService();
