@@ -1,0 +1,734 @@
+/* EventPublicDetail.css */
+.event-public-detail {
+  background-color: #f8fafc;
+  color: #1e293b;
+  min-height: 100vh;
+}
+
+/* Hero Section */
+.event-hero {
+  background-color: #27272A;
+  padding: 2rem 1rem;
+  border-bottom: 1px solid #374151;
+}
+
+.event-hero-container {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  min-height: 500px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.event-hero-info {
+  flex: 2;
+  background-color: #38383D;
+  border-radius: 12px 0 0 12px;
+  padding: 2.5rem 2rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border: 1px solid #374151;
+}
+
+.event-hero-title {
+  font-size: 2rem;
+  font-weight: bold;
+  color: white;
+  margin-bottom: 1rem;
+  line-height: 1.2;
+}
+
+.event-hero-datetime {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.event-hero-datetime-icon {
+  background-color: #3b82f6;
+  border-radius: 50%;
+  padding: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.event-hero-datetime-icon svg {
+  width: 1.5rem;
+  height: 1.5rem;
+  color: white;
+}
+
+.event-hero-datetime-text {
+  color: #10b981;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.event-hero-pricing {
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  padding-top: 1rem;
+  margin-top: 1rem;
+}
+
+.event-hero-price {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.event-hero-price-label {
+  color: white;
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.event-hero-price-amount {
+  color: #10b981;
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.event-hero-price-currency {
+  color: #10b981;
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.event-hero-cta {
+  width: 100%;
+  background-color: #10b981;
+  color: white;
+  border: none;
+  border-radius: 0.75rem;
+  padding: 1rem 3rem;
+  font-size: 1.125rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.event-hero-cta:hover {
+  background-color: #059669;
+}
+
+.event-hero-divider {
+  position: absolute;
+  top: 0;
+  left: 40%;
+  height: 100%;
+  width: 4px;
+  z-index: 10;
+}
+
+.event-hero-divider svg {
+  height: 100%;
+}
+
+.event-hero-cutout-top {
+  position: absolute;
+  top: 2rem;
+  left: 40%;
+  transform: translateX(-50%);
+  width: 4rem;
+  height: 2rem;
+  background-color: #27272A;
+  border-radius: 0 0 2rem 2rem;
+  z-index: 20;
+}
+
+.event-hero-cutout-bottom {
+  position: absolute;
+  bottom: 2rem;
+  left: 40%;
+  transform: translateX(-50%);
+  width: 4rem;
+  height: 2rem;
+  background-color: #27272A;
+  border-radius: 2rem 2rem 0 0;
+  z-index: 20;
+}
+
+.event-hero-banner {
+  flex: 3;
+  position: relative;
+}
+
+.event-hero-banner-image {
+  border-radius: 1.5rem;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  height: 100%;
+}
+
+.event-hero-banner-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.event-hero-banner-placeholder {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6, #3b82f6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  text-align: center;
+}
+
+.event-hero-banner-placeholder h2 {
+  font-size: 1.875rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+}
+
+.event-hero-banner-placeholder .event-code {
+  font-size: 3.75rem;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+.event-hero-banner-placeholder .event-location {
+  font-size: 1.5rem;
+}
+
+.event-hero-banner-placeholder .event-year {
+  font-size: 2.5rem;
+  font-weight: bold;
+}
+
+/* Content Section */
+.event-content {
+  display: flex;
+  background-color: #f5f7fc;
+  padding: 2rem 1rem;
+  gap: 2rem;
+}
+
+.event-content-main {
+  flex: 7;
+}
+
+.event-content-sidebar {
+  flex: 3;
+}
+
+.event-description {
+  background-color: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.event-description h2 {
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: #1e293b;
+  margin-bottom: 1rem;
+}
+
+.event-description-divider {
+  height: 1px;
+  background-color: #e5e7eb;
+  margin: 1rem 0;
+}
+
+.event-description-content {
+  color: #1e293b;
+  line-height: 1.6;
+}
+
+.event-description-content p {
+  margin-bottom: 1rem;
+}
+
+.event-description-content h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  margin-top: 1.5rem;
+}
+
+.event-description-content ul {
+  list-style-type: disc;
+  margin-left: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.event-description-content li {
+  margin-bottom: 0.5rem;
+}
+
+/* Ticket Information */
+.event-ticket-info {
+  background-color: #27272A;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.event-ticket-info h2 {
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: white;
+  margin-bottom: 1rem;
+}
+
+.event-ticket-accordion {
+  width: 100%;
+}
+
+.event-ticket-accordion-item {
+  border: none;
+  margin-bottom: 0.5rem;
+}
+
+.event-ticket-accordion-trigger {
+  background-color: #38383D;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 1rem;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  font-weight: 500;
+}
+
+.event-ticket-accordion-trigger:hover {
+  background-color: #404048;
+}
+
+.event-ticket-accordion-trigger[data-state="open"] {
+  border-radius: 8px 8px 0 0;
+}
+
+.event-ticket-accordion-trigger[data-state="open"] .event-ticket-accordion-chevron {
+  transform: rotate(90deg);
+}
+
+.event-ticket-accordion-chevron {
+  width: 1rem;
+  height: 1rem;
+  color: white;
+  transition: transform 0.2s ease;
+}
+
+.event-ticket-accordion-content {
+  background-color: #38383D;
+  border-radius: 0 0 8px 8px;
+  padding: 1rem;
+  margin-top: -1px;
+}
+
+.event-ticket-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.event-ticket-item:last-child {
+  border-bottom: none;
+}
+
+.event-ticket-name {
+  color: white;
+  font-weight: 500;
+}
+
+.event-ticket-price {
+  color: #10b981;
+  font-weight: 600;
+}
+
+.event-ticket-empty {
+  text-align: center;
+  padding: 2rem;
+  color: #6b7280;
+}
+
+/* Live Meeting Section */
+.live-meeting-section {
+  background-color: #f3f4f6;
+  padding: 2rem 1rem;
+}
+
+.live-meeting-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.live-meeting-card {
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+}
+
+.live-meeting-header {
+  background-color: #059669;
+  color: white;
+  padding: 1rem 1.5rem;
+}
+
+.live-meeting-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.live-indicator {
+  width: 12px;
+  height: 12px;
+  background-color: #ef4444;
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.live-meeting-title {
+  font-size: 1.25rem;
+  font-weight: bold;
+  margin: 0;
+}
+
+.live-meeting-time {
+  color: #d1fae5;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+  margin-bottom: 0;
+}
+
+.jitsi-container {
+  width: 100%;
+  height: 500px;
+  border: none;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .event-content {
+    flex-direction: column;
+  }
+  
+  .event-content-main {
+    flex: none;
+  }
+  
+  .event-content-sidebar {
+    flex: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .event-hero {
+    padding: 1rem;
+  }
+  
+  .event-hero-container {
+    flex-direction: column;
+    min-height: auto;
+  }
+  
+  .event-hero-info {
+    border-radius: 1.5rem 1.5rem 0 0;
+    flex: none;
+    min-height: 300px;
+  }
+  
+  .event-hero-banner {
+    flex: none;
+    height: 300px;
+  }
+  
+  .event-hero-banner-image {
+    border-radius: 0 0 1.5rem 1.5rem;
+  }
+  
+  .event-hero-divider {
+    display: none;
+  }
+  
+  .event-hero-cutout-top,
+  .event-hero-cutout-bottom {
+    display: none;
+  }
+  
+  .event-hero-title {
+    font-size: 1.5rem;
+  }
+  
+  .event-hero-banner-placeholder h2 {
+    font-size: 1.5rem;
+  }
+  
+  .event-hero-banner-placeholder .event-code {
+    font-size: 2.5rem;
+  }
+  
+  .event-hero-banner-placeholder .event-location {
+    font-size: 1.25rem;
+  }
+  
+  .event-hero-banner-placeholder .event-year {
+    font-size: 2rem;
+  }
+  
+  .event-content {
+    padding: 1rem;
+  }
+  
+  .event-description {
+    padding: 1rem;
+  }
+  
+  .event-ticket-info {
+    padding: 1rem;
+  }
+  
+  .live-meeting-section {
+    padding: 1rem 0.5rem;
+  }
+  
+  .jitsi-container {
+    height: 400px;
+  }
+  
+  .live-meeting-header {
+    padding: 0.75rem 1rem;
+  }
+  
+  .live-meeting-title {
+    font-size: 1.125rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .event-hero-info {
+    padding: 1.5rem 1rem;
+  }
+  
+  .event-hero-title {
+    font-size: 1.25rem;
+  }
+  
+  .event-hero-price-label,
+  .event-hero-price-amount,
+  .event-hero-price-currency {
+    font-size: 1.25rem;
+  }
+  
+  .event-hero-cta {
+    padding: 0.75rem 2rem;
+    font-size: 1rem;
+  }
+  
+  .event-hero-datetime-text {
+    font-size: 0.875rem;
+  }
+  
+  .event-ticket-accordion-trigger {
+    padding: 0.75rem;
+    font-size: 0.875rem;
+  }
+  
+  .event-ticket-accordion-content {
+    padding: 0.75rem;
+  }
+  
+  .event-ticket-item {
+    padding: 0.5rem 0;
+  }
+}
+
+/* Utility Classes */
+.event-flex {
+  display: flex;
+}
+
+.event-flex-col {
+  flex-direction: column;
+}
+
+.event-items-center {
+  align-items: center;
+}
+
+.event-justify-center {
+  justify-content: center;
+}
+
+.event-justify-between {
+  justify-content: space-between;
+}
+
+.event-gap-2 {
+  gap: 0.5rem;
+}
+
+.event-gap-4 {
+  gap: 1rem;
+}
+
+.event-w-full {
+  width: 100%;
+}
+
+.event-h-full {
+  height: 100%;
+}
+
+.event-text-center {
+  text-align: center;
+}
+
+.event-font-bold {
+  font-weight: bold;
+}
+
+.event-font-semibold {
+  font-weight: 600;
+}
+
+.event-font-medium {
+  font-weight: 500;
+}
+
+.event-text-sm {
+  font-size: 0.875rem;
+}
+
+.event-text-lg {
+  font-size: 1.125rem;
+}
+
+.event-text-xl {
+  font-size: 1.25rem;
+}
+
+.event-text-2xl {
+  font-size: 1.5rem;
+}
+
+.event-mb-2 {
+  margin-bottom: 0.5rem;
+}
+
+.event-mb-4 {
+  margin-bottom: 1rem;
+}
+
+.event-mt-4 {
+  margin-top: 1rem;
+}
+
+.event-p-4 {
+  padding: 1rem;
+}
+
+.event-px-4 {
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+.event-py-4 {
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
+
+.event-rounded {
+  border-radius: 8px;
+}
+
+.event-rounded-lg {
+  border-radius: 12px;
+}
+
+.event-border {
+  border: 1px solid #e5e7eb;
+}
+
+.event-bg-white {
+  background-color: white;
+}
+
+.event-bg-gray-50 {
+  background-color: #f9fafb;
+}
+
+.event-text-gray-500 {
+  color: #6b7280;
+}
+
+.event-text-gray-600 {
+  color: #4b5563;
+}
+
+.event-text-green-500 {
+  color: #10b981;
+}
+
+.event-text-white {
+  color: white;
+}
+
+.event-shadow {
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
+
+.event-shadow-lg {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.event-transition {
+  transition: all 0.2s ease;
+}
+
+.event-cursor-pointer {
+  cursor: pointer;
+}
+
+.event-select-none {
+  user-select: none;
+}
+
+.event-overflow-hidden {
+  overflow: hidden;
+}
+
+.event-relative {
+  position: relative;
+}
+
+.event-absolute {
+  position: absolute;
+}
+
+.event-z-10 {
+  z-index: 10;
+}
+
+.event-z-20 {
+  z-index: 20;
+}

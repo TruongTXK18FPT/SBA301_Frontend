@@ -11,6 +11,7 @@ interface QuestionListProps {
   totalQuestions: number;
   currentQuestion: number;
   answers: Record<number, Answer>;
+  questions: Array<{ id: number }>;  // Add questions to get the correct IDs
   onQuestionSelect: (index: number) => void;
 }
 
@@ -18,10 +19,13 @@ const QuestionList: React.FC<QuestionListProps> = ({
   totalQuestions,
   currentQuestion,
   answers,
+  questions,
   onQuestionSelect,
 }) => {
   const isAnswered = (index: number) => {
-    const answer = answers[index];
+    // Use the question ID instead of index
+    const questionId = questions[index]?.id;
+    const answer = answers[questionId];
     if (!answer) return false;
     if (typeof answer === 'string') return true;
     return answer.most !== undefined && answer.least !== undefined;
@@ -47,4 +51,4 @@ const QuestionList: React.FC<QuestionListProps> = ({
   );
 };
 
-export default QuestionList; 
+export default QuestionList;

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import {
   FaUser,
   FaEnvelope,
@@ -189,7 +189,7 @@ const Register: React.FC = () => {
       setTimeout(() => {
         setAlert({ show: false, type: "success", message: "" });
         setIsVerifying(true);
-      }, 1500);
+      }, 1000);
 
     } catch (error: any) {
       console.error("Registration error:", error);
@@ -317,16 +317,6 @@ const Register: React.FC = () => {
 
   return (
     <div className="register-container">
-      {/* Floating Alert */}
-      {alert.show && (
-        <Alert
-          type={alert.type}
-          message={alert.message}
-          duration={5000}
-          onClose={() => setAlert((prev) => ({ ...prev, show: false }))}
-        />
-      )}
-
       <div className="register-video-container">
         <video
           ref={videoRef}
@@ -339,7 +329,17 @@ const Register: React.FC = () => {
           <source src={loginVideo} type="video/mp4" />
           Your browser does not support the video tag.
         </video>
-        <div className="register-video-overlay" />
+        <div className="register-video-overlay">
+          {/* Floating Alert */}
+          {alert.show && (
+            <Alert
+              type={alert.type}
+              message={alert.message}
+              duration={2500}
+              onClose={() => setAlert((prev) => ({ ...prev, show: false }))}
+            />
+          )}
+        </div>
       </div>
 
       <motion.div
@@ -348,7 +348,8 @@ const Register: React.FC = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <h1 className="register-title">Đăng Ký Tài Khoản</h1>
+        <div className="register-form-card">
+          <h1 className="register-title">Đăng Ký Tài Khoản</h1>
         {!isVerifying ? (
           <form onSubmit={handleSubmit} className="register-form">
             <motion.div
@@ -365,6 +366,7 @@ const Register: React.FC = () => {
                 onChange={handleChange}
                 placeholder="Họ và tên"
                 required
+                className="register-form-input"
               />
             </motion.div>
 
@@ -382,6 +384,7 @@ const Register: React.FC = () => {
                 onChange={handleChange}
                 placeholder="Email"
                 required
+                className="register-form-input"
               />
             </motion.div>            <motion.div
               className="register-form-group"
@@ -397,7 +400,7 @@ const Register: React.FC = () => {
                 onChange={handleChange}
                 placeholder="Mật khẩu (tối thiểu 8 ký tự)"
                 required
-                className={formErrors.password ? "error" : formData.password.length >= 8 ? "success" : ""}
+                className={`register-form-input ${formErrors.password ? "error" : formData.password.length >= 8 ? "success" : ""}`}
               />
               {formErrors.password && (
                 <div className="validation-message error">{formErrors.password}</div>
@@ -418,6 +421,7 @@ const Register: React.FC = () => {
                 onChange={handleChange}
                 placeholder="Xác nhận mật khẩu"
                 required
+                className="register-form-input"
               />
             </motion.div>            <motion.div
               className="register-form-group"
@@ -433,7 +437,7 @@ const Register: React.FC = () => {
                 onChange={handleChange}
                 max="2010-12-31" // Maximum date for 15+ years old
                 required
-                className={formErrors.birthday ? "error" : formData.birthday && !formErrors.birthday ? "success" : ""}
+                className={`register-form-input ${formErrors.birthday ? "error" : formData.birthday && !formErrors.birthday ? "success" : ""}`}
               />
               {formErrors.birthday && (
                 <div className="validation-message error">{formErrors.birthday}</div>
@@ -454,7 +458,7 @@ const Register: React.FC = () => {
                 pattern="[0-9]{10}"
                 maxLength={10}
                 required
-                className={formErrors.phone ? "error" : /^\d{10}$/.test(formData.phone) ? "success" : ""}
+                className={`register-form-input ${formErrors.phone ? "error" : /^\d{10}$/.test(formData.phone) ? "success" : ""}`}
               />
               {formErrors.phone && (
                 <div className="validation-message error">{formErrors.phone}</div>
@@ -474,8 +478,9 @@ const Register: React.FC = () => {
                   value={formData.provinceCode}
                   onChange={(e) => handleProvinceChange(e.target.value)}
                   required
+                  className="register-form-input"
                 >
-                  <option value="">Chọn tỉnh/thành phố</option>
+                  <option value="" disabled>Chọn tỉnh/thành phố</option>
                   {provinces.map((province) => (
                     <option key={province.code} value={province.code}>
                       {province.name}
@@ -497,8 +502,9 @@ const Register: React.FC = () => {
                   onChange={handleChange}
                   required
                   disabled={!formData.provinceCode}
+                  className="register-form-input"
                 >
-                  <option value="">Chọn quận/huyện</option>
+                  <option value="" disabled>Chọn quận/huyện</option>
                   {districts.map((district) => (
                     <option key={district.code} value={district.code}>
                       {district.name}
@@ -521,6 +527,7 @@ const Register: React.FC = () => {
                 onChange={handleChange}
                 placeholder="Địa chỉ chi tiết"
                 required
+                className="register-form-input"
               />
             </motion.div>
             <motion.div
@@ -632,8 +639,9 @@ const Register: React.FC = () => {
           animate={{ opacity: 1 }}
           transition={{ delay: 1 }}
         >
-          Đã có tài khoản? <a href="/login">Đăng nhập ngay</a>
+          Đã có tài khoản? <Link to="/login">Đăng nhập ngay</Link>
         </motion.p>
+        </div>
       </motion.div>
     </div>
   );

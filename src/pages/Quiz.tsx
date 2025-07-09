@@ -1,21 +1,33 @@
-import React, { useState, useEffect } from 'react';
-  import { useNavigate, useParams } from 'react-router-dom';
-  import QuizIntro from '../components/quiz/QuizIntro';
-  import QuizQuestion from '../components/quiz/QuizQuestion';
-  import DISCQuestion from '../components/quiz/DiscQuestion';
-  import QuizProgress from '../components/quiz/QuizProgress';
-  import QuestionList from '../components/quiz/QuestionList';
-  import QuizResult from '../components/quiz/QuizResult';
-  import quizService, {
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useParams } from 'react-router-dom';
+import QuizIntro from '../components/quiz/QuizIntro';
+import QuizQuestion from '../components/quiz/QuizQuestion';
+import DiscQuestion from '../components/quiz/DiscQuestion';
+import QuizProgress from '../components/quiz/QuizProgress';
+import QuestionList from '../components/quiz/QuestionList';
+import QuizResult from '../components/quiz/QuizResult';
+import quizService, {
     MBTIQuestion,
     DISCQuestionSet,
-    QuizSubmissionData,
-    QuizResult as QuizResultType
+    QuizSubmissionData
   } from '../services/quizService';
   import '../styles/Quiz.css';
 
   type QuizType = 'MBTI' | 'DISC';
-  type Answer = string | { most?: 'D' | 'I' | 'S' | 'C'; least?: 'D' | 'I' | 'S' | 'C' };
+  type DISCAnswer = { most?: 'D' | 'I' | 'S' | 'C'; least?: 'D' | 'I' | 'S' | 'C' };
+  type Answer = string | DISCAnswer;
+  
+  // Frontend result interface for the QuizResult component
+  interface TransformedResult {
+    type: string;
+    description: string;
+    careers: string[];
+    universities: string[];
+    personalityCode?: string;
+    keyTraits?: string;
+    nickname?: string;
+    scores?: any;
+  }
 
   const Quiz: React.FC = () => {
     const [quizStep, setQuizStep] = useState<'intro' | 'questions' | 'result'>('intro');
@@ -24,10 +36,70 @@ import React, { useState, useEffect } from 'react';
     const [questions, setQuestions] = useState<Array<MBTIQuestion | DISCQuestionSet>>([]);
     const [currentQuestion, setCurrentQuestion] = useState(0);
     const [answers, setAnswers] = useState<Record<number, Answer>>({});
-    const [result, setResult] = useState<QuizResultType | null>(null);
+    const [result, setResult] = useState<TransformedResult | null>(null);
     const [loading, setLoading] = useState(false);
-    const navigate = useNavigate();
+    const [questionsLoaded, setQuestionsLoaded] = useState(false);
+
     const { type } = useParams<{ type?: string }>();
+
+    // Memoize current question to prevent unnecessary re-renders
+    const currentQuestionData = useMemo(() => {
+      return questions.length > 0 ? questions[currentQuestion] : null;
+    }, [questions, currentQuestion]);
+
+    // Memoized check for question answered status
+    const isQuestionAnswered = useCallback(() => {
+      if (!currentQuestionData) return false;
+
+      const answer = answers[currentQuestionData.id];
+      if (!answer) {
+        console.log(`No answer found for question ${currentQuestionData.id}`);
+        return false;
+      }
+
+      if (quizType === 'DISC') {
+        const discAnswer = answer as DISCAnswer;
+        const isValid = discAnswer.most !== undefined && discAnswer.least !== undefined;
+        console.log(`DISC question ${currentQuestionData.id} validation:`, {
+          most: discAnswer.most,
+          least: discAnswer.least,
+          isValid
+        });
+        return isValid;
+      }
+
+      // For MBTI, any string answer is valid (including neutral options)
+      const isValid = typeof answer === 'string' && answer.trim().length > 0;
+      console.log(`MBTI question ${currentQuestionData.id} validation:`, {
+        answer,
+        isValid
+      });
+      return isValid;
+    }, [currentQuestionData, answers, quizType]);
+
+  // Helper function to check if a single answer is valid
+  const isAnswerValid = useCallback((answer: Answer, questionType: QuizType): boolean => {
+    if (questionType === 'DISC') {
+      const discAnswer = answer as DISCAnswer;
+      return discAnswer.most !== undefined && discAnswer.least !== undefined;
+    }
+    // For MBTI, any string answer is valid
+    return typeof answer === 'string' && answer.trim().length > 0;
+  }, []);
+
+  // Memoized check for ALL questions answered status
+  const areAllQuestionsAnswered = useCallback(() => {
+    if (questions.length === 0) return false;
+
+    const answeredCount = questions.filter(question => {
+      const answer = answers[question.id];
+      return answer && isAnswerValid(answer, quizType || 'MBTI');
+    }).length;
+
+    const allAnswered = answeredCount === questions.length;
+    console.log(`All questions answered check: ${answeredCount}/${questions.length} = ${allAnswered}`);
+    return allAnswered;
+  }, [questions, answers, quizType, isAnswerValid]);
 
     // Fetch available quiz types on component mount
     useEffect(() => {
@@ -46,19 +118,30 @@ import React, { useState, useEffect } from 'react';
       };
 
       fetchQuizTypes();
-    }, [type]);
+    }, [type]); // Removed dependency that was causing infinite loops
 
-    const handleStartQuiz = async (type: QuizType) => {
+    const handleStartQuiz = useCallback(async (type: QuizType) => {
       setLoading(true);
       setQuizType(type);
+      setQuestionsLoaded(false);
 
       try {
-        // Find the category ID for the selected quiz type
-        const categoryId = availableTypes?.find(t => t.type === type)?.category.id;
-
-        if (!categoryId) {
-          throw new Error('Category not found for quiz type');
+        // Ensure availableTypes is loaded
+        let types = availableTypes;
+        if (!types) {
+          console.log('Loading quiz types first...');
+          types = await quizService.getAvailableQuizTypes();
+          setAvailableTypes(types);
         }
+
+        // Find the category ID for the selected quiz type
+        const selectedType = types.find(t => t.type === type);
+        if (!selectedType?.category) {
+          throw new Error(`Category not found for quiz type: ${type}`);
+        }
+
+        const categoryId = selectedType.category.id;
+        console.log(`Found category ID: ${categoryId} for quiz type: ${type}`);
 
         // Get quizzes for the category
         const quizzes = await quizService.getQuizzesByCategory(categoryId);
@@ -69,51 +152,46 @@ import React, { useState, useEffect } from 'react';
 
         // Get questions for the first quiz
         const quizId = quizzes[0].id;
-        const fetchedQuestions = await quizService.getQuestionsByQuizId(quizId);
-
-        // Transform questions for frontend
-        const transformedQuestions = quizService.transformQuestionsForFrontend(
-          fetchedQuestions,
-          type
-        );
+        const transformedQuestions = await quizService.getQuestionsByQuizId(quizId);
 
         setQuestions(transformedQuestions);
+        setQuestionsLoaded(true);
         setQuizStep('questions');
         setCurrentQuestion(0);
         setAnswers({});
       } catch (error) {
         console.error('Failed to start quiz:', error);
+        alert(`Failed to start quiz: ${error instanceof Error ? error.message : 'Unknown error'}`);
       } finally {
         setLoading(false);
       }
-    };
+    }, [availableTypes]);
 
-    const handleAnswer = (questionId: number, answer: Answer) => {
+    const handleAnswer = useCallback((questionId: number, answer: Answer) => {
       setAnswers(prev => ({
         ...prev,
         [questionId]: answer
       }));
-    };
+    }, []);
 
-    const handleNextQuestion = () => {
+    const handleNextQuestion = useCallback(() => {
       if (currentQuestion < questions.length - 1) {
         setCurrentQuestion(currentQuestion + 1);
-      } else {
-        submitQuiz();
       }
-    };
+      // Remove the automatic submit - let user click Submit button explicitly
+    }, [currentQuestion, questions.length]);
 
-    const handlePrevQuestion = () => {
+    const handlePrevQuestion = useCallback(() => {
       if (currentQuestion > 0) {
         setCurrentQuestion(currentQuestion - 1);
       }
-    };
+    }, [currentQuestion]);
 
-    const handleQuestionSelect = (index: number) => {
+    const handleQuestionSelect = useCallback((index: number) => {
       setCurrentQuestion(index);
-    };
+    }, []);
 
-    const submitQuiz = async () => {
+    const submitQuiz = useCallback(async () => {
       setLoading(true);
 
       try {
@@ -122,59 +200,97 @@ import React, { useState, useEffect } from 'react';
         const quizzes = await quizService.getQuizzesByCategory(categoryId || 0);
         const quizId = quizzes[0].id;
 
-        // Prepare submission data
+        // Convert answers to the format expected by backend (questionId -> optionId)
+        const formattedAnswers: Record<number, number> = {};
+        
+        for (const question of questions) {
+          const questionId = question.id;
+          const answer = answers[questionId];
+          
+          if (answer) {
+            if (quizType === 'MBTI') {
+              // For MBTI, the answer is the option text - we need to find the option ID
+              // This will be handled by the service layer
+              formattedAnswers[questionId] = answer as any; // Service will handle the conversion
+            } else if (quizType === 'DISC') {
+              // For DISC, we need to handle the most/least selection
+              const discAnswer = answer as DISCAnswer;
+              // Service will handle the conversion based on the most selection
+              formattedAnswers[questionId] = discAnswer as any;
+            }
+          }
+        }
+
+        // Prepare submission data - remove quizType as it's not expected by backend
         const submissionData: QuizSubmissionData = {
           quizId,
-          answers,
-          quizType: quizType as 'MBTI' | 'DISC'
+          answers: formattedAnswers
         };
 
         // Submit quiz
         const quizResult = await quizService.submitQuiz(submissionData);
-        setResult(quizResult);
+
+        // Transform the backend data to match frontend expectations
+        const transformedResult: TransformedResult = {
+          type: quizResult.personalityCode || 'Unknown',
+          personalityCode: quizResult.personalityCode,
+          description: quizResult.description,
+          careers: quizResult.careerRecommendations
+            ? quizResult.careerRecommendations.split(', ').filter(career => career.trim() !== '')
+            : [],
+          universities: quizResult.universityRecommendations
+            ? quizResult.universityRecommendations.split(', ').filter(uni => uni.trim() !== '')
+            : [],
+          keyTraits: quizResult.keyTraits,
+          nickname: quizResult.nickname,
+          scores: quizResult.scores
+        };
+
+        setResult(transformedResult);
         setQuizStep('result');
       } catch (error) {
         console.error('Failed to submit quiz:', error);
       } finally {
         setLoading(false);
       }
-    };
+    }, [availableTypes, quizType, answers, questions]);
 
-    const handleRetakeQuiz = () => {
+    const handleRetakeQuiz = useCallback(() => {
       setQuizStep('intro');
       setQuizType(null);
       setQuestions([]);
       setCurrentQuestion(0);
       setAnswers({});
       setResult(null);
-    };
+      setQuestionsLoaded(false);
+    }, []);
 
-    const isQuestionAnswered = () => {
-      const answer = answers[questions[currentQuestion]?.id];
-
-      if (!answer) return false;
-
-      if (quizType === 'DISC') {
-        const discAnswer = answer as { most?: 'D' | 'I' | 'S' | 'C'; least?: 'D' | 'I' | 'S' | 'C' };
-        return discAnswer.most !== undefined && discAnswer.least !== undefined;
-      }
-
-      return true;
-    };
-
-    const renderQuizContent = () => {
+    const renderQuizContent = useMemo(() => {
       if (loading) {
-        return <div className="loading">Loading...</div>;
+        return (
+          <div className="loading">
+            <div className="loading-spinner"></div>
+            <p>Loading quiz questions...</p>
+          </div>
+        );
       }
 
       switch (quizStep) {
         case 'intro':
           return <QuizIntro onStart={handleStartQuiz} availableTypes={availableTypes} />;
 
-        case 'questions':
-          if (questions.length === 0) return null;
+        case 'questions': {
+          if (!questionsLoaded || questions.length === 0) {
+            return (
+              <div className="loading">
+                <div className="loading-spinner"></div>
+                <p>Preparing your quiz...</p>
+              </div>
+            );
+          }
 
-          const question = questions[currentQuestion];
+          const question = currentQuestionData;
+          if (!question) return null;
 
           return (
             <div className="quiz-layout">
@@ -192,9 +308,9 @@ import React, { useState, useEffect } from 'react';
                     onAnswer={handleAnswer}
                   />
                 ) : (
-                  <DISCQuestion
+                  <DiscQuestion
                     questionSet={question as DISCQuestionSet}
-                    selectedAnswer={answers[question.id] as { most?: 'D' | 'I' | 'S' | 'C'; least?: 'D' | 'I' | 'S' | 'C' }}
+                    selectedAnswer={answers[question.id] as DISCAnswer}
                     onAnswer={handleAnswer}
                   />
                 )}
@@ -212,23 +328,29 @@ import React, { useState, useEffect } from 'react';
                     {currentQuestion + 1} of {questions.length}
                   </span>
 
-                  {currentQuestion < questions.length - 1 ? (
-                    <button
-                      className="nav-button next-button"
-                      onClick={handleNextQuestion}
-                      disabled={!isQuestionAnswered()}
-                    >
-                      Next
-                    </button>
-                  ) : (
+                  <div className="nav-right-buttons">
+                    {currentQuestion < questions.length - 1 && (
+                      <button
+                        className="nav-button next-button"
+                        onClick={handleNextQuestion}
+                        disabled={!isQuestionAnswered()}
+                      >
+                        Next
+                      </button>
+                    )}
+
                     <button
                       className="nav-button submit-button"
                       onClick={submitQuiz}
-                      disabled={!isQuestionAnswered()}
+                      disabled={!areAllQuestionsAnswered()}
+                      style={{
+                        marginLeft: currentQuestion < questions.length - 1 ? '0.5rem' : '0',
+                        opacity: areAllQuestionsAnswered() ? 1 : 0.6
+                      }}
                     >
-                      Submit
+                      Submit Quiz
                     </button>
-                  )}
+                  </div>
                 </div>
               </div>
 
@@ -236,10 +358,12 @@ import React, { useState, useEffect } from 'react';
                 totalQuestions={questions.length}
                 currentQuestion={currentQuestion}
                 answers={answers}
+                questions={questions} // Pass the questions array
                 onQuestionSelect={handleQuestionSelect}
               />
             </div>
           );
+        }
 
         case 'result':
           return result ? (
@@ -250,11 +374,31 @@ import React, { useState, useEffect } from 'react';
             />
           ) : null;
       }
-    };
+    }, [
+      loading,
+      quizStep,
+      availableTypes,
+      questionsLoaded,
+      questions.length,
+      currentQuestionData,
+      currentQuestion,
+      quizType,
+      answers,
+      result,
+      handleStartQuiz,
+      handleAnswer,
+      handleNextQuestion,
+      handlePrevQuestion,
+      handleQuestionSelect,
+      submitQuiz,
+      handleRetakeQuiz,
+      isQuestionAnswered,
+      areAllQuestionsAnswered
+    ]);
 
     return (
       <div className="quiz-container">
-        {renderQuizContent()}
+        {renderQuizContent}
       </div>
     );
   };

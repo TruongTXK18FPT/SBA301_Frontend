@@ -1,8 +1,8 @@
 .alert {
   position: fixed;
-  top: 80px;
+  top: 20px;
   right: 20px;
-  z-index: 1000;
+  z-index: 10000;
   margin: 0;
   padding: 1rem;
   border-radius: 12px;
@@ -12,6 +12,7 @@
   animation: slideInRight 0.3s ease-out forwards;
   min-width: 300px;
   max-width: 400px;
+  backdrop-filter: blur(10px);
 }
 
 .alert-content {
@@ -221,4 +222,85 @@
   .alert-description {
     font-size: 0.8rem;
   }
+}
+
+/* Responsive adjustments for alerts */
+@media (max-width: 768px) {
+  .alert {
+    top: 10px;
+    right: 10px;
+    left: 10px;
+    max-width: none;
+    min-width: auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .alert {
+    top: 10px;
+    right: 10px;
+    left: 10px;
+    min-width: auto;
+    max-width: none;
+  }
+  
+  .alert-message {
+    font-size: 0.9rem;
+  }
+  
+  .alert-description {
+    font-size: 0.8rem;
+  }
+}
+
+/* Additional positioning fixes */
+.alert-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 10000;
+  pointer-events: none;
+}
+
+.alert-container .alert {
+  position: relative;
+  top: 0;
+  right: 0;
+  pointer-events: auto;
+}
+
+/* Ensure alerts appear above navbar */
+.alert,
+.alert-container {
+  z-index: 10000 !important;
+}
+
+/* Overlay alert positioning */
+.login-overlay,
+.register-video-overlay,
+.forgot-password-video-overlay {
+  position: relative;
+  z-index: 5;
+}
+
+.login-overlay .alert,
+.register-video-overlay .alert,
+.forgot-password-video-overlay .alert {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 10000;
+}
+
+/* Ensure alerts appear above video overlays */
+.login-overlay,
+.register-video-overlay,
+.forgot-password-video-overlay {
+  pointer-events: none;
+}
+
+.login-overlay .alert,
+.register-video-overlay .alert,
+.forgot-password-video-overlay .alert {
+  pointer-events: auto;
 }

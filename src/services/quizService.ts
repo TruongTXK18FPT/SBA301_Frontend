@@ -8,6 +8,23 @@ export interface Category {
   description: string;
 }
 
+export interface QuizOption {
+  id: number;
+  optionText: string;
+  targetTrait?: string;
+  scoreValue: number;
+  questionId: number;
+}
+
+export interface BackendQuizQuestion {
+  id: number;
+  content: string;
+  orderNumber: number;
+  dimension: string;
+  quizId: number;
+  options: QuizOption[];
+}
+
 export interface MBTIQuestion {
   id: number;
   content: string;
@@ -15,6 +32,7 @@ export interface MBTIQuestion {
   options: Array<{
     id: number;
     text: string;
+    value?: number;
   }>;
 }
 
@@ -25,7 +43,8 @@ export interface DISCChoice {
 
 export interface DISCQuestionSet {
   id: number;
-  choices: DISCChoice[];
+  content: string;
+  options: DISCChoice[];
 }
 
 export interface Quiz {
@@ -38,19 +57,27 @@ export interface Quiz {
 
 export interface QuizSubmissionData {
   quizId: number;
-  answers: Record<number, string | { most?: 'D' | 'I' | 'S' | 'C', least?: 'D' | 'I' | 'S' | 'C' }>;
-  quizType: 'MBTI' | 'DISC';
+  // Remove userId - backend will extract it from JWT token via auth-service
+  answers: Record<number, number>; // questionId -> optionId (backend expects this format)
 }
 
 export interface QuizResult {
-  type: string;
+  personalityCode: string;
+  nickname?: string;
+  keyTraits?: string;
   description: string;
-  careers: string[];
-  universities: string[];
+  careerRecommendations?: string;
+  scores?: Record<string, number>;
+  universityRecommendations?: string;
 }
 
 class QuizService {
   private baseURL = 'http://localhost:8080/api/v1/quiz';
+
+  // Client-side cache for better performance
+  private cache = new Map<string, { data: any; timestamp: number; ttl: number }>();
+  private readonly DEFAULT_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+  private readonly QUESTIONS_CACHE_TTL = 10 * 60 * 1000; // 10 minutes for questions
 
   private getHeaders() {
     const token = getToken();
@@ -60,16 +87,63 @@ class QuizService {
     };
   }
 
-  private async fetchAPI<T>(endpoint: string, options: AxiosRequestConfig = {}): Promise<T> {
+  // Enhanced cache management
+  private getCacheKey(endpoint: string, params?: any): string {
+    const paramStr = params ? JSON.stringify(params) : '';
+    return `${endpoint}${paramStr}`;
+  }
+
+  private getCachedData<T>(key: string): T | null {
+    const cached = this.cache.get(key);
+    if (cached && Date.now() - cached.timestamp < cached.ttl) {
+      console.log(`Cache hit for: ${key}`);
+      return cached.data;
+    }
+    if (cached) {
+      this.cache.delete(key); // Remove expired cache
+    }
+    return null;
+  }
+
+  private setCachedData<T>(key: string, data: T, ttl: number = this.DEFAULT_CACHE_TTL): void {
+    this.cache.set(key, {
+      data,
+      timestamp: Date.now(),
+      ttl
+    });
+  }
+
+  private async fetchAPI<T>(endpoint: string, options: AxiosRequestConfig = {}, cacheTtl?: number): Promise<T> {
+    // Check cache first for GET requests
+    if (!options.method || options.method.toUpperCase() === 'GET') {
+      const cacheKey = this.getCacheKey(endpoint, options.params);
+      const cachedData = this.getCachedData<T>(cacheKey);
+      if (cachedData) {
+        return cachedData;
+      }
+    }
+
     try {
       const fullUrl = `${this.baseURL}${endpoint}`;
       console.log(`Making API request to: ${fullUrl}`);
+
+      const startTime = performance.now();
       const response: AxiosResponse<T> = await axios({
         url: fullUrl,
         headers: this.getHeaders(),
+        timeout: 30000, // 30 second timeout
         ...options,
       });
-      console.log('API response:', response.data);
+      const endTime = performance.now();
+
+      console.log(`API call took ${endTime - startTime}ms for: ${endpoint}`);
+
+      // Cache GET responses
+      if (!options.method || options.method.toUpperCase() === 'GET') {
+        const cacheKey = this.getCacheKey(endpoint, options.params);
+        this.setCachedData(cacheKey, response.data, cacheTtl);
+      }
+
       return response.data;
     } catch (error) {
       console.error('API request failed:', error);
@@ -83,78 +157,222 @@ class QuizService {
     }
   }
 
-  // Get all available quiz types (MBTI, DISC)
+  // Get all available quiz types (MBTI, DISC) with caching
   async getAvailableQuizTypes(): Promise<{ type: 'MBTI' | 'DISC'; category: Category }[]> {
-    const categories = await this.fetchAPI<Category[]>('/categories');
+    const categories = await this.fetchAPI<Category[]>('/categories', {}, this.DEFAULT_CACHE_TTL);
+    console.log('Available categories:', categories);
 
-    // Assuming MBTI is category 1 and DISC is category 2
-    return [
-      { type: 'MBTI', category: categories.find(c => c.id === 1) || categories[0] },
-      { type: 'DISC', category: categories.find(c => c.id === 2) || categories[1] }
-    ];
+    // Find categories by name instead of hardcoded IDs
+    const mbtiCategory = categories.find(c =>
+      c.name.toUpperCase().includes('MBTI') ||
+      c.name.toUpperCase().includes('MYERS')
+    );
+
+    const discCategory = categories.find(c =>
+      c.name.toUpperCase().includes('DISC') ||
+      c.name.toUpperCase().includes('DOMINANCE')
+    );
+
+    const availableTypes: { type: 'MBTI' | 'DISC'; category: Category }[] = [];
+
+    if (mbtiCategory) {
+      availableTypes.push({ type: 'MBTI', category: mbtiCategory });
+    }
+
+    if (discCategory) {
+      availableTypes.push({ type: 'DISC', category: discCategory });
+    }
+
+    console.log('Mapped quiz types:', availableTypes);
+    return availableTypes;
   }
 
-  // Get quizzes by category
+  // Get quizzes by category with caching
   async getQuizzesByCategory(categoryId: number): Promise<Quiz[]> {
-    return this.fetchAPI<Quiz[]>(`/quiz/category/${categoryId}`);
+    return this.fetchAPI<Quiz[]>(`/quiz/category/${categoryId}`, {}, this.DEFAULT_CACHE_TTL);
   }
 
-  // Get questions for a specific quiz
+  // Get questions for a specific quiz with aggressive caching
   async getQuestionsByQuizId(quizId: number): Promise<(MBTIQuestion | DISCQuestionSet)[]> {
-    return this.fetchAPI<(MBTIQuestion | DISCQuestionSet)[]>(`/quiz-questions/quiz/${quizId}`);
+    console.log(`Fetching questions for quiz ID: ${quizId}`);
+    const startTime = performance.now();
+
+    const backendQuestions = await this.fetchAPI<BackendQuizQuestion[]>(
+      `/quiz-questions/quiz/${quizId}`,
+      {},
+      this.QUESTIONS_CACHE_TTL // Cache questions for 10 minutes
+    );
+
+    const endTime = performance.now();
+    console.log(`API call took ${endTime - startTime} milliseconds for ${backendQuestions.length} questions`);
+
+    // Determine quiz type based on the first question's dimension
+    const firstQuestion = backendQuestions[0];
+    if (!firstQuestion) return [];
+
+    const isDiscQuiz = firstQuestion.dimension === 'DISC';
+    const quizType: 'MBTI' | 'DISC' = isDiscQuiz ? 'DISC' : 'MBTI';
+
+    console.log(`Transforming ${backendQuestions.length} ${quizType} questions`);
+    const transformStartTime = performance.now();
+
+    const transformed = this.transformQuestionsForFrontend(backendQuestions, quizType);
+
+    const transformEndTime = performance.now();
+    console.log(`Transformation took ${transformEndTime - transformStartTime} milliseconds`);
+
+    return transformed;
   }
 
-  // Transform backend questions to frontend format
+  // Optimized transformation with memoization
+  private transformationCache = new Map<string, any>();
+
   transformQuestionsForFrontend(
-    questions: (MBTIQuestion | DISCQuestionSet)[],
+    backendQuestions: BackendQuizQuestion[],
     type: 'MBTI' | 'DISC'
   ): (MBTIQuestion | DISCQuestionSet)[] {
-    console.log(`Transforming ${type} questions:`, questions);
+    // Create a cache key based on questions and type
+    const cacheKey = `transform_${type}_${backendQuestions.map(q => q.id).join('_')}`;
+
+    if (this.transformationCache.has(cacheKey)) {
+      console.log('Using cached transformation');
+      return this.transformationCache.get(cacheKey);
+    }
+
+    console.log(`Transforming ${type} questions:`, backendQuestions);
+
+    let result: (MBTIQuestion | DISCQuestionSet)[];
 
     if (type === 'MBTI') {
-      return questions.map(q => {
-        // Type guard to ensure we're working with an MBTI question
-        if ('content' in q && 'options' in q) {
-          return {
-            id: q.id,
-            content: q.content,
-            type: q.type,
-            options: q.options
-          } as MBTIQuestion;
-        }
-        console.warn('Invalid MBTI question format:', q);
-        return q;
+      result = backendQuestions.map(q => {
+        return {
+          id: q.id,
+          content: q.content,
+          type: this.determineMBTIType(q.dimension),
+          options: q.options.map(option => ({
+            id: option.id,
+            text: option.optionText,
+            value: option.scoreValue
+          }))
+        } as MBTIQuestion;
       });
     } else {
-      // DISC questions
-      return questions.map(q => {
-        // Type guard to ensure we're working with a DISC question set
-        if ('choices' in q) {
-          return {
-            id: q.id,
-            choices: q.choices.map((choice: DISCChoice) => ({
-              trait: choice.trait,
-              text: choice.text
-            }))
-          } as DISCQuestionSet;
-        }
-        console.warn('Invalid DISC question format:', q);
-        return q;
+      // DISC questions - group options by question
+      result = backendQuestions.map(q => {
+        return {
+          id: q.id,
+          content: q.content,
+          options: q.options.map(option => ({
+            trait: (option.targetTrait || 'D') as 'D' | 'I' | 'S' | 'C',
+            text: option.optionText
+          }))
+        } as DISCQuestionSet;
       });
+    }
+
+    // Cache the transformation result
+    this.transformationCache.set(cacheKey, result);
+
+    return result;
+  }
+
+  // Helper method to determine MBTI type from dimension
+  private determineMBTIType(dimension: string): 'E/I' | 'S/N' | 'T/F' | 'J/P' {
+    switch (dimension) {
+      case 'E': case 'I': return 'E/I';
+      case 'S': case 'N': return 'S/N';
+      case 'T': case 'F': return 'T/F';
+      case 'J': case 'P': return 'J/P';
+      default: return 'E/I'; // fallback
     }
   }
 
-  // Submit quiz
+  // Enhanced quiz submission with secure microservices integration
   async submitQuiz(submissionData: QuizSubmissionData): Promise<QuizResult> {
-    return this.fetchAPI<QuizResult>('/quiz-results/submit', {
-      method: 'POST',
-      data: submissionData
-    });
+    const { quizId, answers: frontendAnswers } = submissionData;
+
+    // Get backend questions to map answers to optionIds
+    const backendQuestions = await this.fetchAPI<BackendQuizQuestion[]>(
+      `/quiz-questions/quiz/${quizId}`,
+      {},
+      this.QUESTIONS_CACHE_TTL
+    );
+
+    // Determine quiz type from first question
+    const firstQuestion = backendQuestions[0];
+    if (!firstQuestion) {
+      throw new Error('No questions found for this quiz');
+    }
+
+    const quizType: 'MBTI' | 'DISC' = firstQuestion.dimension === 'DISC' ? 'DISC' : 'MBTI';
+
+    // Convert answers to the format expected by backend (questionId -> optionId)
+    const formattedAnswers: Record<number, number> = {};
+
+    for (const backendQuestion of backendQuestions) {
+      const questionId = backendQuestion.id;
+      const answer = frontendAnswers[questionId];
+
+      if (answer) {
+        if (quizType === 'MBTI') {
+          // For MBTI, find the option that matches the selected text
+          const selectedOption = backendQuestion.options.find(opt => opt.optionText === answer);
+          if (selectedOption) {
+            formattedAnswers[questionId] = selectedOption.id;
+          }
+        } else if (quizType === 'DISC') {
+          // For DISC, handle the most/least selection
+          const discAnswer = answer as { most?: 'D' | 'I' | 'S' | 'C', least?: 'D' | 'I' | 'S' | 'C' };
+
+          if (discAnswer.most) {
+            // Find the option that matches the "most" selection
+            const mostOption = backendQuestion.options.find(opt => opt.targetTrait === discAnswer.most);
+            if (mostOption) {
+              formattedAnswers[questionId] = mostOption.id;
+            }
+          }
+        }
+      }
+    }
+
+    // Prepare final submission data (no userId - backend extracts from JWT via microservices)
+    const finalSubmissionData = {
+      quizId,
+      answers: formattedAnswers
+    };
+
+    console.log('Submitting quiz with formatted data:', finalSubmissionData);
+
+    try {
+      // Submit to backend - JWT token automatically included in headers
+      // Backend will:
+      // 1. Extract user ID from JWT token via auth-service
+      // 2. Calculate personality result
+      // 3. Get career recommendations from career-service
+      // 4. Get university recommendations from university-service
+      // 5. Update user profile in persona-service
+      const result = await this.fetchAPI<QuizResult>('/quiz-results/submit', {
+        method: 'POST',
+        data: finalSubmissionData
+      });
+
+      console.log('Quiz result received with microservices data:', result);
+
+      // Cache the result
+      const cacheKey = `result_${quizId}`;
+      this.setCachedData(cacheKey, result, this.DEFAULT_CACHE_TTL);
+
+      return result;
+
+    } catch (error) {
+      console.error('Quiz submission failed:', error);
+      throw new Error(`Failed to submit quiz: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   }
 
-  // Get user's quiz results
-  async getUserResults(userId: number): Promise<QuizResult[]> {
-    return this.fetchAPI<QuizResult[]>(`/quiz-results/user/${userId}`);
+  // Get user's quiz results (no need to pass userId - backend gets it from JWT)
+  async getUserResults(): Promise<QuizResult[]> {
+    return this.fetchAPI<QuizResult[]>('/quiz-results/my-results');
   }
 
   // Get specific quiz result

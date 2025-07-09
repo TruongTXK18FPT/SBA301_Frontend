@@ -47,7 +47,7 @@ const Alert: React.FC<AlertProps> = ({
   type = 'info',
   message,
   description,
-  duration = 4500,
+  duration = 2500,
   onClose,
   action
 }) => {
