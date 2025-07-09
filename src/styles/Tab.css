@@ -1,9 +1,10 @@
 /* Main Container */
 .admin-tab {
-  width: 250px;
+  width: 280px;
   height: 100vh;
-  background: white;
-  border-right: 1px solid #e2e8f0;
+  background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+  backdrop-filter: blur(10px);
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
   transition: all 0.3s ease;
   position: fixed;
   left: 0;
@@ -11,57 +12,63 @@
   z-index: 20;
   overflow-y: auto;
   overflow-x: hidden;
+  box-shadow: 5px 0 20px rgba(0, 0, 0, 0.1);
 }
 
 .admin-tab.collapsed {
-  width: 70px;
+  width: 80px;
 }
 
 .tab-header {
-  padding: 1.5rem;
+  padding: 2rem 1.5rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 1rem;
 }
 
 .logo-container {
   display: flex;
   align-items: center;
   gap: 1rem;
-  color: #1e293b;
+  color: white;
 }
 
 .admin-logo {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
   object-fit: cover;
+  border: 2px solid rgba(255, 255, 255, 0.2);
 }
 
 .admin-title {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #1e293b;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: white;
   white-space: nowrap;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .toggle-button {
-  background: none;
-  border: none;
-  color: #64748b;
-  cursor: pointer;
-  padding: 0.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  width: 36px;
+  height: 36px;
   border-radius: 8px;
-  transition: all 0.3s ease;
   display: flex;
   align-items: center;
   justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(10px);
 }
 
 .toggle-button:hover {
-  background: #f1f5f9;
-  color: #1e293b;
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.05);
 }
 
 .tab-nav {
@@ -76,30 +83,52 @@
   align-items: center;
   gap: 1rem;
   padding: 0.75rem 1rem;
-  border-radius: 8px;
+  border-radius: 12px;
   cursor: pointer;
   transition: all 0.3s ease;
   border: none;
   background: none;
   width: 100%;
-  color: #64748b;
+  color: rgba(255, 255, 255, 0.8);
   position: relative;
   text-align: left;
+  margin-bottom: 5px;
 }
 
 .tab-item:hover {
-  background: #f1f5f9;
-  color: #1e293b;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  transform: translateX(5px);
 }
 
 .tab-item.active {
-  background: #4a69bd;
+  background: rgba(255, 255, 255, 0.25);
   color: white;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+  border-left: 4px solid #ffd700;
+  transform: translateX(5px);
+}
+
+.tab-item.active::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-left: 8px solid #ffd700;
+  border-top: 8px solid transparent;
+  border-bottom: 8px solid transparent;
+}
+
+.tab-item.active .tab-icon {
+  color: #ffd700;
 }
 
 .tab-item.active .notification-badge {
-  background: white;
-  color: #4a69bd;
+  background: #ffd700;
+  color: #667eea;
 }
 
 .tab-icon {
@@ -118,7 +147,7 @@
 }
 
 .tab-item .notification-badge {
-  background: #ef4444;
+  background: #ff6b6b;
   color: white;
   font-size: 0.75rem;
   padding: 0.2rem 0.4rem;
@@ -130,6 +159,14 @@
   align-items: center;
   justify-content: center;
   margin-left: 0.5rem;
+  font-weight: 600;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
 }
 
 /* Scrollbar Styles */

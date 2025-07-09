@@ -563,10 +563,15 @@ body {
   box-shadow: 0 5px 15px rgba(37, 99, 235, 0.4);
 }
 
-.step-icon {
+.process-step .step-icon {
   font-size: 2.5rem;
   color: var(--electric-blue);
   margin: 1rem 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  text-align: center;
 }
 
 .process-step h3 {
