@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { setToken } from "../../services/localStorageService";
 import { getCurrentUser } from "../../services/userService";
-import { Box, CircularProgress, Typography } from "@mui/material";
+import LoadingSpinner from "../LoadingSpinner";
 
 interface AuthenticateProps {
   onLoginSuccess?: () => Promise<void>;
@@ -59,19 +59,9 @@ const Authenticate: React.FC<AuthenticateProps> = ({ onLoginSuccess }) => {
   }, [navigate, onLoginSuccess]);
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        gap: "30px",
-        justifyContent: "center",
-        alignItems: "center",
-        height: "100vh",
-      }}
-    >
-      <CircularProgress />
-      <Typography>Authenticating...</Typography>
-    </Box>
+    <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 9999 }}>
+      <LoadingSpinner message="Đang xác thực với Google..." />
+    </div>
   );
 };
 

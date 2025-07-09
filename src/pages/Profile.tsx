@@ -312,13 +312,13 @@ const Profile: React.FC = () => {
               </p>
               <div className="edit-actions">
                 <button className="edit-profile-btn" onClick={isEditing ? handleCancelEdit : handleEditClick}>
-                  {isEditing ? <FaTimes className="edit-icon" /> : <FaEdit className="edit-icon" />}
-                  {isEditing ? "Hủy" : "Chỉnh sửa hồ sơ"}
+                  {isEditing ? <FaTimes /> : <FaEdit />}
+                  <span>{isEditing ? "Hủy" : "Chỉnh sửa"}</span>
                 </button>
                 {isEditing && (
-                  <button className="save-profile-btn" onClick={handleSaveProfile} disabled={updateLoading}>
-                    <FaSave className="edit-icon" />
-                    {updateLoading ? "Đang lưu..." : "Lưu"}
+                  <button className="edit-profile-btn save" onClick={handleSaveProfile} disabled={updateLoading}>
+                    <FaSave />
+                    <span>{updateLoading ? "Đang lưu..." : "Lưu"}</span>
                   </button>
                 )}
               </div>
@@ -336,7 +336,7 @@ const Profile: React.FC = () => {
               <div className="profile-field">
                 <div className="field-header">
                   <FaUser className="field-icon" />
-                  <span>Họ và tên</span>
+                  <h3>Họ và tên</h3>
                 </div>
                 {isEditing ? (
                   <input
@@ -347,7 +347,7 @@ const Profile: React.FC = () => {
                     placeholder="Nhập họ và tên"
                   />
                 ) : (
-                  <span className="field-value">
+                  <span className={`field-value ${!profile?.fullName ? 'empty' : ''}`}>
                     {profile?.fullName ?? "Chưa cập nhật"}
                   </span>
                 )}
@@ -356,7 +356,7 @@ const Profile: React.FC = () => {
               <div className="profile-field">
                 <div className="field-header">
                   <FaCalendarAlt className="field-icon" />
-                  <span>Ngày sinh</span>
+                  <h3>Ngày sinh</h3>
                 </div>
                 {isEditing ? (
                   <input
@@ -368,7 +368,7 @@ const Profile: React.FC = () => {
                     max={new Date().toISOString().split('T')[0]}
                   />
                 ) : (
-                  <span className="field-value">
+                  <span className={`field-value ${!profile?.birthDate ? 'empty' : ''}`}>
                     {profile?.birthDate ? 
                       new Date(profile.birthDate).toLocaleDateString('vi-VN') : 
                       "Chưa cập nhật"
@@ -380,7 +380,7 @@ const Profile: React.FC = () => {
               <div className="profile-field">
                 <div className="field-header">
                   <FaPhone className="field-icon" />
-                  <span>Số điện thoại</span>
+                  <h3>Số điện thoại</h3>
                 </div>
                 {isEditing ? (
                   <input
@@ -391,7 +391,7 @@ const Profile: React.FC = () => {
                     placeholder="Nhập số điện thoại"
                   />
                 ) : (
-                  <span className="field-value">
+                  <span className={`field-value ${!profile?.phone ? 'empty' : ''}`}>
                     {profile?.phone ?? "Chưa cập nhật"}
                   </span>
                 )}
@@ -400,23 +400,11 @@ const Profile: React.FC = () => {
               <div className="profile-field">
                 <div className="field-header">
                   <FaUser className="field-icon" />
-                  <span>Vai trò</span>
+                  <h3>Vai trò</h3>
                 </div>
-                {isEditing ? (
-                  <select
-                    value={editData.role}
-                    onChange={(e) => setEditData(prev => ({ ...prev, role: e.target.value }))}
-                    className="edit-input"
-                  >
-                    <option value="">Chọn vai trò</option>
-                    <option value="PARENT">Phụ huynh</option>
-                    <option value="STUDENT">Học sinh</option>
-                  </select>
-                ) : (
-                  <span className="field-value">
-                    {getRoleDisplayName(currentUser?.role)}
-                  </span>
-                )}
+                <span className="field-value">
+                  {getRoleDisplayName(currentUser?.role)}
+                </span>
               </div>
             </div>
           </div>
@@ -430,7 +418,7 @@ const Profile: React.FC = () => {
               <div className="profile-field">
                 <div className="field-header">
                   <FaMapMarkerAlt className="field-icon" />
-                  <span>Địa chỉ</span>
+                  <h3>Địa chỉ</h3>
                 </div>
                 {isEditing ? (
                   <input
@@ -441,7 +429,7 @@ const Profile: React.FC = () => {
                     placeholder="Nhập địa chỉ"
                   />
                 ) : (
-                  <span className="field-value">
+                  <span className={`field-value ${!profile?.address ? 'empty' : ''}`}>
                     {profile?.address ?? "Chưa cập nhật"}
                   </span>
                 )}
@@ -450,7 +438,7 @@ const Profile: React.FC = () => {
               <div className="profile-field">
                 <div className="field-header">
                   <FaMapMarkerAlt className="field-icon" />
-                  <span>Tỉnh/Thành phố</span>
+                  <h3>Tỉnh/Thành phố</h3>
                 </div>
                 {isEditing ? (
                   <select
@@ -466,7 +454,7 @@ const Profile: React.FC = () => {
                     ))}
                   </select>
                 ) : (
-                  <span className="field-value">
+                  <span className={`field-value ${!provinceName ? 'empty' : ''}`}>
                     {locationLoading ? (
                       <span className="loading-text">Đang tải...</span>
                     ) : (
@@ -479,7 +467,7 @@ const Profile: React.FC = () => {
               <div className="profile-field">
                 <div className="field-header">
                   <FaMapMarkerAlt className="field-icon" />
-                  <span>Quận/Huyện</span>
+                  <h3>Quận/Huyện</h3>
                 </div>
                 {isEditing ? (
                   <select
@@ -496,7 +484,7 @@ const Profile: React.FC = () => {
                     ))}
                   </select>
                 ) : (
-                  <span className="field-value">
+                  <span className={`field-value ${!districtName ? 'empty' : ''}`}>
                     {locationLoading ? (
                       <span className="loading-text">Đang tải...</span>
                     ) : (

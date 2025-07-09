@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
-import { Route, Routes, useNavigate } from "react-router-dom";
+import { Route, Routes, useNavigate, useLocation } from "react-router-dom";
 import NavBar from "./components/NavBar";
 import ProtectedRoute from "./components/ProtectedRoute";
 import LoadingSpinner from "./components/LoadingSpinner";
+import Alert from "./components/Alert";
 import Home from "./pages/Home";
 import "./App.css";
 import Login from "./pages/LoginForm";
@@ -12,19 +13,17 @@ import Authenticate from "./components/authenticate/Authenticate";
 import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
 import Profile from "./pages/Profile";
+import PremiumPage from "./pages/PremiumPage";
 
 import { getToken, removeToken } from "./services/localStorageService";
 import { getCurrentUser } from "./services/userService";
 import ChatAi from "./pages/ChatAi";
-<<<<<<< Updated upstream
 import EventPublicLayout from "./components/event/EventPublicLayout";
 import EventPublicDetail from "./components/event/EventPublicDetail";
 import EventForm from "./components/event/EventForm";
 import EventPrivateList from "./components/event/EventPrivateList";
 import EventPrivateDetail from "./components/event/EventPrivateDetail";
-=======
 import { logOut } from "./services/authService";
->>>>>>> Stashed changes
 
 interface User {
   id: string;
@@ -37,6 +36,17 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [logoutAlert, setLogoutAlert] = useState<{
+    show: boolean;
+    message: string;
+  }>({
+    show: false,
+    message: "",
+  });
+  const location = useLocation();
+
+  // Routes where navbar should be hidden
+  const hideNavbarRoutes = ['/authenticate'];
 
   // Check authentication status and fetch user data on app load
   useEffect(() => {
@@ -64,6 +74,8 @@ function App() {
   }, []);
   const navigate = useNavigate();
   const handleLogout = async () => {
+    const userName = user?.fullName || "Bạn";
+    
     try {
       await logOut();
     } catch (error) {
@@ -72,7 +84,18 @@ function App() {
       removeToken();
       setIsAuthenticated(false);
       setUser(null);
-      navigate("/login");
+      
+      // Show logout alert
+      setLogoutAlert({
+        show: true,
+        message: `Tạm biệt, ${userName}! Hẹn gặp lại.`,
+      });
+      
+      // Hide alert after 2 seconds and navigate
+      setTimeout(() => {
+        setLogoutAlert({ show: false, message: "" });
+        navigate("/login");
+      }, 2000);
     }
   };
 
@@ -94,11 +117,23 @@ function App() {
 
   return (
     <div className="app-container">
-      <NavBar
-        isAuthenticated={isAuthenticated}
-        onLogout={handleLogout}
-        userRole={user?.role}
-      />
+      {/* Logout Alert */}
+      {logoutAlert.show && (
+        <Alert
+          type="success"
+          message={logoutAlert.message}
+          duration={2000}
+          onClose={() => setLogoutAlert({ show: false, message: "" })}
+        />
+      )}
+      
+      {!hideNavbarRoutes.includes(location.pathname) && (
+        <NavBar
+          isAuthenticated={isAuthenticated}
+          onLogout={handleLogout}
+          userRole={user?.role}
+        />
+      )}
       <main className="main-content">
         <Routes>
           <Route path="/" element={<Home />} />
@@ -112,6 +147,7 @@ function App() {
           />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/premium" element={<PremiumPage isAuthenticated={isAuthenticated} />} />
           {/* <Route path="/complete-profile" element={<CompleteProfile />} /> */}
           <Route path="/events" element={<EventPublicLayout />} />
           <Route path="/events/:slug" element={<EventPublicDetail />} />
@@ -119,6 +155,7 @@ function App() {
           <Route path="/organizer/events/new" element={<EventForm />} />
           <Route path="/organizer/events/:id" element={<EventPrivateDetail />} />
           <Route path="/moderator/events" element={<EventPrivateList />} />
+          <Route path="/moderator/events/:id" element={<EventPrivateDetail />} />
           <Route path="/moderator/events/:id" element={<EventPrivateDetail />} />
           
           <Route path="/admin/premium" />

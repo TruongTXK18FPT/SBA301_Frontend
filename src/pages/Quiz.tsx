@@ -2,20 +2,32 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import QuizIntro from '../components/quiz/QuizIntro';
 import QuizQuestion from '../components/quiz/QuizQuestion';
-import DISCQuestion from '../components/quiz/DISCQuestion';
+import DiscQuestion from '../components/quiz/DiscQuestion';
 import QuizProgress from '../components/quiz/QuizProgress';
 import QuestionList from '../components/quiz/QuestionList';
 import QuizResult from '../components/quiz/QuizResult';
 import quizService, {
     MBTIQuestion,
     DISCQuestionSet,
-    QuizSubmissionData,
-    QuizResult as QuizResultType
+    QuizSubmissionData
   } from '../services/quizService';
   import '../styles/Quiz.css';
 
   type QuizType = 'MBTI' | 'DISC';
-  type Answer = string | { most?: 'D' | 'I' | 'S' | 'C'; least?: 'D' | 'I' | 'S' | 'C' };
+  type DISCAnswer = { most?: 'D' | 'I' | 'S' | 'C'; least?: 'D' | 'I' | 'S' | 'C' };
+  type Answer = string | DISCAnswer;
+  
+  // Frontend result interface for the QuizResult component
+  interface TransformedResult {
+    type: string;
+    description: string;
+    careers: string[];
+    universities: string[];
+    personalityCode?: string;
+    keyTraits?: string;
+    nickname?: string;
+    scores?: any;
+  }
 
   const Quiz: React.FC = () => {
     const [quizStep, setQuizStep] = useState<'intro' | 'questions' | 'result'>('intro');
@@ -24,7 +36,7 @@ import quizService, {
     const [questions, setQuestions] = useState<Array<MBTIQuestion | DISCQuestionSet>>([]);
     const [currentQuestion, setCurrentQuestion] = useState(0);
     const [answers, setAnswers] = useState<Record<number, Answer>>({});
-    const [result, setResult] = useState<QuizResultType | null>(null);
+    const [result, setResult] = useState<TransformedResult | null>(null);
     const [loading, setLoading] = useState(false);
     const [questionsLoaded, setQuestionsLoaded] = useState(false);
 
@@ -46,7 +58,7 @@ import quizService, {
       }
 
       if (quizType === 'DISC') {
-        const discAnswer = answer as { most?: 'D' | 'I' | 'S' | 'C'; least?: 'D' | 'I' | 'S' | 'C' };
+        const discAnswer = answer as DISCAnswer;
         const isValid = discAnswer.most !== undefined && discAnswer.least !== undefined;
         console.log(`DISC question ${currentQuestionData.id} validation:`, {
           most: discAnswer.most,
@@ -65,32 +77,29 @@ import quizService, {
       return isValid;
     }, [currentQuestionData, answers, quizType]);
 
-    // Memoized check for ALL questions answered status
-    const areAllQuestionsAnswered = useCallback(() => {
-      if (questions.length === 0) return false;
+  // Helper function to check if a single answer is valid
+  const isAnswerValid = useCallback((answer: Answer, questionType: QuizType): boolean => {
+    if (questionType === 'DISC') {
+      const discAnswer = answer as DISCAnswer;
+      return discAnswer.most !== undefined && discAnswer.least !== undefined;
+    }
+    // For MBTI, any string answer is valid
+    return typeof answer === 'string' && answer.trim().length > 0;
+  }, []);
 
-      let answeredCount = 0;
-      for (const question of questions) {
-        const answer = answers[question.id];
-        if (answer) {
-          if (quizType === 'DISC') {
-            const discAnswer = answer as { most?: 'D' | 'I' | 'S' | 'C'; least?: 'D' | 'I' | 'S' | 'C' };
-            if (discAnswer.most !== undefined && discAnswer.least !== undefined) {
-              answeredCount++;
-            }
-          } else {
-            // For MBTI, any string answer is valid
-            if (typeof answer === 'string' && answer.trim().length > 0) {
-              answeredCount++;
-            }
-          }
-        }
-      }
+  // Memoized check for ALL questions answered status
+  const areAllQuestionsAnswered = useCallback(() => {
+    if (questions.length === 0) return false;
 
-      const allAnswered = answeredCount === questions.length;
-      console.log(`All questions answered check: ${answeredCount}/${questions.length} = ${allAnswered}`);
-      return allAnswered;
-    }, [questions, answers, quizType]);
+    const answeredCount = questions.filter(question => {
+      const answer = answers[question.id];
+      return answer && isAnswerValid(answer, quizType || 'MBTI');
+    }).length;
+
+    const allAnswered = answeredCount === questions.length;
+    console.log(`All questions answered check: ${answeredCount}/${questions.length} = ${allAnswered}`);
+    return allAnswered;
+  }, [questions, answers, quizType, isAnswerValid]);
 
     // Fetch available quiz types on component mount
     useEffect(() => {
@@ -127,7 +136,7 @@ import quizService, {
 
         // Find the category ID for the selected quiz type
         const selectedType = types.find(t => t.type === type);
-        if (!selectedType || !selectedType.category) {
+        if (!selectedType?.category) {
           throw new Error(`Category not found for quiz type: ${type}`);
         }
 
@@ -191,26 +200,50 @@ import quizService, {
         const quizzes = await quizService.getQuizzesByCategory(categoryId || 0);
         const quizId = quizzes[0].id;
 
-        // Prepare submission data
+        // Convert answers to the format expected by backend (questionId -> optionId)
+        const formattedAnswers: Record<number, number> = {};
+        
+        for (const question of questions) {
+          const questionId = question.id;
+          const answer = answers[questionId];
+          
+          if (answer) {
+            if (quizType === 'MBTI') {
+              // For MBTI, the answer is the option text - we need to find the option ID
+              // This will be handled by the service layer
+              formattedAnswers[questionId] = answer as any; // Service will handle the conversion
+            } else if (quizType === 'DISC') {
+              // For DISC, we need to handle the most/least selection
+              const discAnswer = answer as DISCAnswer;
+              // Service will handle the conversion based on the most selection
+              formattedAnswers[questionId] = discAnswer as any;
+            }
+          }
+        }
+
+        // Prepare submission data - remove quizType as it's not expected by backend
         const submissionData: QuizSubmissionData = {
           quizId,
-          answers,
-          quizType: quizType as 'MBTI' | 'DISC'
+          answers: formattedAnswers
         };
 
         // Submit quiz
         const quizResult = await quizService.submitQuiz(submissionData);
 
         // Transform the backend data to match frontend expectations
-        const transformedResult = {
-          type: quizResult.personalityCode || quizResult.type,
+        const transformedResult: TransformedResult = {
+          type: quizResult.personalityCode || 'Unknown',
+          personalityCode: quizResult.personalityCode,
           description: quizResult.description,
           careers: quizResult.careerRecommendations
             ? quizResult.careerRecommendations.split(', ').filter(career => career.trim() !== '')
             : [],
           universities: quizResult.universityRecommendations
             ? quizResult.universityRecommendations.split(', ').filter(uni => uni.trim() !== '')
-            : []
+            : [],
+          keyTraits: quizResult.keyTraits,
+          nickname: quizResult.nickname,
+          scores: quizResult.scores
         };
 
         setResult(transformedResult);
@@ -220,7 +253,7 @@ import quizService, {
       } finally {
         setLoading(false);
       }
-    }, [availableTypes, quizType, answers]);
+    }, [availableTypes, quizType, answers, questions]);
 
     const handleRetakeQuiz = useCallback(() => {
       setQuizStep('intro');
@@ -275,9 +308,9 @@ import quizService, {
                     onAnswer={handleAnswer}
                   />
                 ) : (
-                  <DISCQuestion
+                  <DiscQuestion
                     questionSet={question as DISCQuestionSet}
-                    selectedAnswer={answers[question.id] as { most?: 'D' | 'I' | 'S' | 'C'; least?: 'D' | 'I' | 'S' | 'C' }}
+                    selectedAnswer={answers[question.id] as DISCAnswer}
                     onAnswer={handleAnswer}
                   />
                 )}

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { FaGoogle, FaKey } from "react-icons/fa";
-import { useNavigate } from "react-router-dom";
+import { FaGoogle } from "react-icons/fa";
+import { useNavigate, Link } from "react-router-dom";
 import Button from "../components/Button";
 import Alert from "../components/Alert";
 import "../styles/LoginForm.css";
@@ -252,15 +252,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
         <source src={Login} type="video/mp4" />
       </video>
 
-      <div className="login-overlay" />
-
-      <div className="login-form-container animate-slide-up">
-        <div className="login-header">
-          <h1 className="login-title animate-fade-in">Chào Mừng Trở Lại</h1>
-          <p className="login-subtitle animate-fade-in-delay">
-            Đăng nhập để khám phá tính cách của bạn
-          </p>
-        </div>{" "}
+      <div className="login-overlay">
         {alert.show && (
           <Alert
             type={alert.type}
@@ -269,123 +261,86 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
             onClose={() => setAlert((prev) => ({ ...prev, show: false }))}
           />
         )}
-        {!showOtpVerification ? (
-          <form onSubmit={handleSubmit} className="login-form">
-            <div className="form-group animate-slide-right">
-              <input
-                type="text"
-                placeholder="Email của bạn"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="login-form-input"
-              />
-              <div className="input-highlight" />
-            </div>
+      </div>
 
-            <div
-              className="form-group animate-slide-right"
-              style={{ animationDelay: "0.1s" }}
-            >
-              <input
-                type="password"
-                placeholder="Mật khẩu"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="login-form-input"
-              />
-              <div className="input-highlight" />
-            </div>
-
-            <div
-              className="form-options animate-fade-in"
-              style={{ animationDelay: "0.2s" }}
-            >
-              <label className="remember-me">
-                <input type="checkbox" />
-                <span>Ghi nhớ đăng nhập</span>
-              </label>
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "flex-end",
-                  gap: "0.5rem",
-                }}
-              >
-                <a href="/forgot-password" className="forgot-password">
-                  Quên mật khẩu?
-                </a>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (email) {
-                      setUnverifiedEmail(email);
-                      setShowOtpVerification(true);
-                    } else {
-                      setAlert({
-                        show: true,
-                        type: "error",
-                        message: "Vui lòng nhập email trước",
-                        description: "Nhập email để xác thực tài khoản",
-                      });
-                    }
-                  }}
-                  className="forgot-password"
-                  style={{
-                    background: "none",
-                    border: "none",
-                    padding: 0,
-                    fontSize: "0.9rem",
-                    cursor: "pointer",
-                  }}
-                >
-                  Xác thực tài khoản?
-                </button>
-              </div>
-            </div>
-
-            <Button
-              type="submit"
-              variant="gradient"
-              size="lg"
-              isLoading={isLoading}
-              className="login-button animate-scale-up"
-              style={{ animationDelay: "0.3s" }}
-            >
-              Đăng Nhập
-            </Button>
-          </form>
-        ) : (
-          <div className="otp-verification-section">
-            <div className="otp-header">
-              <h3>Xác Thực Tài Khoản</h3>
-              <p>
-                Nhập mã OTP đã được gửi đến email:{" "}
-                <strong>{unverifiedEmail}</strong>
-              </p>
-            </div>
-
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleVerifyOtp();
-              }}
-              className="login-form"
-            >
-              <div className="form-group animate-slide-right">
-                <FaKey className="input-icon" />
+      <div className="login-form-container">
+        <div className="login-form-card">
+          <div className="login-header">
+            <h1 className="login-title">Chào Mừng Trở Lại</h1>
+            <p className="login-subtitle">
+              Đăng nhập để khám phá tính cách của bạn
+            </p>
+          </div>
+          
+          {!showOtpVerification ? (
+            <form onSubmit={handleSubmit} className="login-form">
+              <div className="form-group">
                 <input
                   type="text"
-                  value={otp}
-                  onChange={(e) => setOtp(e.target.value)}
-                  placeholder="Nhập mã OTP (6 chữ số)"
-                  maxLength={6}
-                  className="login-form-input"
+                  placeholder="Email của bạn"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   required
+                  className="login-form-input"
                 />
-                <div className="input-highlight" />
+                <div className="input-icon">📧</div>
+              </div>
+
+              <div className="form-group">
+                <input
+                  type="password"
+                  placeholder="Mật khẩu"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="login-form-input"
+                />
+                <div className="input-icon">🔒</div>
+              </div>
+
+              <div className="form-options">
+                <label className="remember-me">
+                  <input type="checkbox" />
+                  <span>Ghi nhớ đăng nhập</span>
+                </label>
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "flex-end",
+                    gap: "0.5rem",
+                  }}
+                >
+                  <Link to="/forgot-password" className="forgot-password">
+                    Quên mật khẩu?
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (email) {
+                        setUnverifiedEmail(email);
+                        setShowOtpVerification(true);
+                      } else {
+                        setAlert({
+                          show: true,
+                          type: "error",
+                          message: "Vui lòng nhập email trước",
+                          description: "Nhập email để xác thực tài khoản",
+                        });
+                      }
+                    }}
+                    className="forgot-password"
+                    style={{
+                      background: "none",
+                      border: "none",
+                      padding: 0,
+                      fontSize: "0.9rem",
+                      cursor: "pointer",
+                    }}
+                  >
+                    Xác thực tài khoản?
+                  </button>
+                </div>
               </div>
 
               <Button
@@ -393,68 +348,105 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
                 variant="gradient"
                 size="lg"
                 isLoading={isLoading}
-                className="login-button animate-scale-up"
-                disabled={!otp || otp.length < 6}
+                className="login-button"
               >
-                Xác Thực
+                Đăng Nhập
               </Button>
+            </form>
+          ) : (
+            <div className="otp-verification-section">
+              <div className="otp-header">
+                <h3>Xác Thực Tài Khoản</h3>
+                <p>
+                  Nhập mã OTP đã được gửi đến email:{" "}
+                  <strong>{unverifiedEmail}</strong>
+                </p>
+              </div>
 
-              <div className="otp-actions">
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleVerifyOtp();
+                }}
+                className="login-form"
+              >
+                <div className="form-group">
+                  <input
+                    type="text"
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value)}
+                    placeholder="Nhập mã OTP (6 chữ số)"
+                    maxLength={6}
+                    className="login-form-input"
+                    required
+                  />
+                  <div className="input-icon">🔑</div>
+                </div>
+
                 <Button
-                  type="button"
-                  variant="outline"
-                  size="md"
-                  onClick={() => handleResendOtp(false)}
-                  className="resend-button"
-                  disabled={isLoading}
+                  type="submit"
+                  variant="gradient"
+                  size="lg"
+                  isLoading={isLoading}
+                  className="login-button"
+                  disabled={!otp || otp.length < 6}
                 >
-                  Gửi Lại OTP
+                  Xác Thực
                 </Button>
 
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowOtpVerification(false);
-                    setUnverifiedEmail("");
-                    setOtp("");
-                    setAlert({ show: false, type: "success", message: "" });
-                  }}
-                  className="back-to-login"
-                >
-                  ← Quay lại đăng nhập
-                </button>
-              </div>
-            </form>
-          </div>
-        )}
-        {!showOtpVerification && (
-          <div
-            className="social-login animate-fade-in"
-            style={{ animationDelay: "0.4s" }}
-          >
-            <div className="divider">
-              <span>Hoặc đăng nhập với</span>
-            </div>
+                <div className="otp-actions">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="md"
+                    onClick={() => handleResendOtp(false)}
+                    className="resend-button"
+                    disabled={isLoading}
+                  >
+                    Gửi Lại OTP
+                  </Button>
 
-            <div className="google-login-container">
-              <Button
-                variant="outline"
-                size="lg"
-                icon={<FaGoogle />}
-                onClick={handleGoogleLogin}
-                className="google-login-button animate-hover"
-              >
-                Đăng nhập với Google
-              </Button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowOtpVerification(false);
+                      setUnverifiedEmail("");
+                      setOtp("");
+                      setAlert({ show: false, type: "success", message: "" });
+                    }}
+                    className="back-to-login"
+                  >
+                    ← Quay lại đăng nhập
+                  </button>
+                </div>
+              </form>
             </div>
+          )}
+          
+          {!showOtpVerification && (
+            <div className="social-login">
+              <div className="divider">
+                <span>Hoặc đăng nhập với</span>
+              </div>
+
+              <div className="google-login-container">
+                <Button
+                  variant="outline"
+                  size="lg"
+                  icon={<FaGoogle />}
+                  onClick={handleGoogleLogin}
+                  className="google-login-button"
+                >
+                  Đăng nhập với Google
+                </Button>
+              </div>
+            </div>
+          )}
+          
+          <div className="register-link">
+            Chưa có tài khoản? <Link to="/register">Đăng ký ngay</Link>
           </div>
-        )}
-        <p
-          className="signup-prompt animate-fade-in"
-          style={{ animationDelay: "0.5s" }}
-        >
-          Chưa có tài khoản? <a href="/register">Đăng ký ngay</a>
-        </p>
+        </div>
       </div>
     </div>
   );
