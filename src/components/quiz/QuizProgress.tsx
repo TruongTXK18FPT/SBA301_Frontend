@@ -13,8 +13,8 @@ const QuizProgress: React.FC<QuizProgressProps> = ({ current, total, type }) => 
   return (
     <div className="quiz-progress">
       <div className="progress-info">
-        <h3>{type} Personality Quiz</h3>
-        <p>Question {current + 1} of {total}</p>
+        <h3>Trắc Nghiệm Tính Cách {type}</h3>
+        <p>Câu hỏi {current + 1} trong {total}</p>
       </div>
       
       <div className="progress-bar-container">

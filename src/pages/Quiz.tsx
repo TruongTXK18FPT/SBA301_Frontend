@@ -29,6 +29,33 @@ import quizService, {
     scores?: any;
   }
 
+  // Hook for responsive design
+  const useResponsive = () => {
+    const [screenSize, setScreenSize] = useState({
+      isMobile: window.innerWidth <= 480,
+      isTablet: window.innerWidth > 480 && window.innerWidth <= 768,
+      isSmallDesktop: window.innerWidth > 768 && window.innerWidth <= 1024,
+      isDesktop: window.innerWidth > 1024
+    });
+
+    useEffect(() => {
+      const handleResize = () => {
+        const width = window.innerWidth;
+        setScreenSize({
+          isMobile: width <= 480,
+          isTablet: width > 480 && width <= 768,
+          isSmallDesktop: width > 768 && width <= 1024,
+          isDesktop: width > 1024
+        });
+      };
+
+      window.addEventListener('resize', handleResize);
+      return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    return screenSize;
+  };
+
   const Quiz: React.FC = () => {
     const [quizStep, setQuizStep] = useState<'intro' | 'questions' | 'result'>('intro');
     const [quizType, setQuizType] = useState<QuizType | null>(null);
@@ -41,6 +68,7 @@ import quizService, {
     const [questionsLoaded, setQuestionsLoaded] = useState(false);
 
     const { type } = useParams<{ type?: string }>();
+    const { isMobile, isTablet } = useResponsive();
 
     // Memoize current question to prevent unnecessary re-renders
     const currentQuestionData = useMemo(() => {
@@ -270,7 +298,7 @@ import quizService, {
         return (
           <div className="loading">
             <div className="loading-spinner"></div>
-            <p>Loading quiz questions...</p>
+            <p>Đang tải câu hỏi...</p>
           </div>
         );
       }
@@ -284,7 +312,7 @@ import quizService, {
             return (
               <div className="loading">
                 <div className="loading-spinner"></div>
-                <p>Preparing your quiz...</p>
+                <p>Đang chuẩn bị bài trắc nghiệm...</p>
               </div>
             );
           }
@@ -321,7 +349,7 @@ import quizService, {
                     onClick={handlePrevQuestion}
                     disabled={currentQuestion === 0}
                   >
-                    Previous
+                    Trước
                   </button>
 
                   <span className="question-indicator">
@@ -335,7 +363,7 @@ import quizService, {
                         onClick={handleNextQuestion}
                         disabled={!isQuestionAnswered()}
                       >
-                        Next
+                        Tiếp
                       </button>
                     )}
 
@@ -348,7 +376,7 @@ import quizService, {
                         opacity: areAllQuestionsAnswered() ? 1 : 0.6
                       }}
                     >
-                      Submit Quiz
+                      Nộp Bài
                     </button>
                   </div>
                 </div>
@@ -360,6 +388,8 @@ import quizService, {
                 answers={answers}
                 questions={questions} // Pass the questions array
                 onQuestionSelect={handleQuestionSelect}
+                isMobile={isMobile}
+                isTablet={isTablet}
               />
             </div>
           );
