@@ -27,6 +27,7 @@ import {
 } from 'react-icons/fa';
 import '../styles/ParentDashBoard.css';
 import quizService from '../services/quizService';
+import pdfService from '../services/pdfService';
 
 interface QuizResult {
   id: number;
@@ -91,6 +92,8 @@ const ParentDashBoard: React.FC = () => {
   const [selectedChat, setSelectedChat] = useState<UniversityChat | null>(null);
   const [chatMessage, setChatMessage] = useState('');
   const [chatMessages, setChatMessages] = useState<{id: number, sender: 'user' | 'university', message: string, timestamp: string}[]>([]);
+  const [downloadLoading, setDownloadLoading] = useState<number | null>(null);
+  const [downloadAllLoading, setDownloadAllLoading] = useState(false);
   
   // Seminar and transaction data (would come from API in real implementation)
   const [seminars] = useState<SeminarTicket[]>([
@@ -253,6 +256,37 @@ const ParentDashBoard: React.FC = () => {
       style: 'currency',
       currency: 'VND'
     }).format(amount);
+  };
+
+  // PDF Download functions
+  const downloadQuizResult = async (result: QuizResult) => {
+    if (!searchResults) return;
+
+    setDownloadLoading(result.id);
+    try {
+      await pdfService.downloadQuizResultPDF(searchResults, result);
+      // You could show a success message here if needed
+    } catch (error) {
+      console.error('Error downloading PDF:', error);
+      setError('Không thể tải file PDF. Vui lòng thử lại.');
+    } finally {
+      setDownloadLoading(null);
+    }
+  };
+
+  const downloadAllQuizResults = async () => {
+    if (!searchResults) return;
+
+    setDownloadAllLoading(true);
+    try {
+      await pdfService.downloadAllQuizResultsPDF(searchResults);
+      // You could show a success message here if needed
+    } catch (error) {
+      console.error('Error downloading all results PDF:', error);
+      setError('Không thể tải file PDF. Vui lòng thử lại.');
+    } finally {
+      setDownloadAllLoading(false);
+    }
   };
 
   const containerVariants = {
@@ -482,6 +516,25 @@ const ParentDashBoard: React.FC = () => {
                       <div className="results-count">
                         <span>{searchResults.results.length} bài test</span>
                       </div>
+                      <div className="results-actions">
+                        <button 
+                          className="action-button download-all"
+                          onClick={downloadAllQuizResults}
+                          disabled={downloadAllLoading}
+                        >
+                          {downloadAllLoading ? (
+                            <>
+                              <FaSpinner className="spinner" />
+                              Đang tải...
+                            </>
+                          ) : (
+                            <>
+                              <FaDownload />
+                              Tải Tất Cả
+                            </>
+                          )}
+                        </button>
+                      </div>
                     </div>
 
                     <div className="results-grid">
@@ -518,13 +571,29 @@ const ParentDashBoard: React.FC = () => {
                             <p>{result.description?.substring(0, 100)}...</p>
                           </div>
                           <div className="result-actions">
-                            <button className="action-button view">
+                            <button 
+                              className="action-button view"
+                              onClick={() => setSelectedResult(result)}
+                            >
                               <FaEye />
                               Xem Chi Tiết
                             </button>
-                            <button className="action-button download">
-                              <FaDownload />
-                              Tải Về
+                            <button 
+                              className="action-button download"
+                              onClick={() => downloadQuizResult(result)}
+                              disabled={downloadLoading === result.id}
+                            >
+                              {downloadLoading === result.id ? (
+                                <>
+                                  <FaSpinner className="spinner" />
+                                  Đang tải...
+                                </>
+                              ) : (
+                                <>
+                                  <FaDownload />
+                                  Tải Về
+                                </>
+                              )}
                             </button>
                           </div>
                         </motion.div>

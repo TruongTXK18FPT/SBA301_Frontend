@@ -1083,35 +1083,60 @@
 /* Recommendations Grid */
 .recommendations-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-  gap: 2rem;
+  grid-template-columns: 1fr;
+  gap: 2.5rem;
   position: relative;
   z-index: 10;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 .recommendation-card {
-  background: var(--glass-bg);
-  backdrop-filter: blur(20px);
-  border: 1px solid var(--glass-border);
-  border-radius: 20px;
-  padding: 2rem;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+  backdrop-filter: blur(25px);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+  padding: 2.5rem;
   position: relative;
   overflow: hidden;
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
   box-shadow: 
-    0 10px 25px rgba(0, 0, 0, 0.2),
-    0 0 0 1px rgba(255, 255, 255, 0.05);
+    0 20px 40px rgba(0, 0, 0, 0.3),
+    0 8px 16px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
   display: flex;
   flex-direction: column;
-  height: auto;
-  min-height: 400px;
+  width: 100%;
+  min-height: 500px;
+  animation: cardFloat 6s ease-in-out infinite;
+  animation-delay: var(--animation-delay, 0s);
+}
+
+@keyframes cardFloat {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+.career-card {
+  --animation-delay: 0s;
+}
+
+.university-card {
+  --animation-delay: 0.5s;
 }
 
 .recommendation-card:hover {
+  transform: translateY(-8px) scale(1.02);
   box-shadow: 
-    0 20px 40px rgba(0, 0, 0, 0.3),
-    0 0 0 1px rgba(255, 255, 255, 0.1);
+    0 32px 64px rgba(0, 0, 0, 0.4),
+    0 16px 32px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 .recommendation-card::before {
@@ -1120,53 +1145,128 @@
   top: 0;
   left: 0;
   right: 0;
-  height: 3px;
-  border-radius: 20px 20px 0 0;
+  height: 6px;
+  border-radius: 24px 24px 0 0;
+  z-index: 1;
 }
 
-.career-card::before {
-  background: var(--success-gradient);
+.recommendation-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, transparent 0%, rgba(255, 255, 255, 0.02) 50%, transparent 100%);
+  border-radius: 24px;
+  pointer-events: none;
+  z-index: 1;
+  background-image: linear-gradient(
+    135deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.1) 50%,
+    transparent 100%
+  );
+  background-size: 200% 200%;
+  animation: shimmer 3s ease-in-out infinite;
 }
 
-.university-card::before {
-  background: var(--blue-gradient);
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.card-icon {
+  width: 70px;
+  height: 70px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  color: white;
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+  animation: iconPulse 3s ease-in-out infinite;
+}
+
+@keyframes iconPulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+.career-icon {
+  background: linear-gradient(135deg, #10b981 0%, #059669 50%, #047857 100%);
+  box-shadow: 
+    0 8px 25px rgba(16, 185, 129, 0.4),
+    0 4px 12px rgba(16, 185, 129, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.university-icon {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 50%, #1d4ed8 100%);
+  box-shadow: 
+    0 8px 25px rgba(59, 130, 246, 0.4),
+    0 4px 12px rgba(59, 130, 246, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 .card-header {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+  position: relative;
+  z-index: 2;
 }
 
 .card-icon {
-  width: 50px;
-  height: 50px;
-  border-radius: 12px;
+  width: 70px;
+  height: 70px;
+  border-radius: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.5rem;
+  font-size: 2rem;
   color: white;
   flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
 }
 
-.career-icon {
-  background: var(--success-gradient);
-  box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
-}
-
-.university-icon {
-  background: var(--blue-gradient);
-  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+.card-icon::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, transparent 50%, rgba(255, 255, 255, 0.1) 100%);
+  border-radius: 20px;
 }
 
 .card-header h3 {
-  font-family: 'Poppins', sans-serif;
-  font-size: 1.2rem;
-  font-weight: 600;
+  font-family: 'Orbitron', monospace;
+  font-size: 1.5rem;
+  font-weight: 700;
   color: var(--text-primary);
   margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  background: linear-gradient(135deg, #ffffff 0%, #e2e8f0 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .card-content {
@@ -1175,66 +1275,102 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  z-index: 2;
 }
 
 .recommendation-grid {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
   flex: 1;
   overflow-y: auto;
-  max-height: 300px;
-  padding-right: 4px;
+  max-height: 400px;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
 }
 
 .recommendation-grid::-webkit-scrollbar {
-  width: 4px;
+  width: 8px;
 }
 
 .recommendation-grid::-webkit-scrollbar-track {
-  background: var(--glass-bg);
-  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
 }
 
 .recommendation-grid::-webkit-scrollbar-thumb {
-  background: var(--electric-blue);
-  border-radius: 2px;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .recommendation-grid::-webkit-scrollbar-thumb:hover {
-  background: var(--bright-blue);
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
 }
 
 .recommendation-item {
   display: flex;
   align-items: flex-start;
-  gap: 0.75rem;
-  padding: 1rem;
-  background: var(--glass-bg-light);
-  border-radius: 12px;
-  border: 1px solid var(--glass-border);
-  transition: all 0.3s ease;
+  gap: 1rem;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.04) 100%);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   font-family: 'Poppins', sans-serif;
   font-weight: 500;
   color: var(--text-secondary);
   word-wrap: break-word;
   word-break: break-word;
   hyphens: auto;
-  line-height: 1.5;
-  min-height: 48px;
+  line-height: 1.6;
+  min-height: auto;
+  position: relative;
+  overflow: hidden;
+}
+
+.recommendation-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(37, 99, 235, 0.05) 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  border-radius: 16px;
+}
+
+.recommendation-item:hover::before {
+  opacity: 1;
 }
 
 .recommendation-item:hover {
-  background: var(--glass-bg);
-  transform: translateX(5px);
-  box-shadow: 0 4px 15px rgba(37, 99, 235, 0.1);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.08) 100%);
+  transform: translateX(8px) translateY(-2px);
+  box-shadow: 
+    0 8px 25px rgba(59, 130, 246, 0.2),
+    0 4px 12px rgba(0, 0, 0, 0.1);
+  border-color: rgba(59, 130, 246, 0.3);
 }
 
 .recommendation-item .item-icon {
-  font-size: 1rem;
-  color: var(--electric-blue);
+  font-size: 1.2rem;
+  color: #3b82f6;
   flex-shrink: 0;
-  margin-top: 0.25rem;
+  margin-top: 0.2rem;
+  filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.3));
+  transition: all 0.3s ease;
+}
+
+.recommendation-item:hover .item-icon {
+  color: #60a5fa;
+  transform: scale(1.1);
+  filter: drop-shadow(0 0 12px rgba(59, 130, 246, 0.5));
 }
 
 .recommendation-item span {
@@ -1242,7 +1378,16 @@
   overflow-wrap: break-word;
   word-wrap: break-word;
   hyphens: auto;
-  line-height: 1.5;
+  line-height: 1.6;
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.9);
+  position: relative;
+  z-index: 1;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.8) 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 /* Action Buttons */
@@ -1271,6 +1416,21 @@
   overflow: hidden;
   backdrop-filter: blur(10px);
   border: 1px solid var(--glass-border);
+}
+
+.action-button .spinner {
+  animation: spin 1s linear infinite;
+}
+
+.action-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.action-button:disabled:hover {
+  transform: none !important;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3) !important;
 }
 
 .action-button::before {
@@ -1371,14 +1531,42 @@
 }
 
 /* Responsive Design for Quiz Result */
-@media (max-width: 1024px) {
+@media (max-width: 1400px) {
   .recommendations-grid {
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
+    max-width: 1000px;
   }
   
   .recommendation-card {
-    min-width: unset;
+    min-height: 450px;
+  }
+}
+
+@media (max-width: 1200px) {
+  .recommendations-grid {
+    max-width: 900px;
+  }
+  
+  .recommendation-grid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.2rem;
+  }
+}
+
+@media (max-width: 1024px) {
+  .recommendations-grid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    max-width: 800px;
+  }
+  
+  .recommendation-card {
+    min-height: 400px;
+    padding: 2rem;
+  }
+  
+  .recommendation-grid {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    max-height: 350px;
   }
 }
 
@@ -1391,6 +1579,54 @@
   .result-main-card {
     padding: 1.5rem;
   }
+  
+  .recommendations-grid {
+    max-width: 100%;
+    gap: 1.5rem;
+  }
+  
+  .recommendation-card {
+    min-height: 350px;
+    padding: 1.5rem;
+    border-radius: 20px;
+  }
+  
+  .card-header {
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .card-icon {
+    width: 60px;
+    height: 60px;
+    font-size: 1.8rem;
+    border-radius: 16px;
+  }
+  
+  .card-header h3 {
+    font-size: 1.3rem;
+  }
+  
+  .recommendation-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    max-height: 300px;
+    padding: 0.8rem;
+  }
+  
+  .recommendation-item {
+    padding: 1.2rem;
+    gap: 0.8rem;
+  }
+  
+  .recommendation-item .item-icon {
+    font-size: 1.1rem;
+  }
+  
+  .recommendation-item span {
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
 
   .celebration-title {
     font-size: 2rem;
@@ -1399,11 +1635,80 @@
   .celebration-icon {
     font-size: 3rem;
   }
+}
 
-  .personality-code {
-    font-size: 2rem;
+@media (max-width: 480px) {
+  .recommendation-card {
+    min-height: 320px;
+    padding: 1.2rem;
+    margin: 0 0.5rem;
   }
+  
+  .card-header {
+    flex-direction: column;
+    text-align: center;
+    gap: 0.8rem;
+    margin-bottom: 1.2rem;
+  }
+  
+  .card-icon {
+    width: 50px;
+    height: 50px;
+    font-size: 1.5rem;
+    border-radius: 12px;
+    margin: 0 auto;
+  }
+  
+  .card-header h3 {
+    font-size: 1.1rem;
+  }
+  
+  .recommendation-grid {
+    max-height: 250px;
+    padding: 0.6rem;
+  }
+  
+  .recommendation-item {
+    padding: 1rem;
+    gap: 0.6rem;
+    border-radius: 12px;
+  }
+  
+  .recommendation-item span {
+    font-size: 0.85rem;
+  }
+}
 
+/* Beautiful animations and effects for recommendation cards */
+@keyframes cardFloat {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes iconPulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+/* Additional responsive styles */
+@media (max-width: 640px) {
   .result-actions {
     flex-direction: column;
     align-items: center;
@@ -1426,9 +1731,7 @@
     white-space: normal;
     text-align: center;
   }
-}
 
-@media (max-width: 640px) {
   .quiz-result-container {
     padding: 0.5rem;
   }

@@ -11,12 +11,15 @@ import {
   FaHeart,
   FaLightbulb,
   FaTrophy,
-  FaRocket
+  FaRocket,
+  FaSpinner
 } from 'react-icons/fa';
+import pdfService from '../../services/pdfService';
 
 interface QuizResultProps {
   type: 'DISC' | 'MBTI';
   result: {
+    id?: number;
     type: string;
     description: string;
     careers: string[];
@@ -25,11 +28,20 @@ interface QuizResultProps {
     keyTraits?: string;
     nickname?: string;
     scores?: any;
+    submittedAt?: string;
+    quizType?: string;
   };
   onRetake?: () => void;
+  userInfo?: {
+    userId: string;
+    email: string;
+    fullName: string;
+  };
 }
 
-const QuizResult: React.FC<QuizResultProps> = ({ type, result, onRetake }) => {
+const QuizResult: React.FC<QuizResultProps> = ({ type, result, onRetake, userInfo }) => {
+  const [downloadLoading, setDownloadLoading] = React.useState(false);
+  
   const getPersonalityIcon = (type: string) => {
     switch (type) {
       case 'DISC':
@@ -45,6 +57,38 @@ const QuizResult: React.FC<QuizResultProps> = ({ type, result, onRetake }) => {
     if (type === 'DISC') return 'disc-result';
     if (type === 'MBTI') return 'mbti-result';
     return 'default-result';
+  };
+
+  const handleDownloadPDF = async () => {
+    try {
+      setDownloadLoading(true);
+      
+      // Create a mock UserQuizResults object for PDF generation
+      const userResults = {
+        userId: userInfo?.userId || 'current-user',
+        email: userInfo?.email || 'user@example.com',
+        fullName: userInfo?.fullName || 'Người dùng',
+        results: [{
+          id: result.id || Date.now(),
+          personalityCode: result.personalityCode || result.type,
+          nickname: result.nickname,
+          keyTraits: result.keyTraits,
+          description: result.description,
+          careerRecommendations: result.careers.join(', '),
+          universityRecommendations: result.universities.join(', '),
+          scores: result.scores,
+          submittedAt: result.submittedAt || new Date().toISOString(),
+          quizType: result.quizType || type
+        }]
+      };
+
+      await pdfService.downloadQuizResultPDF(userResults, userResults.results[0]);
+    } catch (error) {
+      console.error('Error downloading PDF:', error);
+      alert('Không thể tải file PDF. Vui lòng thử lại.');
+    } finally {
+      setDownloadLoading(false);
+    }
   };
 
   const containerVariants = {
@@ -253,13 +297,20 @@ const QuizResult: React.FC<QuizResultProps> = ({ type, result, onRetake }) => {
           className="action-button download-button"
           whileHover={{ scale: 1.05, y: -2 }}
           whileTap={{ scale: 0.95 }}
-          onClick={() => {
-            // Generate PDF or download functionality here
-            console.log('Download results');
-          }}
+          onClick={handleDownloadPDF}
+          disabled={downloadLoading}
         >
-          <FaDownload className="button-icon" />
-          <span>Tải Về PDF</span>
+          {downloadLoading ? (
+            <>
+              <FaSpinner className="button-icon spinner" />
+              <span>Đang tải...</span>
+            </>
+          ) : (
+            <>
+              <FaDownload className="button-icon" />
+              <span>Tải Về PDF</span>
+            </>
+          )}
         </motion.button>
 
         <motion.button
