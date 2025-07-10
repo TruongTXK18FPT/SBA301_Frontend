@@ -194,21 +194,28 @@ const ParentDashBoard: React.FC = () => {
 
     try {
       const results = await quizService.getUserResultsByEmail(searchEmail);
-      setSearchResults(results);
-      
-      if (!results || results.results.length === 0) {
+      setSearchResults(results || {
+        userId: '',
+        email: searchEmail,
+        fullName: '',
+        results: []
+      });
+
+      // Only show "no results" error if results array is actually empty
+      if (!results || !results.results || results.results.length === 0) {
         setError('Không tìm thấy kết quả trắc nghiệm cho email này');
       }
+
+      // Log the actual results for debugging
+      console.log('Search results:', results);
     } catch (err) {
       console.error('Search error:', err);
       
-      // Provide more specific error messages based on the error type
       if (err instanceof Error) {
         const errorMessage = err.message.toLowerCase();
         
         if (errorMessage.includes('unauthenticated') || errorMessage.includes('401')) {
           setError('⚠️ Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại để tiếp tục tìm kiếm.');
-          // Navigate to login page after showing the error for 3 seconds
           setTimeout(() => {
             navigate('/login');
           }, 3000);
@@ -457,8 +464,8 @@ const ParentDashBoard: React.FC = () => {
                   </motion.div>
                 )}
 
-                {searchResults && (
-                  <motion.div 
+                {searchResults && searchResults.results && (
+                  <motion.div
                     className="search-results"
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -468,7 +475,7 @@ const ParentDashBoard: React.FC = () => {
                       <div className="student-info">
                         <FaUserGraduate className="student-icon" />
                         <div>
-                          <h3>{searchResults.fullName}</h3>
+                          <h3>{searchResults.fullName || searchResults.email}</h3>
                           <p>{searchResults.email}</p>
                         </div>
                       </div>

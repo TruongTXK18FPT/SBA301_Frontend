@@ -418,23 +418,38 @@ class QuizService {
       quizType: string;
     }>;
   }> {
-    return this.fetchAPI<{
-      userId: string;
-      email: string;
-      fullName: string;
-      results: Array<{
-        id: number;
-        personalityCode: string;
-        nickname?: string;
-        keyTraits?: string;
-        description: string;
-        careerRecommendations?: string;
-        universityRecommendations?: string;
-        scores?: Record<string, number>;
-        submittedAt: string;
-        quizType: string;
-      }>;
-    }>(`/quiz-results/user/by-email?email=${encodeURIComponent(email)}`);
+    try {
+      const response = await this.fetchAPI<{
+        userId: string;
+        email: string;
+        totalQuizzesTaken: number;
+        quizResults: any[];
+      }>(`/quiz-results/user/by-email?email=${encodeURIComponent(email)}`);
+
+      if (!response) {
+        throw new Error('No response received from server');
+      }
+
+      // Transform the response to match expected format
+      return {
+        userId: response.userId,
+        email: response.email,
+        fullName: response.email, // Using email as fullName since it's not provided
+        results: response.quizResults?.map(result => ({
+          id: result.resultId,
+          personalityCode: result.personalityCode || result.resultType,
+          nickname: result.personalityName,
+          description: result.personalityDescription || '',
+          submittedAt: result.timeSubmit,
+          quizType: result.resultType,
+          // Include additional fields from resultJson if available
+          ...(result.resultJson ? JSON.parse(result.resultJson) : {})
+        })) || []
+      };
+    } catch (error) {
+      console.error('API request failed:', error);
+      throw error;
+    }
   }
 }
 
