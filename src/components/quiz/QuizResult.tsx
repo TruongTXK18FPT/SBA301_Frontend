@@ -278,8 +278,8 @@ const QuizResult: React.FC<QuizResultProps> = ({ type, result, onRetake }) => {
         className="result-footer"
         variants={itemVariants}
       >
-        <div className="footer-content">
-          <FaHeart className="footer-icon" />
+        <div className="result-footer-content">
+          <FaHeart className="result-footer-icon" />
           <p>Tính cách của bạn là siêu năng lực. Hãy sử dụng những hiểu biết này để phát huy hết tiềm năng của mình!</p>
         </div>
       </motion.div>

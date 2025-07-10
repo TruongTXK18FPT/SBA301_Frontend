@@ -151,7 +151,27 @@ class QuizService {
         const axiosError = error as AxiosError;
         console.error('Response data:', axiosError.response?.data);
         console.error('Response status:', axiosError.response?.status);
-        throw new Error(`API Error ${axiosError.code}: ${axiosError.message}`);
+        
+        // More detailed error messages based on status codes
+        const status = axiosError.response?.status;
+        const responseData = axiosError.response?.data;
+        
+        switch (status) {
+          case 401:
+            throw new Error('Unauthenticated - Please login again');
+          case 403:
+            throw new Error('Forbidden - You do not have permission to access this resource');
+          case 404:
+            throw new Error('Not Found - The requested resource was not found');
+          case 500:
+            // Extract more specific error message from backend if available
+            if (typeof responseData === 'string' && responseData.includes('Unauthenticated')) {
+              throw new Error('Internal Server Error - Authentication failed with microservice');
+            }
+            throw new Error(`Internal Server Error - ${responseData || 'Server encountered an error'}`);
+          default:
+            throw new Error(`API Error ${axiosError.code}: ${axiosError.message}`);
+        }
       }
       throw new Error('Unknown API error occurred');
     }
@@ -378,6 +398,43 @@ class QuizService {
   // Get specific quiz result
   async getQuizResult(resultId: number): Promise<QuizResult> {
     return this.fetchAPI<QuizResult>(`/quiz-results/${resultId}`);
+  }
+
+  // Get user's quiz results by email (for parent dashboard)
+  async getUserResultsByEmail(email: string): Promise<{
+    userId: string;
+    email: string;
+    fullName: string;
+    results: Array<{
+      id: number;
+      personalityCode: string;
+      nickname?: string;
+      keyTraits?: string;
+      description: string;
+      careerRecommendations?: string;
+      universityRecommendations?: string;
+      scores?: Record<string, number>;
+      submittedAt: string;
+      quizType: string;
+    }>;
+  }> {
+    return this.fetchAPI<{
+      userId: string;
+      email: string;
+      fullName: string;
+      results: Array<{
+        id: number;
+        personalityCode: string;
+        nickname?: string;
+        keyTraits?: string;
+        description: string;
+        careerRecommendations?: string;
+        universityRecommendations?: string;
+        scores?: Record<string, number>;
+        submittedAt: string;
+        quizType: string;
+      }>;
+    }>(`/quiz-results/user/by-email?email=${encodeURIComponent(email)}`);
   }
 }
 

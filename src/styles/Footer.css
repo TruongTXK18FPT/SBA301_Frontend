@@ -14,6 +14,8 @@
 }
 
 .footer {
+  width: 100%;
+  min-width: 100vw;
   background: var(--dark-bg);
   backdrop-filter: blur(20px);
   color: var(--text-light);
@@ -22,6 +24,13 @@
   overflow: hidden;
   font-family: 'Poppins', sans-serif;
   border-top: 1px solid var(--glass-border);
+  margin: 0;
+  box-sizing: border-box;
+  clear: both;
+  z-index: 10;
+  left: 0 !important;
+  right: 0 !important;
+  max-width: none !important;
 }
 
 .footer-gradient {
@@ -42,6 +51,8 @@
   grid-template-columns: 1fr 2fr 1fr;
   gap: 3rem;
   align-items: start;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .company-info {
@@ -395,4 +406,10 @@
     width: 16px;
     height: 16px;
   }
+}
+
+/* Ensure footer is not affected by other CSS */
+.footer,
+.footer * {
+  box-sizing: border-box;
 }

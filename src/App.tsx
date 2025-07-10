@@ -14,6 +14,7 @@ import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
 import Profile from "./pages/Profile";
 import PremiumPage from "./pages/PremiumPage";
+import ParentDashBoard from "./pages/ParentDashBoard";
 
 import { getToken, removeToken } from "./services/localStorageService";
 import { getCurrentUser } from "./services/userService";
@@ -55,6 +56,8 @@ function App() {
       if (token) {
         try {
           const userData = await getCurrentUser();
+          console.log("User data retrieved:", userData);
+          console.log("User role:", userData?.role);
           setUser(userData);
           setIsAuthenticated(true);
         } catch (error) {
@@ -131,7 +134,7 @@ function App() {
         <NavBar
           isAuthenticated={isAuthenticated}
           onLogout={handleLogout}
-          userRole={user?.role}
+          userRole={user?.role?.toLowerCase()}
         />
       )}
       <main className="main-content">
@@ -184,11 +187,24 @@ function App() {
             element={
               <ProtectedRoute
                 isAuthenticated={isAuthenticated}
-                userRole={user?.role}
+                userRole={user?.role?.toLowerCase()}
                 requiredRole="admin"
                 requireExactRole={true}
               >
                 <Admin />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/parent"
+            element={
+              <ProtectedRoute
+                isAuthenticated={isAuthenticated}
+                userRole={user?.role?.toLowerCase()}
+                requiredRole="parent"
+                requireExactRole={true}
+              >
+                <ParentDashBoard />
               </ProtectedRoute>
             }
           />
