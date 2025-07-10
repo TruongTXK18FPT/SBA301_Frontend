@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { FaUserCircle, FaSignInAlt, FaSignOutAlt, FaListAlt, FaCalendarAlt, FaCrown, FaNewspaper, FaCog, FaRobot } from 'react-icons/fa';
+import { FaUserCircle, FaSignInAlt, FaSignOutAlt, FaCalendarAlt, FaCrown, FaNewspaper, FaCog, FaRobot, FaBrain, FaUsers } from 'react-icons/fa';
 import '../styles/NavBar.css';
 import Logo from '../assets/Logo.jpeg';
 
@@ -14,6 +14,9 @@ const NavBar = ({ isAuthenticated, onLogout, userRole }: NavBarProps) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
+
+  // Normalize role to lowercase for comparison
+  const normalizedRole = userRole?.toLowerCase();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -41,6 +44,7 @@ const NavBar = ({ isAuthenticated, onLogout, userRole }: NavBarProps) => {
           className="mobile-toggle" 
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           aria-label="Toggle mobile menu"
+          aria-expanded={isMobileMenuOpen}
         >
           <div className={`hamburger ${isMobileMenuOpen ? 'active' : ''}`}>
             <span></span>
@@ -58,14 +62,14 @@ const NavBar = ({ isAuthenticated, onLogout, userRole }: NavBarProps) => {
               className={`nav-item ${location.pathname === '/events' ? 'active' : ''}`}
             >
               <FaCalendarAlt />
-              <span>Sự Kiện</span>
+              <span className="nav-text">Sự Kiện</span>
             </Link>
             <Link 
               to="/quiz" 
               className={`nav-item ${location.pathname === '/quiz' ? 'active' : ''}`}
             >
-              <FaListAlt />
-              <span>Trắc Nghiệm</span>
+              <FaBrain />
+              <span className="nav-text">Trắc Nghiệm</span>
             </Link>
             {/* Show additional authenticated user links */}
             {isAuthenticated && (
@@ -75,21 +79,14 @@ const NavBar = ({ isAuthenticated, onLogout, userRole }: NavBarProps) => {
                   className={`nav-item ${location.pathname === '/blog' ? 'active' : ''}`}
                 >
                   <FaNewspaper />
-                  <span>Bài Viết</span>
+                  <span className="nav-text">Bài Viết</span>
                 </Link>
                 <Link 
                   to="/chat-ai" 
                   className={`nav-item ${location.pathname === '/chat-ai' ? 'active' : ''}`}
                 >
                   <FaRobot />
-                  <span>AI Tư Vấn</span>
-                </Link>
-                <Link 
-                  to="/profile" 
-                  className={`nav-item ${location.pathname === '/profile' ? 'active' : ''}`}
-                >
-                  <FaUserCircle />
-                  <span>Hồ Sơ</span>
+                  <span className="nav-text">AI Tư Vấn</span>
                 </Link>
               </>
             )}
@@ -100,17 +97,27 @@ const NavBar = ({ isAuthenticated, onLogout, userRole }: NavBarProps) => {
                 className={`nav-item ${location.pathname === '/blog' ? 'active' : ''}`}
               >
                 <FaNewspaper />
-                <span>Bài Viết</span>
+                <span className="nav-text">Bài Viết</span>
               </Link>
             )}
             {/* Admin link - only show for admin users */}
-            {userRole === 'admin' && (
+            {normalizedRole === 'admin' && (
               <Link 
                 to="/admin" 
                 className={`nav-item admin-link ${location.pathname === '/admin' ? 'active' : ''}`}
               >
                 <FaCog />
-                <span>Quản Trị</span>
+                <span className="nav-text">Quản Trị</span>
+              </Link>
+            )}
+            {/* Parent Dashboard link - only show for parent users */}
+            {normalizedRole === 'parent' && (
+              <Link 
+                to="/parent" 
+                className={`nav-item parent-link ${location.pathname === '/parent' ? 'active' : ''}`}
+              >
+                <FaUsers />
+                <span className="nav-text">DashBoard</span>
               </Link>
             )}
           </div>
@@ -119,24 +126,30 @@ const NavBar = ({ isAuthenticated, onLogout, userRole }: NavBarProps) => {
           <div className="nav-section auth-nav">
             {isAuthenticated ? (
               <>
+                <Link 
+                  to="/profile" 
+                  className={`nav-item profile-link ${location.pathname === '/profile' ? 'active' : ''}`}
+                  title="Hồ Sơ"
+                >
+                  <FaUserCircle />
+                </Link>
                 <Link to="/premium" className="auth-button premium">
                   <FaCrown />
-                  <span>Nâng Cấp Premium</span>
+                  <span className="auth-text">Premium</span>
                 </Link>
-                <button onClick={onLogout} className="auth-button logout">
+                <button onClick={onLogout} className="auth-button logout" title="Đăng xuất">
                   <FaSignOutAlt />
-                  <span>Đăng xuất</span>
                 </button>
               </>
             ) : (
               <>
                 <Link to="/premium" className="auth-button premium">
                   <FaCrown />
-                  <span>Nâng Cấp Premium</span>
+                  <span className="auth-text">Premium</span>
                 </Link>
                 <Link to="/login" className="auth-button login">
                   <FaSignInAlt />
-                  <span>Đăng nhập</span>
+                  <span className="auth-text">Đăng nhập</span>
                 </Link>
               </>
             )}
