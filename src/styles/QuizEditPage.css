@@ -1,0 +1,554 @@
+/* Quiz Edit Page - Clean and Simple Styles */
+.quiz-edit-container {
+  background: white;
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Global reset for all elements inside quiz edit container */
+.quiz-edit-container *,
+.quiz-edit-container *::before,
+.quiz-edit-container *::after {
+  -webkit-text-fill-color: unset !important;
+  -webkit-background-clip: unset !important;
+  background-clip: unset !important;
+  background-image: none !important;
+  color: inherit !important;
+}
+
+.quiz-edit-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #f1f5f9;
+}
+
+.quiz-edit-header h2 {
+  color: #1e293b !important;
+  font-size: 1.75rem;
+  margin: 0;
+  font-weight: 600;
+}
+
+/* Quiz Information Section */
+.quiz-info-section {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  border: 1px solid #e2e8f0;
+}
+
+.quiz-info-section h3 {
+  color: #1e293b !important;
+  margin: 0 0 1.5rem 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+/* Form Elements - Simple and Clean */
+.quiz-edit-form .form-group {
+  margin-bottom: 1.5rem;
+}
+
+.quiz-edit-form label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #374151 !important;
+  font-weight: 600;
+  font-size: 0.875rem;
+  -webkit-text-fill-color: #374151 !important;
+  -webkit-background-clip: unset !important;
+  background-clip: unset !important;
+  background-image: none !important;
+}
+
+/* Universal Form Input Styling - Enhanced with stronger specificity */
+.quiz-edit-form input,
+.quiz-edit-form select,
+.quiz-edit-form textarea,
+.quiz-edit-container input,
+.quiz-edit-container select,
+.quiz-edit-container textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid #e5e7eb !important;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-family: inherit;
+  box-sizing: border-box;
+
+  /* Force colors with maximum specificity */
+  background: white !important;
+  background-color: white !important;
+  background-image: none !important;
+  color: #1f2937 !important;
+  -webkit-text-fill-color: #1f2937 !important;
+  -webkit-background-clip: unset !important;
+  background-clip: unset !important;
+}
+
+.quiz-edit-form input:focus,
+.quiz-edit-form select:focus,
+.quiz-edit-form textarea:focus,
+.quiz-edit-container input:focus,
+.quiz-edit-container select:focus,
+.quiz-edit-container textarea:focus {
+  outline: none;
+  border-color: #4a69bd !important;
+  box-shadow: 0 0 0 3px rgba(74, 105, 189, 0.1);
+  color: #1f2937 !important;
+  -webkit-text-fill-color: #1f2937 !important;
+}
+
+.quiz-edit-form input::placeholder,
+.quiz-edit-form textarea::placeholder,
+.quiz-edit-container input::placeholder,
+.quiz-edit_container textarea::placeholder {
+  color: #9ca3af !important;
+  -webkit-text-fill-color: #9ca3af !important;
+  opacity: 1 !important;
+}
+
+/* Simple Select Dropdown */
+.quiz-edit-form select,
+.quiz-edit-container select {
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e") !important;
+  background-position: right 0.5rem center;
+  background-repeat: no-repeat;
+  background-size: 1.5em 1.5em;
+  padding-right: 2.5rem;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+}
+
+/* Select Options - Keep it simple */
+.quiz-edit-form select option,
+.quiz-edit-container select option {
+  background: white !important;
+  background-color: white !important;
+  color: #1f2937 !important;
+  -webkit-text-fill-color: #1f2937 !important;
+  padding: 0.5rem;
+}
+
+.quiz-edit-form textarea,
+.quiz-edit-container textarea {
+  resize: vertical;
+  min-height: 100px;
+  color: #1f2937 !important;
+  -webkit-text-fill-color: #1f2937 !important;
+  -webkit-background-clip: unset !important;
+  background-clip: unset !important;
+  background-image: none !important;
+}
+
+/* Questions Section */
+.questions-section {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  border: 1px solid #e2e8f0;
+}
+
+.questions-section h3 {
+  color: #1e293b !important;
+  margin: 0 0 1.5rem 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.questions-container {
+  margin: 1.5rem 0;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+/* Question Blocks */
+.question-block {
+  background: white;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  transition: border-color 0.3s ease;
+}
+
+.question-block:hover {
+  border-color: #4a69bd;
+}
+
+.question-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #f1f5f9;
+}
+
+.question-header h4 {
+  margin: 0;
+  color: #1e293b !important;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+/* Options Container */
+.options-container {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background: #f8fafc;
+  border-radius: 8px;
+}
+
+.options-container h4 {
+  margin: 0 0 1rem 0;
+  color: #374151 !important;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.option-block {
+  background: white !important;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.option-block:last-child {
+  margin-bottom: 0;
+}
+
+.option-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  font-weight: 600;
+  color: #374151 !important;
+  -webkit-text-fill-color: #374151 !important;
+  -webkit-background-clip: unset !important;
+  background-clip: unset !important;
+  background-image: none !important;
+}
+
+.option-header span {
+  color: #374151 !important;
+  -webkit-text-fill-color: #374151 !important;
+}
+
+.option-fields {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1rem;
+  align-items: end;
+}
+
+/* Enhanced option field fixes with maximum specificity */
+.option-fields input,
+.option-fields select,
+.option-fields textarea,
+.option-block input,
+.option-block select,
+.option-block textarea {
+  background: white !important;
+  background-color: white !important;
+  background-image: none !important;
+  color: #1f2937 !important;
+  -webkit-text-fill-color: #1f2937 !important;
+  -webkit-background-clip: unset !important;
+  background-clip: unset !important;
+  border: 2px solid #e5e7eb !important;
+  font-family: inherit !important;
+  font-size: 0.875rem !important;
+}
+
+.option-fields input:focus,
+.option-fields select:focus,
+.option-fields textarea:focus,
+.option-block input:focus,
+.option-block select:focus,
+.option-block textarea:focus {
+  border-color: #4a69bd !important;
+  color: #1f2937 !important;
+  -webkit-text-fill-color: #1f2937 !important;
+  background: white !important;
+  background-color: white !important;
+}
+
+.option-fields input::placeholder,
+.option-block input::placeholder {
+  color: #9ca3af !important;
+  -webkit-text-fill-color: #9ca3af !important;
+  opacity: 1 !important;
+}
+
+/* Specific targeting for option text inputs with ID patterns */
+input[id*="option-text"],
+input[name*="option"],
+input[class*="option"] {
+  background: white !important;
+  background-color: white !important;
+  background-image: none !important;
+  color: #1f2937 !important;
+  -webkit-text-fill-color: #1f2937 !important;
+  -webkit-background-clip: unset !important;
+  background-clip: unset !important;
+  border: 2px solid #e5e7eb !important;
+  font-family: inherit !important;
+  font-size: 0.875rem !important;
+}
+
+input[id*="option-text"]:focus,
+input[name*="option"]:focus,
+input[class*="option"]:focus {
+  border-color: #4a69bd !important;
+  color: #1f2937 !important;
+  -webkit-text-fill-color: #1f2937 !important;
+  background: white !important;
+  background-color: white !important;
+}
+
+input[id*="option-text"]::placeholder,
+input[name*="option"]::placeholder,
+input[class*="option"]::placeholder {
+  color: #9ca3af !important;
+  -webkit-text-fill-color: #9ca3af !important;
+  opacity: 1 !important;
+}
+
+/* Specific targeting for question content textarea */
+textarea[id*="question-content"],
+textarea[name*="content"],
+textarea[class*="content"] {
+  background: white !important;
+  background-color: white !important;
+  background-image: none !important;
+  color: #1f2937 !important;
+  -webkit-text-fill-color: #1f2937 !important;
+  -webkit-background-clip: unset !important;
+  background-clip: unset !important;
+  border: 2px solid #e5e7eb !important;
+  font-family: inherit !important;
+  font-size: 0.875rem !important;
+}
+
+textarea[id*="question-content"]:focus,
+textarea[name*="content"]:focus,
+textarea[class*="content"]:focus {
+  border-color: #4a69bd !important;
+  color: #1f2937 !important;
+  -webkit-text-fill-color: #1f2937 !important;
+  background: white !important;
+  background-color: white !important;
+}
+
+textarea[id*="question-content"]::placeholder,
+textarea[name*="content"]::placeholder,
+textarea[class*="content"]::placeholder {
+  color: #9ca3af !important;
+  -webkit-text-fill-color: #9ca3af !important;
+  opacity: 1 !important;
+}
+
+/* Trait Badges */
+.trait-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.trait-D {
+  background: #fef2f2;
+  color: #dc2626 !important;
+  -webkit-text-fill-color: #dc2626 !important;
+}
+
+.trait-I {
+  background: #fefce8;
+  color: #ca8a04 !important;
+  -webkit-text-fill-color: #ca8a04 !important;
+}
+
+.trait-S {
+  background: #f0fdf4;
+  color: #16a34a !important;
+  -webkit-text-fill-color: #16a34a !important;
+}
+
+.trait-C {
+  background: #f0f9ff;
+  color: #0284c7 !important;
+  -webkit-text-fill-color: #0284c7 !important;
+}
+
+/* Dimension Badge for MBTI questions */
+.dimension-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: #e0f2fe;
+  color: #0369a1 !important;
+  -webkit-text-fill-color: #0369a1 !important;
+  border: 1px solid #0ea5e9;
+}
+
+/* Dimension hint in labels */
+.dimension-hint {
+  font-size: 0.7rem;
+  color: #6b7280 !important;
+  -webkit-text-fill-color: #6b7280 !important;
+  font-weight: 400;
+  margin-left: 0.5rem;
+  font-style: italic;
+}
+
+/* Add Question Section */
+.add-question-section {
+  display: flex;
+  justify-content: center;
+  padding: 2rem;
+  border: 2px dashed #e2e8f0;
+  border-radius: 12px;
+  margin-bottom: 2rem;
+  background: #fafbfc;
+  transition: all 0.3s ease;
+}
+
+.add-question-section:hover {
+  border-color: #4a69bd;
+  background: #f8fafc;
+}
+
+/* Action Buttons */
+.quiz-edit-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  padding: 1.5rem;
+  border-top: 2px solid #f1f5f9;
+  margin-top: 2rem;
+}
+
+/* Loading and Error States */
+.quiz-edit-loading,
+.quiz-edit-error {
+  text-align: center;
+  padding: 3rem;
+  font-style: italic;
+}
+
+.quiz-edit-loading {
+  color: #64748b !important;
+}
+
+.quiz-edit-error {
+  color: #ef4444 !important;
+}
+
+/* Simple animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.quiz-edit-container {
+  animation: fadeIn 0.5s ease;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .quiz-edit-container {
+    padding: 1rem;
+    margin: 0;
+  }
+
+  .quiz-edit-header {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+
+  .option-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .quiz-edit-actions {
+    flex-direction: column;
+  }
+}
+
+/* Ultimate override to ensure visibility */
+.quiz-edit-container input[type="text"],
+.quiz-edit-container input[type="number"],
+.quiz-edit-container textarea,
+.quiz-edit-container select {
+  background: white !important;
+  background-color: white !important;
+  background-image: none !important;
+  color: #1f2937 !important;
+  -webkit-text-fill-color: #1f2937 !important;
+  -webkit-background-clip: unset !important;
+  background-clip: unset !important;
+  border: 2px solid #e5e7eb !important;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif !important;
+  font-size: 0.875rem !important;
+  line-height: 1.5 !important;
+}
+
+.quiz-edit-container input[type="text"]:focus,
+.quiz-edit-container input[type="number"]:focus,
+.quiz-edit-container textarea:focus,
+.quiz-edit-container select:focus {
+  border-color: #4a69bd !important;
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(74, 105, 189, 0.1) !important;
+  color: #1f2937 !important;
+  -webkit-text-fill-color: #1f2937 !important;
+  background: white !important;
+  background-color: white !important;
+}
+
+/* Force visibility for all text elements */
+.quiz-edit-container * {
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Additional safety net for form elements */
+.quiz-edit-container .form-group input,
+.quiz-edit-container .form-group textarea,
+.quiz-edit-container .form-group select,
+.quiz-edit-container .option-fields input,
+.quiz-edit-container .option-fields textarea,
+.quiz-edit-container .option-fields select {
+  background: white !important;
+  background-color: white !important;
+  background-image: none !important;
+  color: #1f2937 !important;
+  -webkit-text-fill-color: #1f2937 !important;
+  -webkit-background-clip: unset !important;
+  background-clip: unset !important;
+  text-shadow: none !important;
+  text-fill-color: #1f2937 !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
