@@ -49,7 +49,7 @@ const QuizManagement: React.FC<QuizManagementProps> = ({ onAlert }) => {
           title: 'MBTI Personality Assessment',
           categoryId: mbtiCategory.id,
           description: 'Comprehensive Myers-Briggs Type Indicator personality test to discover your personality type',
-          questionQuantity: 20,
+          questionQuantity: 60,
           categoryName: mbtiCategory.name
         });
       }
@@ -60,7 +60,7 @@ const QuizManagement: React.FC<QuizManagementProps> = ({ onAlert }) => {
           title: 'DISC Behavioral Assessment',
           categoryId: discCategory.id,
           description: 'DISC assessment to understand your behavioral style and communication preferences',
-          questionQuantity: 15,
+          questionQuantity: 28,
           categoryName: discCategory.name
         });
       }
