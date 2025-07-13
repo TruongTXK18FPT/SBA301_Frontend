@@ -1,79 +1,75 @@
 import axios from "axios";
-import { getToken, setToken, removeToken } from "./localStorageService";
-import { refreshAccessToken } from "./authService";
+import { getToken, removeToken, setToken } from "./localStorageService";
 
-const instance = axios.create({
-  baseURL: "http://localhost:8080/api/v1", // Đặt baseURL theo gateway
+const api = axios.create({
+  baseURL: "http://localhost:8080/api/v1",
+  headers: {
+    "Content-Type": "application/json",
+  },
 });
 
-let isRefreshing = false;
-let failedQueue: {
-  resolve: (token: string) => void;
-  reject: (err: any) => void;
-}[] = [];
-
-const processQueue = (error: any, token: string | null = null) => {
-  failedQueue.forEach((prom) => {
-    if (error) prom.reject(error);
-    else prom.resolve(token!);
-  });
-  failedQueue = [];
-};
-
-// Request interceptor: gắn token
-instance.interceptors.request.use(
+// Request interceptor to add token to every request
+api.interceptors.request.use(
   (config) => {
-    if (!config.headers["Skip-Authorization"]) {
-      const token = getToken();
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
-    } else {
-      delete config.headers["Skip-Authorization"];
+    const token = getToken();
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => {
+    return Promise.reject(error instanceof Error ? error : new Error('Request failed'));
+  }
 );
 
-// Response interceptor: xử lý lỗi 401
-instance.interceptors.response.use(
-  (response) => response,
+// Response interceptor to handle token refresh and logout
+api.interceptors.response.use(
+  (response) => {
+    return response;
+  },
   async (error) => {
     const originalRequest = error.config;
 
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
-      if (isRefreshing) {
-        return new Promise<string>((resolve, reject) => {
-          failedQueue.push({ resolve, reject });
-        }).then((token) => {
-          originalRequest.headers.Authorization = `Bearer ${token}`;
-          return axios(originalRequest);
-        });
-      }
-
-      isRefreshing = true;
-
       try {
-        const newToken = await refreshAccessToken();
+        const currentToken = getToken();
+        if (!currentToken) {
+          removeToken();
+          window.location.href = '/login';
+          return Promise.reject(new Error('No token available for refresh'));
+        }
+
+        // Try to refresh the token
+        const refreshResponse = await axios.post(
+          "http://localhost:8080/api/v1/authenticate/auth/refresh",
+          {
+            token: currentToken,
+          }
+        );
+
+        const newToken = refreshResponse.data.result?.token || refreshResponse.data.token;
+        if (!newToken) {
+          throw new Error("No token in refresh response");
+        }
+        
         setToken(newToken);
-        processQueue(null, newToken);
+
+        // Retry the original request with the new token
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
-        return axios(originalRequest);
-      } catch (err) {
-        processQueue(err, null);
+        return api(originalRequest);
+      } catch (refreshError) {
+        // If refresh fails, logout user
+        console.error('Token refresh failed:', refreshError);
         removeToken();
-        window.location.href = "/login";
-        return Promise.reject(err);
-      } finally {
-        isRefreshing = false;
+        window.location.href = '/login';
+        return Promise.reject(new Error('Token refresh failed'));
       }
     }
 
-    return Promise.reject(error);
+    return Promise.reject(error instanceof Error ? error : new Error('Request failed'));
   }
 );
 
-export default instance;
+export default api;

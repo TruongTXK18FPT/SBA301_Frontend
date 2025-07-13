@@ -58,7 +58,7 @@ export interface Quiz {
 export interface QuizSubmissionData {
   quizId: number;
   // Remove userId - backend will extract it from JWT token via auth-service
-  answers: Record<number, number>; // questionId -> optionId (backend expects this format)
+  answers: Record<number, string | { most?: 'D' | 'I' | 'S' | 'C', least?: 'D' | 'I' | 'S' | 'C' }>; // questionId -> answer
 }
 
 export interface QuizResult {
@@ -71,11 +71,72 @@ export interface QuizResult {
   universityRecommendations?: string;
 }
 
+// Quiz Management Types
+export interface QuizData {
+  id: number;
+  title: string;
+  categoryId: number;
+  description: string;
+  questionQuantity: number;
+  categoryName?: string;
+}
+
+export interface QuizCreateRequest {
+  title: string;
+  categoryId: number;
+  description: string;
+  questionQuantity: number;
+}
+
+export interface QuizUpdateRequest {
+  title: string;
+  categoryId: number;
+  description: string;
+  questionQuantity: number;
+}
+
+export interface QuizQuestionCreateRequest {
+  content: string;
+  orderNumber: number;
+  dimension: string;
+  quizId: number;
+  options: QuizOptionCreateRequest[];
+}
+
+export interface QuizOptionCreateRequest {
+  optionText: string;
+  targetTrait?: string;
+  scoreValue: 'NEGATIVE_ONE' | 'ZERO' | 'POSITIVE_ONE' | 'DISC_TWO'; // Match backend enum
+}
+
+export interface QuizQuestionResponse {
+  id: number;
+  content: string;
+  orderNumber: number;
+  dimension: string;
+  quizId: number;
+  options: QuizOptionResponse[];
+}
+
+export interface QuizOptionResponse {
+  id: number;
+  optionText: string;
+  targetTrait?: string;
+  scoreValue: number;
+  questionId: number;
+}
+
+interface CacheItem {
+  data: unknown;
+  timestamp: number;
+  ttl: number;
+}
+
 class QuizService {
   private baseURL = 'http://localhost:8080/api/v1/quiz';
 
   // Client-side cache for better performance
-  private cache = new Map<string, { data: any; timestamp: number; ttl: number }>();
+  private cache = new Map<string, CacheItem>();
   private readonly DEFAULT_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
   private readonly QUESTIONS_CACHE_TTL = 10 * 60 * 1000; // 10 minutes for questions
 
@@ -88,7 +149,7 @@ class QuizService {
   }
 
   // Enhanced cache management
-  private getCacheKey(endpoint: string, params?: any): string {
+  private getCacheKey(endpoint: string, params?: unknown): string {
     const paramStr = params ? JSON.stringify(params) : '';
     return `${endpoint}${paramStr}`;
   }
@@ -97,7 +158,7 @@ class QuizService {
     const cached = this.cache.get(key);
     if (cached && Date.now() - cached.timestamp < cached.ttl) {
       console.log(`Cache hit for: ${key}`);
-      return cached.data;
+      return cached.data as T;
     }
     if (cached) {
       this.cache.delete(key); // Remove expired cache
@@ -245,7 +306,7 @@ class QuizService {
   }
 
   // Optimized transformation with memoization
-  private transformationCache = new Map<string, any>();
+  private transformationCache = new Map<string, (MBTIQuestion | DISCQuestionSet)[]>();
 
   transformQuestionsForFrontend(
     backendQuestions: BackendQuizQuestion[],
@@ -256,7 +317,7 @@ class QuizService {
 
     if (this.transformationCache.has(cacheKey)) {
       console.log('Using cached transformation');
-      return this.transformationCache.get(cacheKey);
+      return this.transformationCache.get(cacheKey)!;
     }
 
     console.log(`Transforming ${type} questions:`, backendQuestions);
@@ -365,12 +426,6 @@ class QuizService {
 
     try {
       // Submit to backend - JWT token automatically included in headers
-      // Backend will:
-      // 1. Extract user ID from JWT token via auth-service
-      // 2. Calculate personality result
-      // 3. Get career recommendations from career-service
-      // 4. Get university recommendations from university-service
-      // 5. Update user profile in persona-service
       const result = await this.fetchAPI<QuizResult>('/quiz-results/submit', {
         method: 'POST',
         data: finalSubmissionData
@@ -388,16 +443,6 @@ class QuizService {
       console.error('Quiz submission failed:', error);
       throw new Error(`Failed to submit quiz: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
-  }
-
-  // Get user's quiz results (no need to pass userId - backend gets it from JWT)
-  async getUserResults(): Promise<QuizResult[]> {
-    return this.fetchAPI<QuizResult[]>('/quiz-results/my-results');
-  }
-
-  // Get specific quiz result
-  async getQuizResult(resultId: number): Promise<QuizResult> {
-    return this.fetchAPI<QuizResult>(`/quiz-results/${resultId}`);
   }
 
   // Get user's quiz results by email (for parent dashboard)
@@ -423,7 +468,15 @@ class QuizService {
         userId: string;
         email: string;
         totalQuizzesTaken: number;
-        quizResults: any[];
+        quizResults: Array<{
+          resultId: number;
+          personalityCode?: string;
+          resultType: string;
+          personalityName?: string;
+          personalityDescription?: string;
+          timeSubmit: string;
+          resultJson?: string;
+        }>;
       }>(`/quiz-results/user/by-email?email=${encodeURIComponent(email)}`);
 
       if (!response) {
@@ -450,6 +503,89 @@ class QuizService {
       console.error('API request failed:', error);
       throw error;
     }
+  }
+
+  // Get all quizzes for management
+  async getAllQuizzes(): Promise<QuizData[]> {
+    return this.fetchAPI<QuizData[]>('/quiz', {}, this.DEFAULT_CACHE_TTL);
+  }
+
+  // Get all categories for dropdown
+  async getAllCategories(): Promise<Category[]> {
+    try {
+      const response = await this.fetchAPI<Category[]>('/categories', {}, this.DEFAULT_CACHE_TTL);
+      console.log('Categories API response:', response);
+      return response;
+    } catch (error) {
+      console.error('Failed to fetch categories:', error);
+      throw error;
+    }
+  }
+
+  // Create new quiz
+  async createQuiz(quizData: QuizCreateRequest): Promise<QuizData> {
+    // Clear cache after creating
+    this.cache.clear();
+    return this.fetchAPI<QuizData>('/quiz', {
+      method: 'POST',
+      data: quizData
+    });
+  }
+
+  // Update existing quiz
+  async updateQuiz(quizId: number, quizData: QuizUpdateRequest): Promise<QuizData> {
+    // Clear cache after updating
+    this.cache.clear();
+    return this.fetchAPI<QuizData>(`/quiz/${quizId}`, {
+      method: 'PUT',
+      data: quizData
+    });
+  }
+
+  // Delete quiz
+  async deleteQuiz(quizId: number): Promise<void> {
+    // Clear cache after deleting
+    this.cache.clear();
+    return this.fetchAPI<void>(`/quiz/${quizId}`, {
+      method: 'DELETE'
+    });
+  }
+
+  // Get quiz by ID for editing
+  async getQuizById(quizId: number): Promise<QuizData> {
+    return this.fetchAPI<QuizData>(`/quiz/${quizId}`, {}, this.DEFAULT_CACHE_TTL);
+  }
+
+  // Create quiz question with options
+  async createQuizQuestion(questionData: QuizQuestionCreateRequest): Promise<QuizQuestionResponse> {
+    // Clear cache after creating
+    this.cache.clear();
+    return this.fetchAPI<QuizQuestionResponse>('/quiz-questions', {
+      method: 'POST',
+      data: questionData
+    });
+  }
+
+  // Get questions for a quiz (for management)
+  async getQuizQuestions(quizId: number): Promise<QuizQuestionResponse[]> {
+    return this.fetchAPI<QuizQuestionResponse[]>(`/quiz-questions/quiz/${quizId}`, {}, this.DEFAULT_CACHE_TTL);
+  }
+
+  // Update quiz question
+  async updateQuizQuestion(questionId: number, questionData: QuizQuestionCreateRequest): Promise<QuizQuestionResponse> {
+    this.cache.clear();
+    return this.fetchAPI<QuizQuestionResponse>(`/quiz-questions/${questionId}`, {
+      method: 'PUT',
+      data: questionData
+    });
+  }
+
+  // Delete quiz question
+  async deleteQuizQuestion(questionId: number): Promise<void> {
+    this.cache.clear();
+    return this.fetchAPI<void>(`/quiz-questions/${questionId}`, {
+      method: 'DELETE'
+    });
   }
 }
 

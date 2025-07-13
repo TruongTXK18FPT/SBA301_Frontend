@@ -4,6 +4,7 @@ import { Link, useSearchParams } from "react-router-dom"
 import axios from "axios"
 import camelcaseKeys from "camelcase-keys"
 import './EventPublicLayout.css'
+import { getEvents } from "@/services/eventService"
 
 const EventPublicLayout = () => {
   const [events, setEvents] = useState<EventOverviewResponse[]>([])
@@ -78,60 +79,29 @@ const EventPublicLayout = () => {
   // }, [searchParams])
 
   useEffect(() => {
-    axios.get('http://localhost:8809/event/events', {
-      params: {
-        name: searchParams.get('q') || null,
-        from: searchParams.get('from') || null,
-        to: searchParams.get('to') || null,
-        status: searchParams.get('status') || null,
-        page: (parseInt(searchParams.get('page') || '1', 10)) - 1,
-        size: parseInt(searchParams.get('size') || '9', 10),
-      }
-    }).then(response => {
-      console.log("Fetched events:", camelcaseKeys(response.data.content, { deep: true }))
-      const fetchedEvents = camelcaseKeys(response.data.content, { deep: true })
-      
-      // Set pagination data
-      // setTotalPages(response.data.totalPages || 0)
-      // setTotalElements(response.data.totalElements || 0)
-      
-      // Add test data if we have less than 3 events to see the layout
-      const testEvents = [
-        {
-          id: 'test-1',
-          slug: 'test-event-1',
-          name: 'Test Event 1 - Lorem ipsum dolor sit amet consectetur',
-          bannerUrl: null,
-          price: 150000,
-          startTime: '2025-07-15T10:00:00'
-        },
-        {
-          id: 'test-2',
-          slug: 'test-event-2',
-          name: 'Test Event 2 - Adipiscing elit sed do eiusmod',
-          bannerUrl: null,
-          price: 250000,
-          startTime: '2025-07-20T14:00:00'
-        },
-        {
-          id: 'test-3',
-          slug: 'test-event-3',
-          name: 'Test Event 3 - Tempor incididunt ut labore',
-          bannerUrl: null,
-          price: 300000,
-          startTime: '2025-07-25T16:00:00'
-        }
-      ]
-
-      // Use real data if available, otherwise use test data
-      setEvents(fetchedEvents.length > 0 ? [...fetchedEvents, ...testEvents.slice(0, 3 - fetchedEvents.length)] : testEvents)
-      setLoading(false)
-    }).catch(error => {
-      console.error("Failed to fetch events:", error)
-      setError("Failed to fetch events")
-      setLoading(false)
+    getEvents({
+      name: searchParams.get('q') || undefined,
+      from: searchParams.get('from') || undefined,
+      to: searchParams.get('to') || undefined,
+      organizerId: searchParams.get('organizerId') || undefined,
+      moderatorId: searchParams.get('moderatorId') || undefined,
+      status: searchParams.get('status') || 'UPCOMING',
+      personalityTypes: searchParams.get('personalityTypes') || undefined,
+      page: parseInt(searchParams.get('page') || '0', 10),  
+      size: parseInt(searchParams.get('size') || '10', 10),
+      sortBy: searchParams.get('sortBy') || undefined,
+      sortDirection: searchParams.get('sortDirection') as 'asc' | 'desc' || undefined
     })
-  }, [searchParams])
+      .then(response => {
+        setEvents(response.content)
+        setLoading(false)
+      })
+      .catch(error => {
+        console.error("Error fetching events:", error)
+        setError("Failed to load events")
+        setLoading(false)
+      })
+  }, [])
 
   if (loading) {
     console.log('Rendering loading state')

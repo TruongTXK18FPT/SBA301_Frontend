@@ -6,6 +6,7 @@ import { EventCreateDto } from "./dto/event.dto";
 import { ShowTimeCreateDto } from "./dto/showtime.dto";
 import snakecaseKeys from "snakecase-keys";
 import './EventForm.css';
+import { createAndSubmitEvent } from "@/services/eventService";
 
 const EventForm = () => {
     const bannerUrlRef = useRef<HTMLInputElement>(null);
@@ -175,16 +176,15 @@ const EventForm = () => {
             taxCode: invoiceInfo.needInvoice ? invoiceInfo.taxCode : undefined
         };
 
-        axios.put('http://localhost:8809/event/events', snakecaseKeys(JSON.parse(JSON.stringify(formData)), { deep: true }), {
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyMjIiLCJlbWFpbCI6InZ1aG1wckBnbWFpbC5jb20iLCJzY29wZSI6IkVWRU5UX09SR0FOSVpFUiJ9.mP6Ra4iHM-ccSebnwlWnUrPhMXDYnxyLE-nByYwc0mYgppgzWdgrchGa76Ser0J2BCzkvgrT325LAigaEOexHg
-`
-            }
-        });
+        try {
+            createAndSubmitEvent(snakecaseKeys(JSON.parse(JSON.stringify(formData)), { deep: true }));
+        } catch (error) {
+            console.error("Error submitting event:", error);
+            alert("Có lỗi khi gửi sự kiện. Vui lòng thử lại sau.");
+            return;
+        }
 
         console.log('Form Data to Submit:', snakecaseKeys(JSON.parse(JSON.stringify(formData)), { deep: true }));
-        alert('Dữ liệu đã được ghi vào console. Mở DevTools để xem chi tiết!');
     };
 
     // Add new showtime

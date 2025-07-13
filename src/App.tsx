@@ -15,16 +15,19 @@ import ForgotPassword from "./pages/ForgotPassword";
 import Profile from "./pages/Profile";
 import PremiumPage from "./pages/PremiumPage";
 import ParentDashBoard from "./pages/ParentDashBoard";
+import Event from "./pages/Event";
+import EventManagerDashboard from "./pages/EventManagerDashboard";
+import EventCreationForm from "./components/event/EventCreationForm";
+import EventDetails from "./pages/EventDetails";
+import Ticket from "./pages/Ticket";
 
 import { getToken, removeToken } from "./services/localStorageService";
 import { getCurrentUser } from "./services/userService";
 import ChatAi from "./pages/ChatAi";
-import EventPublicLayout from "./components/event/EventPublicLayout";
-import EventPublicDetail from "./components/event/EventPublicDetail";
-import EventForm from "./components/event/EventForm";
-import EventPrivateList from "./components/event/EventPrivateList";
-import EventPrivateDetail from "./components/event/EventPrivateDetail";
 import { logOut } from "./services/authService";
+import { useSetAtom } from "jotai";
+import { subscriptionAtom, userAtom } from "./atom/atom";
+import { getSubscriptions } from "./services/premiumService";
 
 interface User {
   id: string;
@@ -36,6 +39,8 @@ interface User {
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const setUserAtom = useSetAtom(userAtom);
+  const setSubscriptionAtom = useSetAtom(subscriptionAtom);
   const [loading, setLoading] = useState(true);
   const [logoutAlert, setLogoutAlert] = useState<{
     show: boolean;
@@ -53,20 +58,44 @@ function App() {
   useEffect(() => {
     const initializeAuth = async () => {
       const token = getToken();
+      
       if (token) {
         try {
+          // Try to fetch user data directly instead of validating token first
           const userData = await getCurrentUser();
+          
           console.log("User data retrieved:", userData);
           console.log("User role:", userData?.role);
           setUser(userData);
+          setUserAtom(userData);
           setIsAuthenticated(true);
+          
+          // Try to fetch subscription data only for non-admin users
+          if (userData?.role?.toLowerCase() !== 'admin') {
+            try {
+              const subscriptionData = await getSubscriptions(
+                { 
+                  uid: userData.id, 
+                  status: "active" 
+                }
+              );
+              setSubscriptionAtom(subscriptionData);
+            } catch (subscriptionError) {
+              console.warn("Could not fetch subscription data:", subscriptionError);
+              // Don't break authentication flow if subscription fails
+            }
+          }
         } catch (error) {
-          console.error("Failed to fetch user data:", error);
-          removeToken();
+          console.error("Failed to initialize authentication:", error);
+          // Only remove token if the error indicates invalid authentication
+          if (error instanceof Error && (error.message.includes('401') || error.message.includes('403'))) {
+            removeToken();
+          }
           setIsAuthenticated(false);
           setUser(null);
         }
       } else {
+        console.log("No token found, user not authenticated");
         setIsAuthenticated(false);
         setUser(null);
       }
@@ -115,7 +144,7 @@ function App() {
 
   // Show loading spinner while checking authentication
   if (loading) {
-    return <LoadingSpinner message="Đang kiểm tra xác thực..." />;
+    return <LoadingSpinner size="medium" message="Đang kiểm tra xác thực..." />;
   }
 
   return (
@@ -151,15 +180,62 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/register" element={<Register />} />
           <Route path="/premium" element={<PremiumPage isAuthenticated={isAuthenticated} />} />
+          
+          {/* Event Routes */}
+          <Route path="/events" element={<Event />} />
+          <Route path="/event-details/:id" element={<EventDetails />} />
+          <Route path="/ticket/:eventId" element={<Ticket />} />
+          
+          {/* Event Manager Routes */}
+          <Route
+            path="/event-manager/dashboard"
+            element={
+              <ProtectedRoute
+                isAuthenticated={isAuthenticated}
+                userRole={user?.role?.toLowerCase()}
+                requiredRole="event_manager"
+                requireExactRole={true}
+              >
+                <EventManagerDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/event-manager/create"
+            element={
+              <ProtectedRoute
+                isAuthenticated={isAuthenticated}
+                userRole={user?.role?.toLowerCase()}
+                requiredRole="event_manager"
+                requireExactRole={true}
+              >
+                <EventCreationForm />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/event-manager"
+            element={
+              <ProtectedRoute
+                isAuthenticated={isAuthenticated}
+                userRole={user?.role?.toLowerCase()}
+                requiredRole="event_manager"
+                requireExactRole={true}
+              >
+                <EventManagerDashboard />
+              </ProtectedRoute>
+            }
+          />
+          
           {/* <Route path="/complete-profile" element={<CompleteProfile />} /> */}
-          <Route path="/events" element={<EventPublicLayout />} />
+          {/* <Route path="/events" element={<EventPublicLayout />} />
           <Route path="/events/:slug" element={<EventPublicDetail />} />
           <Route path="/organizer/events" element={<EventPrivateList />} />
           <Route path="/organizer/events/new" element={<EventForm />} />
           <Route path="/organizer/events/:id" element={<EventPrivateDetail />} />
           <Route path="/moderator/events" element={<EventPrivateList />} />
           <Route path="/moderator/events/:id" element={<EventPrivateDetail />} />
-          <Route path="/moderator/events/:id" element={<EventPrivateDetail />} />
+          <Route path="/moderator/events/:id" element={<EventPrivateDetail />} /> */}
           
           <Route path="/admin/premium" />
           <Route path="/admin/premiums/:id" />

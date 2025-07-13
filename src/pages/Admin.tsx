@@ -14,6 +14,7 @@ import EventManagement from '../components/admin/EventManagement';
 import Analytics from '../components/admin/Analytics';
 import Settings from '../components/admin/Settings';
 import '../styles/Admin.css';
+import EventPrivateList from '@/components/event/EventPrivateList';
 
 export interface AdminStats {
   totalUsers: number;
@@ -120,7 +121,7 @@ const Admin = () => {
       case 'quizzes':
         return <QuizManagement onAlert={showAlert} />;
       case 'events':
-        return <EventManagement onAlert={showAlert} />;
+        return <EventPrivateList />;
       case 'analytics':
         return <Analytics stats={stats} />;
       case 'premium':

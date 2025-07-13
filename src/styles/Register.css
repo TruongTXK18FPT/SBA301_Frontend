@@ -262,14 +262,14 @@
 .register-form-select:invalid,
 .register-form-input:invalid,
 select:invalid {
-  color: #1e293b !important; /* Dark color for placeholder */
+  color: white !important; /* Dark color for placeholder */
 }
 
 /* When an option is selected */
 .register-form-select:valid,
 .register-form-input:valid,
 select:valid {
-  color: var(--text-primary) !important; /* White color for selected text */
+  color: var(--bg-darker); /* White color for selected text */
 }
 
 .register-form-select:focus,

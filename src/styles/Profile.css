@@ -296,7 +296,7 @@
   position: relative;
 }
 
-.section-title {
+.profile-section-title {
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -307,7 +307,7 @@
   color: var(--text-primary);
 }
 
-.section-icon {
+.profile-section-icon {
   color: var(--electric-blue);
   filter: drop-shadow(0 0 10px rgba(37, 99, 235, 0.3));
   font-size: 1.2rem;
@@ -385,12 +385,17 @@
 }
 
 .edit-input::placeholder {
-  color: var(--text-muted);
+  color: var(--bg-dark);
 }
 
 /* Select styles for edit mode */
 .edit-input select {
   cursor: pointer;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  color: var(--text-primary);
+  padding: 0.75rem;
+  border-radius: 8px;
 }
 
 .edit-input select option {

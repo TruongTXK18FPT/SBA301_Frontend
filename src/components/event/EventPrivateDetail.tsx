@@ -3,11 +3,11 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { EventPrivateDetailResponse, EventUpdateDto } from './dto/event.dto'
 import { ShowTimeUpdateDto } from './dto/showtime.dto'
 import axios from 'axios'
-import camelcaseKeys from 'camelcase-keys'
 import snakecaseKeys from 'snakecase-keys'
 import ReactQuill from 'react-quill'
 import 'react-quill/dist/quill.snow.css'
 import './EventPrivateDetail.css'
+import { approveEvent, getEventById, rejectEvent, updateEvent } from '@/services/eventService'
 
 const EventPrivateDetail = () => {
     const { id } = useParams<{ id: string }>()
@@ -66,8 +66,6 @@ const EventPrivateDetail = () => {
     ]
     const [adminMessage, setAdminMessage] = useState<string>('')
     
-    const organizerToken = 'eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyMjIiLCJlbWFpbCI6InZ1aG1wckBnbWFpbC5jb20iLCJzY29wZSI6IkVWRU5UX09SR0FOSVpFUiJ9.mP6Ra4iHM-ccSebnwlWnUrPhMXDYnxyLE-nByYwc0mYgppgzWdgrchGa76Ser0J2BCzkvgrT325LAigaEOexHg'
-    const moderatorToken = 'eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI5OTkiLCJlbWFpbCI6InZ1aHNlMTgyNjkyQGZwdC5lZHUudm4iLCJzY29wZSI6IkFETUlOIn0.M8zMcrUYnIebJGC0HIrVhQOxp20VOaP7SKfLGSv-A2f8DumHHBh10tqCiRBMP_ateM8ftUQ4adVi1cZbVpI9PA';
     // Auto-generate slug from event name
     const generateSlug = (name: string) => {
         return name
@@ -128,23 +126,18 @@ const EventPrivateDetail = () => {
     useEffect(() => {
         if (!id) return
         
-        axios.get(`http://localhost:8809/event/events/${id}`, {
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${organizerToken}`
+        const fetchEvent = async () => {
+            try {
+                const response = await getEventById(Number(id))
+                setEvent(response)
+                initializeFormData(response)
+            } catch (error) {
+                console.error("Error fetching event:", error)
+            } finally {
+                setLoading(false)
             }
-        })
-        .then(response => {
-            const fetchedEvent = camelcaseKeys(response.data, { deep: true }) as EventPrivateDetailResponse
-            setEvent(fetchedEvent)
-            initializeFormData(fetchedEvent)
-            setLoading(false)
-        })
-        .catch(error => {
-            console.error('Error fetching event details:', error)
-            setEvent(null)
-            setLoading(false)
-        })
+        }
+        fetchEvent()
     }, [id])
 
     // Handle image upload
@@ -303,15 +296,8 @@ const EventPrivateDetail = () => {
                 taxCode: invoiceInfo.needInvoice && invoiceInfo.businessType === 'company' ? invoiceInfo.taxCode : undefined
             }
 
-            await axios.put(`http://localhost:8809/event/events/${id}`, 
-                snakecaseKeys(JSON.parse(JSON.stringify(updateData)), { deep: true }),
-                {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${organizerToken}`
-                    }
-                }
-            )
+            const response = await updateEvent(event.id, snakecaseKeys(updateData))
+
             
             alert('Cập nhật sự kiện thành công!')
             setIsEditing(false)
@@ -328,19 +314,7 @@ const EventPrivateDetail = () => {
     const handleApprove = async () => {
         setSubmitting(true)
         try {
-            await axios.put(`http://localhost:8809/event/events/${id}/approve`, 
-                {   
-                    id: id,
-                    is_approved: true,
-                    notes: adminMessage
-                },
-                {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${moderatorToken}`
-                    }
-                }
-            )
+            await approveEvent(event.id, { notes: adminMessage })
             setShowApproveDialog(false)
             setAdminMessage('')
             window.location.reload()
@@ -356,15 +330,7 @@ const EventPrivateDetail = () => {
     const handleReject = async () => {
         setSubmitting(true)
         try {
-            await axios.post(`http://localhost:8809/event/events/${id}/reject`, 
-                { message: adminMessage },
-                {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${organizerToken}`
-                    }
-                }
-            )
+            await rejectEvent(event.id, { notes: adminMessage })
             setShowRejectDialog(false)
             setAdminMessage('')
             window.location.reload()

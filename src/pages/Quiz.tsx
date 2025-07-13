@@ -6,6 +6,7 @@ import DiscQuestion from '../components/quiz/DiscQuestion';
 import QuizProgress from '../components/quiz/QuizProgress';
 import QuestionList from '../components/quiz/QuestionList';
 import QuizResult from '../components/quiz/QuizResult';
+import LoadingSpinner from '../components/LoadingSpinner';
 import quizService, {
     MBTIQuestion,
     DISCQuestionSet,
@@ -296,10 +297,10 @@ import quizService, {
     const renderQuizContent = useMemo(() => {
       if (loading) {
         return (
-          <div className="loading">
-            <div className="loading-spinner"></div>
-            <p>Đang tải câu hỏi...</p>
-          </div>
+          <LoadingSpinner
+            size="medium"
+            message="Đang tải câu hỏi..."
+          />
         );
       }
 
@@ -310,10 +311,10 @@ import quizService, {
         case 'questions': {
           if (!questionsLoaded || questions.length === 0) {
             return (
-              <div className="loading">
-                <div className="loading-spinner"></div>
-                <p>Đang chuẩn bị bài trắc nghiệm...</p>
-              </div>
+              <LoadingSpinner
+                size="medium"
+                message="Đang chuẩn bị bài trắc nghiệm..."
+              />
             );
           }
 

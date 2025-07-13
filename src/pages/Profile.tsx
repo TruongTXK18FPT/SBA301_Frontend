@@ -4,6 +4,7 @@ import { getProfile } from "../services/authService";
 import { getProvinceName, getDistrictName } from "../services/locationService";
 import { getCurrentUser, updateProfile } from "../services/userService";
 import Alert from "../components/Alert";
+import LoadingSpinner from "../components/LoadingSpinner";
 import "../styles/Profile.css";
 
 const Profile: React.FC = () => {
@@ -248,12 +249,10 @@ const Profile: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="profile-container">
-        <div className="profile-loading animate-fade-in">
-          <div className="loading-spinner"></div>
-          <p>Đang tải thông tin...</p>
-        </div>
-      </div>
+     <LoadingSpinner
+        size="medium"
+        message="Đang tải thông tin cá nhân..."
+      />
     );
   }
 
@@ -328,8 +327,8 @@ const Profile: React.FC = () => {
 
         <div className="profile-details">
           <div className="profile-section">
-            <h2 className="section-title">
-              <FaUser className="section-icon" />
+            <h2 className="profile-section-title">
+              <FaUser className="profile-section-icon" />
               Thông tin cá nhân
             </h2>
             <div className="profile-grid">
@@ -410,8 +409,8 @@ const Profile: React.FC = () => {
           </div>
 
           <div className="profile-section">
-            <h2 className="section-title">
-              <FaMapMarkerAlt className="section-icon" />
+            <h2 className="profile-section-title">
+              <FaMapMarkerAlt className="profile-section-icon" />
               Địa chỉ
             </h2>
             <div className="profile-grid">

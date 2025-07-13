@@ -3,6 +3,7 @@ import { FaGoogle } from "react-icons/fa";
 import { useNavigate, Link } from "react-router-dom";
 import Button from "../components/Button";
 import Alert from "../components/Alert";
+import LoadingSpinner from "../components/LoadingSpinner";
 import "../styles/LoginForm.css";
 import Login from "../assets/Login.mp4";
 import OAuthConfig from "../configurations/configuration";
@@ -248,6 +249,13 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
 
   return (
     <div className="login-container">
+      {isLoading && (
+        <LoadingSpinner
+          size="medium"
+          message={showOtpVerification ? "Đang xử lý OTP..." : "Đang đăng nhập..."}
+        />
+      )}
+      
       <video autoPlay muted loop className="login-background">
         <source src={Login} type="video/mp4" />
       </video>
