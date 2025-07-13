@@ -1,6 +1,5 @@
 import axios from "axios";
 import { setToken, removeToken, getToken } from "./localStorageService";
-import { useNavigate } from 'react-router-dom';
 
 // Login
 export const login = async (email: string, password: string): Promise<void> => {
@@ -47,17 +46,36 @@ export const logOut = async () => {
 };
 
 
-// (Tùy chọn) Gọi API test token đang dùng
-export const getProfile = async () => {
-  const token = getToken();
-  const response = await axios.get(
-    "http://localhost:8804/profiles",
-    {
+// Validate current token
+export const validateToken = async (): Promise<boolean> => {
+  try {
+    const token = getToken();
+    if (!token) {
+      return false;
+    }
+
+    // Make a simple API call to validate token
+    await axios.get("http://localhost:8804/profiles", {
       headers: {
         Authorization: `Bearer ${token}`,
       },
-    }
-  );
+    });
+    return true;
+  } catch (error) {
+    console.error("Token validation failed:", error);
+    removeToken();
+    return false;
+  }
+};
+
+// (Tùy chọn) Gọi API test token đang dùng
+export const getProfile = async () => {
+  const token = getToken();
+  const response = await axios.get("http://localhost:8804/profiles", {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
   return response.data;
 };
 

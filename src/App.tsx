@@ -24,7 +24,7 @@ import EventPublicDetail from "./components/event/EventPublicDetail";
 import EventForm from "./components/event/EventForm";
 import EventPrivateList from "./components/event/EventPrivateList";
 import EventPrivateDetail from "./components/event/EventPrivateDetail";
-import { logOut } from "./services/authService";
+import { logOut, validateToken } from "./services/authService";
 import { useSetAtom } from "jotai";
 import { subscriptionAtom, userAtom } from "./atom/atom";
 import { getSubscriptions } from "./services/premiumService";
@@ -58,28 +58,50 @@ function App() {
   useEffect(() => {
     const initializeAuth = async () => {
       const token = getToken();
+      
       if (token) {
         try {
-          const userData = await getCurrentUser();
-          const subscriptionData = await getSubscriptions(
-            { 
-              uid: userData.id, 
-              status: "active" 
+          // First validate the token
+          const isTokenValid = await validateToken();
+          
+          if (isTokenValid) {
+            // Token is valid, fetch user data
+            const userData = await getCurrentUser();
+            
+            console.log("User data retrieved:", userData);
+            console.log("User role:", userData?.role);
+            setUser(userData);
+            setUserAtom(userData);
+            setIsAuthenticated(true);
+            
+            // Try to fetch subscription data, but don't fail authentication if it fails
+            try {
+              const subscriptionData = await getSubscriptions(
+                { 
+                  uid: userData.id, 
+                  status: "active" 
+                }
+              );
+              setSubscriptionAtom(subscriptionData);
+            } catch (subscriptionError) {
+              console.warn("Could not fetch subscription data:", subscriptionError);
+              // Don't break authentication flow if subscription fails
             }
-          );
-          console.log("User data retrieved:", userData);
-          console.log("User role:", userData?.role);
-          setUser(userData);
-          setUserAtom(userData);
-          setSubscriptionAtom(subscriptionData);
-          setIsAuthenticated(true);
+          } else {
+            // Token is invalid, clear authentication
+            console.log("Token validation failed, logging out");
+            removeToken();
+            setIsAuthenticated(false);
+            setUser(null);
+          }
         } catch (error) {
-          console.error("Failed to fetch user data:", error);
+          console.error("Failed to initialize authentication:", error);
           removeToken();
           setIsAuthenticated(false);
           setUser(null);
         }
       } else {
+        console.log("No token found, user not authenticated");
         setIsAuthenticated(false);
         setUser(null);
       }
