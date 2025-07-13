@@ -11,6 +11,7 @@ import {
   FaKey,
 } from "react-icons/fa";
 import Alert from "../components/Alert";
+import LoadingSpinner from "../components/LoadingSpinner";
 import loginVideo from "../assets/Login.mp4";
 import "../styles/Register.css";
 import { registerUser, resendOtp, verifyOtp } from "../services/authService";
@@ -317,6 +318,13 @@ const Register: React.FC = () => {
 
   return (
     <div className="register-container">
+      {isLoading && (
+        <LoadingSpinner
+          size="medium"
+          message={showVerification ? "Đang xử lý xác thực..." : "Đang đăng ký tài khoản..."}
+        />
+      )}
+      
       <div className="register-video-container">
         <video
           ref={videoRef}

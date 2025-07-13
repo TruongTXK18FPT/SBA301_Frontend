@@ -150,7 +150,7 @@ function App() {
 
   // Show loading spinner while checking authentication
   if (loading) {
-    return <LoadingSpinner message="Đang kiểm tra xác thực..." />;
+    return <LoadingSpinner size="medium" message="Đang kiểm tra xác thực..." />;
   }
 
   return (
