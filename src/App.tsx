@@ -24,7 +24,7 @@ import EventPublicDetail from "./components/event/EventPublicDetail";
 import EventForm from "./components/event/EventForm";
 import EventPrivateList from "./components/event/EventPrivateList";
 import EventPrivateDetail from "./components/event/EventPrivateDetail";
-import { logOut, validateToken } from "./services/authService";
+import { logOut } from "./services/authService";
 import { useSetAtom } from "jotai";
 import { subscriptionAtom, userAtom } from "./atom/atom";
 import { getSubscriptions } from "./services/premiumService";
@@ -61,20 +61,17 @@ function App() {
       
       if (token) {
         try {
-          // First validate the token
-          const isTokenValid = await validateToken();
+          // Try to fetch user data directly instead of validating token first
+          const userData = await getCurrentUser();
           
-          if (isTokenValid) {
-            // Token is valid, fetch user data
-            const userData = await getCurrentUser();
-            
-            console.log("User data retrieved:", userData);
-            console.log("User role:", userData?.role);
-            setUser(userData);
-            setUserAtom(userData);
-            setIsAuthenticated(true);
-            
-            // Try to fetch subscription data, but don't fail authentication if it fails
+          console.log("User data retrieved:", userData);
+          console.log("User role:", userData?.role);
+          setUser(userData);
+          setUserAtom(userData);
+          setIsAuthenticated(true);
+          
+          // Try to fetch subscription data only for non-admin users
+          if (userData?.role?.toLowerCase() !== 'admin') {
             try {
               const subscriptionData = await getSubscriptions(
                 { 
@@ -87,16 +84,13 @@ function App() {
               console.warn("Could not fetch subscription data:", subscriptionError);
               // Don't break authentication flow if subscription fails
             }
-          } else {
-            // Token is invalid, clear authentication
-            console.log("Token validation failed, logging out");
-            removeToken();
-            setIsAuthenticated(false);
-            setUser(null);
           }
         } catch (error) {
           console.error("Failed to initialize authentication:", error);
-          removeToken();
+          // Only remove token if the error indicates invalid authentication
+          if (error instanceof Error && (error.message.includes('401') || error.message.includes('403'))) {
+            removeToken();
+          }
           setIsAuthenticated(false);
           setUser(null);
         }

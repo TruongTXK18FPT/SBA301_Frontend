@@ -17,6 +17,7 @@ import {
   FaEye,
   FaDownload,
   FaUsers,
+  FaUser,
   FaCheckCircle,
   FaTimesCircle,
   FaSpinner,
@@ -798,7 +799,7 @@ const ParentDashBoard: React.FC = () => {
         </AnimatePresence>
       </motion.div>
 
-      {/* Result Detail Modal */}
+      {/* Enhanced Result Detail Modal */}
       <AnimatePresence>
         {selectedResult && (
           <motion.div
@@ -810,13 +811,18 @@ const ParentDashBoard: React.FC = () => {
           >
             <motion.div
               className="modal-content"
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.8, opacity: 0 }}
+              initial={{ scale: 0.8, opacity: 0, y: 50 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.8, opacity: 0, y: 50 }}
               onClick={(e) => e.stopPropagation()}
             >
               <div className="modal-header">
-                <h2>Chi Tiết Kết Quả - {selectedResult.quizType}</h2>
+                <div className="modal-title">
+                  <div className="modal-title-icon">
+                    {selectedResult.quizType === 'MBTI' ? <FaBrain /> : <FaUsers />}
+                  </div>
+                  Chi Tiết Kết Quả {selectedResult.quizType}
+                </div>
                 <button 
                   className="modal-close"
                   onClick={() => setSelectedResult(null)}
@@ -825,39 +831,110 @@ const ParentDashBoard: React.FC = () => {
                 </button>
               </div>
               <div className="modal-body">
-                <div className="result-detail">
-                  <div className="personality-section">
-                    <div className="personality-code-large">
-                      {selectedResult.personalityCode}
+                {/* Personality Display */}
+                <div className="modal-personality-display">
+                  <div className="modal-personality-code">
+                    {selectedResult.personalityCode}
+                  </div>
+                  {selectedResult.nickname && (
+                    <div className="modal-personality-nickname">
+                      "{selectedResult.nickname}"
                     </div>
-                    {selectedResult.nickname && (
-                      <div className="personality-nickname-large">
-                        "{selectedResult.nickname}"
+                  )}
+                </div>
+
+                {/* Description Section */}
+                <div className="modal-section">
+                  <div className="modal-section-title">
+                    <FaUser />
+                    Mô tả tính cách
+                  </div>
+                  <div className="modal-section-content">
+                    {selectedResult.description}
+                  </div>
+                </div>
+
+                {/* Key Traits */}
+                {selectedResult.keyTraits && (
+                  <div className="modal-section">
+                    <div className="modal-section-title">
+                      <FaChartLine />
+                      Đặc điểm chính
+                    </div>
+                    <div className="modal-section-content">
+                      <div className="key-traits-list">
+                        {selectedResult.keyTraits.split(',').map((trait, index) => (
+                          <div key={index} className="trait-item">
+                            {trait.trim()}
+                          </div>
+                        ))}
                       </div>
-                    )}
+                    </div>
                   </div>
-                  <div className="description-section">
-                    <h3>Mô tả tính cách</h3>
-                    <p>{selectedResult.description}</p>
+                )}
+
+                {/* Scores Display for DISC */}
+                {selectedResult.scores && (
+                  <div className="modal-section">
+                    <div className="modal-section-title">
+                      <FaChartLine />
+                      Điểm số chi tiết
+                    </div>
+                    <div className="modal-section-content">
+                      <div className="scores-grid">
+                        {Object.entries(selectedResult.scores).map(([key, value]) => (
+                          <div key={key} className="score-item">
+                            <div className="score-letter">{key}</div>
+                            <div className="score-value">{value}%</div>
+                            <div className="score-bar">
+                              <div 
+                                className="score-fill"
+                                style={{ width: `${value}%` }}
+                              ></div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   </div>
-                  {selectedResult.keyTraits && (
-                    <div className="traits-section">
-                      <h3>Đặc điểm chính</h3>
-                      <p>{selectedResult.keyTraits}</p>
+                )}
+
+                {/* Career Recommendations */}
+                {selectedResult.careerRecommendations && (
+                  <div className="modal-section">
+                    <div className="modal-section-title">
+                      <FaUserGraduate />
+                      Nghề nghiệp phù hợp
                     </div>
-                  )}
-                  {selectedResult.careerRecommendations && (
-                    <div className="careers-section">
-                      <h3>Nghề nghiệp phù hợp</h3>
-                      <p>{selectedResult.careerRecommendations}</p>
+                    <div className="modal-section-content">
+                      {selectedResult.careerRecommendations}
                     </div>
-                  )}
-                  {selectedResult.universityRecommendations && (
-                    <div className="universities-section">
-                      <h3>Trường đại học phù hợp</h3>
-                      <p>{selectedResult.universityRecommendations}</p>
+                  </div>
+                )}
+
+                {/* University Recommendations */}
+                {selectedResult.universityRecommendations && (
+                  <div className="modal-section">
+                    <div className="modal-section-title">
+                      <FaUniversity />
+                      Trường đại học phù hợp
                     </div>
-                  )}
+                    <div className="modal-section-content">
+                      {selectedResult.universityRecommendations}
+                    </div>
+                  </div>
+                )}
+
+                {/* Test Date */}
+                <div className="modal-section">
+                  <div className="modal-section-title">
+                    <FaCalendarAlt />
+                    Thông tin bài test
+                  </div>
+                  <div className="modal-section-content">
+                    <p><strong>Ngày thực hiện:</strong> {formatDate(selectedResult.submittedAt)}</p>
+                    <p><strong>Loại test:</strong> {selectedResult.quizType}</p>
+                  </div>
                 </div>
               </div>
             </motion.div>

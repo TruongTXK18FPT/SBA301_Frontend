@@ -385,52 +385,23 @@
 }
 
 .edit-input::placeholder {
-  color: var(--text-muted);
+  color: var(--bg-dark);
 }
 
 /* Select styles for edit mode */
 .edit-input select {
   cursor: pointer;
   background: var(--glass-bg);
-  color: var(--text-primary);
   border: 1px solid var(--glass-border);
-  border-radius: 12px;
-  padding: 0.75rem 1rem;
-  font-size: 1rem;
-  font-weight: 500;
-  width: 100%;
-  appearance: none;
-  background-image: url("data:image/svg+xml;charset=US-ASCII,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 5'><path fill='%23f8fafc' d='M2 0L0 2h4zm0 5L0 3h4z'/></svg>");
-  background-repeat: no-repeat;
-  background-position: right 1rem center;
-  background-size: 0.8rem;
-  transition: all 0.3s ease;
-}
-
-.edit-input select:focus {
-  outline: none;
-  border-color: var(--bright-blue);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1), var(--neon-glow);
-  background: rgba(255, 255, 255, 0.08);
-}
-
-.edit-input select:hover {
-  border-color: var(--bright-blue);
-  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary);
+  padding: 0.75rem;
+  border-radius: 8px;
 }
 
 .edit-input select option {
   background: var(--bg-darker);
   color: var(--text-primary);
-  padding: 0.75rem 1rem;
-  font-weight: 500;
-  border: none;
-}
-
-.edit-input select option:hover,
-.edit-input select option:focus {
-  background: var(--primary-indigo);
-  color: var(--text-primary);
+  padding: 0.5rem;
 }
 
 /* Loading and Error States */

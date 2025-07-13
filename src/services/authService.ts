@@ -54,7 +54,7 @@ export const validateToken = async (): Promise<boolean> => {
       return false;
     }
 
-    // Make a simple API call to validate token
+    // Make a simple API call to validate token - use consistent endpoint
     await axios.get("http://localhost:8804/profiles", {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -63,7 +63,8 @@ export const validateToken = async (): Promise<boolean> => {
     return true;
   } catch (error) {
     console.error("Token validation failed:", error);
-    removeToken();
+    // Don't automatically remove token on validation failure
+    // Let the calling code decide what to do
     return false;
   }
 };

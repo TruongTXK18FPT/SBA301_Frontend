@@ -57,13 +57,16 @@ const NavBar = ({ isAuthenticated, onLogout, userRole }: NavBarProps) => {
         <div className={`nav-menu ${isMobileMenuOpen ? 'active' : ''}`}>
           {/* Main Navigation */}
           <div className="nav-section main-nav">
-            <Link 
-              to="/events" 
-              className={`nav-item ${location.pathname === '/events' ? 'active' : ''}`}
-            >
-              <FaCalendarAlt />
-              <span className="nav-text">Sự Kiện</span>
-            </Link>
+            {/* Only show regular navigation for non-admin users */}
+            {normalizedRole !== 'admin' && (
+              <>
+                <Link 
+                  to="/events" 
+                  className={`nav-item ${location.pathname === '/events' ? 'active' : ''}`}
+                >
+                  <FaCalendarAlt />
+                  <span className="nav-text">Sự Kiện</span>
+                </Link>
             <Link 
               to="/quiz" 
               className={`nav-item ${location.pathname === '/quiz' ? 'active' : ''}`}
@@ -120,26 +123,39 @@ const NavBar = ({ isAuthenticated, onLogout, userRole }: NavBarProps) => {
                 <span className="nav-text">DashBoard</span>
               </Link>
             )}
+              </>
+            )}
           </div>
 
           {/* Auth Section */}
           <div className="nav-section auth-nav">
             {isAuthenticated ? (
               <>
-                <Link 
-                  to="/profile" 
-                  className={`nav-item profile-link ${location.pathname === '/profile' ? 'active' : ''}`}
-                  title="Hồ Sơ"
-                >
-                  <FaUserCircle />
-                </Link>
-                <Link to="/premium" className="auth-button premium">
-                  <FaCrown />
-                  <span className="auth-text">Premium</span>
-                </Link>
-                <button onClick={onLogout} className="auth-button logout" title="Đăng xuất">
-                  <FaSignOutAlt />
-                </button>
+                {/* Admin users only see logout */}
+                {normalizedRole === 'admin' ? (
+                  <button onClick={onLogout} className="auth-button logout" title="Đăng xuất">
+                    <FaSignOutAlt />
+                    <span className="auth-text">Đăng xuất</span>
+                  </button>
+                ) : (
+                  /* Regular users see profile, premium, and logout */
+                  <>
+                    <Link 
+                      to="/profile" 
+                      className={`nav-item profile-link ${location.pathname === '/profile' ? 'active' : ''}`}
+                      title="Hồ Sơ"
+                    >
+                      <FaUserCircle />
+                    </Link>
+                    <Link to="/premium" className="auth-button premium">
+                      <FaCrown />
+                      <span className="auth-text">Premium</span>
+                    </Link>
+                    <button onClick={onLogout} className="auth-button logout" title="Đăng xuất">
+                      <FaSignOutAlt />
+                    </button>
+                  </>
+                )}
               </>
             ) : (
               <>

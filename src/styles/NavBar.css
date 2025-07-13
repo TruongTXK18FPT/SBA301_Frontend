@@ -526,7 +526,7 @@
 
 .nav-item.parent-link {
   background: linear-gradient(135deg, rgba(255, 140, 0, 0.15) 0%, rgba(255, 215, 0, 0.15) 100%);
-  color: var(--text-dark);
+  color: var(--text-light);
   font-weight: 700;
   border: 2px solid rgba(255, 140, 0, 0.4);
   box-shadow: 0 4px 15px rgba(255, 140, 0, 0.3);

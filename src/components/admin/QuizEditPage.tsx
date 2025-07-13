@@ -528,7 +528,9 @@ const QuizEditPage: React.FC<QuizEditPageProps> = ({ quizId, onBack, onAlert }) 
                     icon={<FaTrash />}
                     onClick={() => removeQuestion(questionIndex)}
                     title="Remove Question"
-                  />
+                  >
+                    Remove
+                  </Button>
                 )}
               </div>
 
@@ -649,7 +651,7 @@ const QuizEditPage: React.FC<QuizEditPageProps> = ({ quizId, onBack, onAlert }) 
 
           <div className="add-question-section">
             <Button
-              variant="outline"
+              variant="primary"
               icon={<FaPlus />}
               onClick={addNewQuestion}
             >
@@ -662,7 +664,7 @@ const QuizEditPage: React.FC<QuizEditPageProps> = ({ quizId, onBack, onAlert }) 
       {/* Action Buttons */}
       <div className="quiz-edit-actions">
         <Button
-          variant="outline"
+          variant="danger"
           onClick={onBack}
           disabled={saving}
         >
