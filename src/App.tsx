@@ -25,6 +25,9 @@ import EventForm from "./components/event/EventForm";
 import EventPrivateList from "./components/event/EventPrivateList";
 import EventPrivateDetail from "./components/event/EventPrivateDetail";
 import { logOut } from "./services/authService";
+import { useSetAtom } from "jotai";
+import { subscriptionAtom, userAtom } from "./atom/atom";
+import { getSubscriptions } from "./services/premiumService";
 
 interface User {
   id: string;
@@ -36,6 +39,8 @@ interface User {
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const setUserAtom = useSetAtom(userAtom);
+  const setSubscriptionAtom = useSetAtom(subscriptionAtom);
   const [loading, setLoading] = useState(true);
   const [logoutAlert, setLogoutAlert] = useState<{
     show: boolean;
@@ -56,9 +61,17 @@ function App() {
       if (token) {
         try {
           const userData = await getCurrentUser();
+          const subscriptionData = await getSubscriptions(
+            { 
+              uid: userData.id, 
+              status: "active" 
+            }
+          );
           console.log("User data retrieved:", userData);
           console.log("User role:", userData?.role);
           setUser(userData);
+          setUserAtom(userData);
+          setSubscriptionAtom(subscriptionData);
           setIsAuthenticated(true);
         } catch (error) {
           console.error("Failed to fetch user data:", error);

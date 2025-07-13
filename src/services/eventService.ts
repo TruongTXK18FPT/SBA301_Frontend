@@ -1,6 +1,9 @@
 import { EventCreateDto, EventPrivateDetailResponse, EventPublicDetailResponse, EventStatus, EventUpdateDto, PageEventOverviewResponse } from "@/components/event/dto/event.dto";
 import instance from "./axiosInstance";
 import { TicketResponse } from "@/components/event/dto/ticket.dto";
+import camelcaseKeys from "camelcase-keys";
+import axios from "axios";
+import api from "./axiosInstance";
 
 
 export const getEvents = async (params: {
@@ -16,69 +19,74 @@ export const getEvents = async (params: {
   sortBy?: string;
   sortDirection?: "asc" | "desc";
 }): Promise<PageEventOverviewResponse> => {
-  const response = await instance.get<PageEventOverviewResponse>("/events", { params });
-  return response.data;
+  const response = await api.get<PageEventOverviewResponse>(
+      "/event/events",
+      {
+          params
+      }
+  );
+  return camelcaseKeys(response.data, { deep: true }) as unknown as PageEventOverviewResponse;
 };
 
 // GET: Event by ID
 export const getEventById = async (id: number): Promise<EventPrivateDetailResponse> => {
-  const response = await instance.get<EventPrivateDetailResponse>(`/events/${id}`);
-  return response.data;
+  const response = await api.get<EventPrivateDetailResponse>(`/event/events/${id}`);
+  return camelcaseKeys(response.data, { deep: true }) as unknown as EventPrivateDetailResponse;
 };
 
 // GET: Event by slug
 export const getEventBySlug = async (slug: string): Promise<EventPublicDetailResponse> => {
-  const response = await instance.get<EventPublicDetailResponse>(`/events/slug/${slug}`);
-  return response.data;
+  const response = await api.get<EventPublicDetailResponse>(`/event/events/slug/${slug}`);
+  return camelcaseKeys(response.data, { deep: true }) as unknown as EventPublicDetailResponse;
 };
 
 // POST: Create draft event
 export const createDraftEvent = async (data: EventCreateDto): Promise<void> => {
-  await instance.post("/events", data);
+  await api.post("/event/events", data);
 };
 
 // PUT: Submit draft event (create and submit)
 export const createAndSubmitEvent = async (data: EventCreateDto): Promise<void> => {
-  await instance.put("/events", data);
+  await api.put("/event/events", data);
 };
 
 // PUT: Update draft event
 export const updateDraftEvent = async (id: number, data: EventUpdateDto): Promise<EventPrivateDetailResponse> => {
-  const response = await instance.put<EventPrivateDetailResponse>(`/events/${id}`, data);
-  return response.data;
+  const response = await api.put<EventPrivateDetailResponse>(`/event/events/${id}`, data);
+  return camelcaseKeys(response.data, { deep: true }) as unknown as EventPrivateDetailResponse;
 };
 
 // PUT: Submit draft event by ID
 export const submitDraftEvent = async (id: number, data: EventUpdateDto): Promise<void> => {
-  await instance.put(`/events/${id}/submit`, data);
+  await api.put(`/event/events/${id}/submit`, data);
 };
 
 // PUT: Approve event
 export const approveEvent = async (id: number, data: { notes?: string }): Promise<EventPrivateDetailResponse> => {
-  const response = await instance.put<EventPrivateDetailResponse>(`/events/${id}/approve`, data);
-  return response.data;
+  const response = await api.put<EventPrivateDetailResponse>(`/event/events/${id}/approve`, data);
+  return camelcaseKeys(response.data, { deep: true }) as unknown as EventPrivateDetailResponse;
 };
 
 // PUT: Reject event
 export const rejectEvent = async (id: number, data: { notes?: string }): Promise<EventPrivateDetailResponse> => {
-  const response = await instance.put<EventPrivateDetailResponse>(`/events/${id}/reject`, data);
-  return response.data;
+  const response = await api.put<EventPrivateDetailResponse>(`/event/events/${id}/reject`, data);
+  return camelcaseKeys(response.data, { deep: true }) as unknown as EventPrivateDetailResponse;
 };
 
 // PUT: Cancel event
 export const cancelEvent = async (id: number, data: { notes?: string }): Promise<EventPrivateDetailResponse> => {
-  const response = await instance.put<EventPrivateDetailResponse>(`/events/${id}/cancel`, data);
-  return response.data;
+  const response = await api.put<EventPrivateDetailResponse>(`/event/events/${id}/cancel`, data);
+  return camelcaseKeys(response.data, { deep: true }) as unknown as EventPrivateDetailResponse;
 };
 
 // PATCH: Update event (moderator/organizer)
 export const updateEvent = async (id: number, data: EventUpdateDto): Promise<EventPrivateDetailResponse> => {
-  const response = await instance.patch<EventPrivateDetailResponse>(`/events/${id}`, data);
-  return response.data;
+  const response = await api.patch<EventPrivateDetailResponse>(`/event/events/${id}`, data);
+  return camelcaseKeys(response.data, { deep: true }) as unknown as EventPrivateDetailResponse;
 };
 
 // GET: Tickets for an event
 export const getEventTickets = async (id: number): Promise<TicketResponse> => {
-  const response = await instance.get<TicketResponse>(`/events/tickets/${id}`);
-  return response.data;
+  const response = await api.get<TicketResponse>(`/event/events/tickets/${id}`);
+  return camelcaseKeys(response.data, { deep: true }) as unknown as TicketResponse;
 };

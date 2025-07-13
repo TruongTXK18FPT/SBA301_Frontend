@@ -1,13 +1,12 @@
 import { useEffect, useState } from "react";
-import { EventOverviewResponse } from "./dto/event.dto";
+import { PageEventOverviewResponse } from "./dto/event.dto";
 import { useSearchParams } from "react-router-dom";
-import axios from "axios";
 import { Pen } from "lucide-react";
-import camelcaseKeys from "camelcase-keys";
 import { FaQuestionCircle } from "react-icons/fa";
+import { getEvents } from "@/services/eventService";
 
 const EventPrivateList = () => {
-    const [events, setEvents] = useState<EventOverviewResponse[]>([]);
+    const [events, setEvents] = useState<PageEventOverviewResponse>();
     
     // status, page, size
     const [searchParams, setSearchParams] = useSearchParams(
@@ -19,23 +18,20 @@ const EventPrivateList = () => {
     );
 
     useEffect(() => {
-        axios.get('http://localhost:8809/event/events', {
-            params: {
-                status: searchParams.get("status"),
-                page: searchParams.get("page"),
-                size: searchParams.get("size"),
-            },
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI5OTkiLCJlbWFpbCI6InZ1aHNlMTgyNjkyQGZwdC5lZHUudm4iLCJzY29wZSI6IkFETUlOIn0.M8zMcrUYnIebJGC0HIrVhQOxp20VOaP7SKfLGSv-A2f8DumHHBh10tqCiRBMP_ateM8ftUQ4adVi1cZbVpI9PA
-`
+        const fetchEvents = async () => {
+            try {
+                const response = await getEvents(searchParams);
+                setEvents(response);
+            } catch (error) {
+                console.error("Error fetching events:", error);
             }
-        }).then(response => {
-            setEvents(camelcaseKeys(response.data.content));
-        }).catch(error => {
-            console.error("Error fetching events:", error);
-        });
+        };
+        fetchEvents();
     }, [searchParams]);
+
+    if (!events) {
+        return <div>Loading...</div>;
+    }   
 
   return (
     <>
@@ -48,9 +44,9 @@ const EventPrivateList = () => {
 
         {/* Event List */}
         {
-            events.length > 0 ? (
+            events?.numberOfElements > 0 ? (
                 <ul className="space-y-4">
-                    {events.map(event => (
+                    {events.content.map(event => (
                         <li key={event.id} className="bg-[#31353e] rounded-xl !px-6 !py-4 flex gap-2">
                             <img src={event.bannerUrl} alt={event.name} className="w-[20%] object-cover rounded-lg" />
                             <div className="flex flex-col">

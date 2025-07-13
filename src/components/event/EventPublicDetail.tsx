@@ -5,6 +5,7 @@ import { ShowTimeResponse } from './dto/showtime.dto'
 import axios from 'axios'
 import camelcaseKeys from 'camelcase-keys'
 import './EventPublicDetail.css'
+import { getEventBySlug } from '@/services/eventService'
 
 // Declare Jitsi API
 declare global {
@@ -356,11 +357,17 @@ const EventPublicDetail = () => {
   }, [event, currentShowtime, jitsiApi, initializeJitsi]);
 
   useEffect(() => {
-    axios.get(`http://localhost:8809/event/events/slug/${slug}`)
-      .then(response => {
-        const fetchedEvent = camelcaseKeys(response.data, { deep: true }) as EventPublicDetailResponse;
+    const fetchEvent = async () => {
+      try {
+        if (!slug) {
+          setEvent(null);
+          setLoading(false);
+          return;
+        }
+        const fetchedEvent = await getEventBySlug(slug);
         setEvent(fetchedEvent);
-        
+        setLoading(false);
+
         // Check if any showtime is currently happening
         const activeShowtime = checkCurrentShowtime(fetchedEvent.showtimes);
         console.log('Active showtime found on load:', activeShowtime);
@@ -373,14 +380,12 @@ const EventPublicDetail = () => {
             initializeJitsi(activeShowtime.meetingId!, activeShowtime.meetingPassword);
           }, 1000); // Give a bit more time for the DOM to be ready
         }
-        
+      } catch (error) {
+        console.error('Error initializing event details:', error);
         setLoading(false);
-      })
-      .catch(error => {
-        console.error("Failed to fetch event details:", error);
-        setEvent(null);
-        setLoading(false);
-      });
+      }
+    };
+    fetchEvent();
   }, [slug, initializeJitsi]);
 
   if (loading) {
@@ -568,88 +573,6 @@ const EventPublicDetail = () => {
         </div>
       )}
 
-      {/* Debug Section - Remove in production */}
-      <div className="bg-yellow-100 p-4 border-l-4 border-yellow-500">
-        <h3 className="font-bold text-yellow-800">Debug Info (Remove in production)</h3>
-        <p><strong>Current Time:</strong> {new Date().toLocaleString()}</p>
-        <p><strong>Current Showtime:</strong> {currentShowtime ? `ID: ${currentShowtime.id}, Meeting: ${currentShowtime.meetingId}` : 'None'}</p>
-        <p><strong>Jitsi API Available:</strong> {window.JitsiMeetExternalAPI ? 'Yes' : 'No'}</p>
-        <p><strong>Jitsi API Type:</strong> {typeof window.JitsiMeetExternalAPI}</p>
-        <p><strong>Jitsi API Instance:</strong> {jitsiApi ? 'Created' : 'None'}</p>
-        <p><strong>Jitsi Script in DOM:</strong> {document.querySelector('script[src*="jitsi"]') ? 'Yes' : 'No'}</p>
-        <p><strong>Connection Cooldown:</strong> {connectionCooldown ? 'Active (30s)' : 'Ready'}</p>
-        <p><strong>Last Attempt:</strong> {lastConnectionAttempt ? new Date(lastConnectionAttempt).toLocaleTimeString() : 'Never'}</p>
-        
-        {/* Test button */}
-        <button
-          onClick={() => {
-            console.log('=== Manual Debug Test ===');
-            
-            if (connectionCooldown) {
-              console.log('❌ Connection is in cooldown period');
-              alert('Connection is in cooldown. Please wait 30 seconds between attempts.');
-              return;
-            }
-            
-            if (!checkRateLimit()) {
-              console.log('❌ Rate limited');
-              alert('Rate limited. Please wait before trying again.');
-              return;
-            }
-            
-            console.log('Window object keys with "jitsi":', Object.keys(window).filter(key => key.toLowerCase().includes('jitsi')));
-            console.log('JitsiMeetExternalAPI:', window.JitsiMeetExternalAPI);
-            console.log('Type of JitsiMeetExternalAPI:', typeof window.JitsiMeetExternalAPI);
-            console.log('Script tag exists:', !!document.querySelector('script[src*="jitsi"]'));
-            console.log('Container exists:', !!document.querySelector('#jitsi-container'));
-            
-            // Test with current showtime or hardcoded ID
-            const testMeetingId = currentShowtime?.meetingId || 'test-meeting-room-123';
-            const testPassword = currentShowtime?.meetingPassword;
-            
-            console.log('Testing with Meeting ID:', testMeetingId);
-            console.log('Testing with Password:', testPassword);
-            
-            // Direct API call without async wrapper
-            if (window.JitsiMeetExternalAPI) {
-              console.log('Direct API call - JitsiMeetExternalAPI is available');
-              createJitsiMeeting(testMeetingId, testPassword);
-            } else {
-              console.log('Direct API call - JitsiMeetExternalAPI NOT available');
-              // Try initializing
-              initializeJitsi(testMeetingId, testPassword);
-            }
-          }}
-          className="bg-blue-500 text-white px-4 py-2 rounded mt-2 mr-2"
-          disabled={connectionCooldown}
-        >
-          {connectionCooldown ? 'Cooldown...' : 'Debug & Test Jitsi'}
-        </button>
-        
-        <button
-          onClick={() => {
-            if (jitsiApi) {
-              jitsiApi.dispose();
-              setJitsiApi(null);
-              console.log('Jitsi API disposed');
-            }
-          }}
-          className="bg-red-500 text-white px-4 py-2 rounded mt-2"
-        >
-          Dispose Jitsi
-        </button>
-        
-        {event?.showtimes && (
-          <div>
-            <strong>All Showtimes:</strong>
-            {event.showtimes.map(st => (
-              <div key={st.id} className="ml-4 text-sm">
-                ID: {st.id}, Start: {new Date(st.startTime).toLocaleString()}, End: {new Date(st.endTime).toLocaleString()}, Meeting: {st.meetingId || 'None'}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
 
       {/* Event Description */}
       <div className='flex bg-[#f5f7fc] !py-8 !px-4'>
