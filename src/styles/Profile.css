@@ -296,7 +296,7 @@
   position: relative;
 }
 
-.section-title {
+.profile-section-title {
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -307,7 +307,7 @@
   color: var(--text-primary);
 }
 
-.section-icon {
+.profile-section-icon {
   color: var(--electric-blue);
   filter: drop-shadow(0 0 10px rgba(37, 99, 235, 0.3));
   font-size: 1.2rem;

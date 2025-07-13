@@ -321,7 +321,7 @@ const Register: React.FC = () => {
       {isLoading && (
         <LoadingSpinner
           size="medium"
-          message={showVerification ? "Đang xử lý xác thực..." : "Đang đăng ký tài khoản..."}
+          message={isVerifying ? "Đang xử lý xác thực..." : "Đang đăng ký tài khoản..."}
         />
       )}
       

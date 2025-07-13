@@ -57,53 +57,7 @@ const NavBar = ({ isAuthenticated, onLogout, userRole }: NavBarProps) => {
         <div className={`nav-menu ${isMobileMenuOpen ? 'active' : ''}`}>
           {/* Main Navigation */}
           <div className="nav-section main-nav">
-            {/* Only show regular navigation for non-admin users */}
-            {normalizedRole !== 'admin' && (
-              <>
-                <Link 
-                  to="/events" 
-                  className={`nav-item ${location.pathname === '/events' ? 'active' : ''}`}
-                >
-                  <FaCalendarAlt />
-                  <span className="nav-text">Sự Kiện</span>
-                </Link>
-            <Link 
-              to="/quiz" 
-              className={`nav-item ${location.pathname === '/quiz' ? 'active' : ''}`}
-            >
-              <FaBrain />
-              <span className="nav-text">Trắc Nghiệm</span>
-            </Link>
-            {/* Show additional authenticated user links */}
-            {isAuthenticated && (
-              <>
-                <Link 
-                  to="/blog" 
-                  className={`nav-item ${location.pathname === '/blog' ? 'active' : ''}`}
-                >
-                  <FaNewspaper />
-                  <span className="nav-text">Bài Viết</span>
-                </Link>
-                <Link 
-                  to="/chat-ai" 
-                  className={`nav-item ${location.pathname === '/chat-ai' ? 'active' : ''}`}
-                >
-                  <FaRobot />
-                  <span className="nav-text">AI Tư Vấn</span>
-                </Link>
-              </>
-            )}
-            {/* Show blog for non-authenticated users */}
-            {!isAuthenticated && (
-              <Link 
-                to="/blog" 
-                className={`nav-item ${location.pathname === '/blog' ? 'active' : ''}`}
-              >
-                <FaNewspaper />
-                <span className="nav-text">Bài Viết</span>
-              </Link>
-            )}
-            {/* Admin link - only show for admin users */}
+            {/* Admin Navigation */}
             {normalizedRole === 'admin' && (
               <Link 
                 to="/admin" 
@@ -113,16 +67,103 @@ const NavBar = ({ isAuthenticated, onLogout, userRole }: NavBarProps) => {
                 <span className="nav-text">Quản Trị</span>
               </Link>
             )}
-            {/* Parent Dashboard link - only show for parent users */}
-            {normalizedRole === 'parent' && (
-              <Link 
-                to="/parent" 
-                className={`nav-item parent-link ${location.pathname === '/parent' ? 'active' : ''}`}
-              >
-                <FaUsers />
-                <span className="nav-text">DashBoard</span>
-              </Link>
+
+            {/* Event Manager Navigation */}
+            {normalizedRole === 'event_manager' && (
+              <>
+                <Link 
+                  to="/event-manager/dashboard" 
+                  className={`nav-item event-manager-link ${location.pathname === '/event-manager/dashboard' ? 'active' : ''}`}
+                >
+                  <FaCalendarAlt />
+                  <span className="nav-text">Quản lý sự kiện</span>
+                </Link>
+                <Link 
+                  to="/events" 
+                  className={`nav-item ${location.pathname === '/events' ? 'active' : ''}`}
+                >
+                  <FaCalendarAlt />
+                  <span className="nav-text">Sự kiện</span>
+                </Link>
+              </>
             )}
+
+            {/* Parent Navigation */}
+            {normalizedRole === 'parent' && (
+              <>
+                <Link 
+                  to="/parent" 
+                  className={`nav-item parent-link ${location.pathname === '/parent' ? 'active' : ''}`}
+                >
+                  <FaUsers />
+                  <span className="nav-text">Dashboard</span>
+                </Link>
+                <Link 
+                  to="/events" 
+                  className={`nav-item ${location.pathname === '/events' ? 'active' : ''}`}
+                >
+                  <FaCalendarAlt />
+                  <span className="nav-text">Sự Kiện</span>
+                </Link>
+                <Link 
+                  to="/quiz" 
+                  className={`nav-item ${location.pathname === '/quiz' ? 'active' : ''}`}
+                >
+                  <FaBrain />
+                  <span className="nav-text">Trắc Nghiệm</span>
+                </Link>
+                <Link 
+                  to="/blog" 
+                  className={`nav-item ${location.pathname === '/blog' ? 'active' : ''}`}
+                >
+                  <FaNewspaper />
+                  <span className="nav-text">Bài Viết</span>
+                </Link>
+                {isAuthenticated && (
+                  <Link 
+                    to="/chat-ai" 
+                    className={`nav-item ${location.pathname === '/chat-ai' ? 'active' : ''}`}
+                  >
+                    <FaRobot />
+                    <span className="nav-text">AI Tư Vấn</span>
+                  </Link>
+                )}
+              </>
+            )}
+
+            {/* Regular user navigation */}
+            {(normalizedRole !== 'admin' && normalizedRole !== 'event_manager' && normalizedRole !== 'parent') && (
+              <>
+                <Link 
+                  to="/events" 
+                  className={`nav-item ${location.pathname === '/events' ? 'active' : ''}`}
+                >
+                  <FaCalendarAlt />
+                  <span className="nav-text">Sự Kiện</span>
+                </Link>
+                <Link 
+                  to="/quiz" 
+                  className={`nav-item ${location.pathname === '/quiz' ? 'active' : ''}`}
+                >
+                  <FaBrain />
+                  <span className="nav-text">Trắc Nghiệm</span>
+                </Link>
+                <Link 
+                  to="/blog" 
+                  className={`nav-item ${location.pathname === '/blog' ? 'active' : ''}`}
+                >
+                  <FaNewspaper />
+                  <span className="nav-text">Bài Viết</span>
+                </Link>
+                {isAuthenticated && (
+                  <Link 
+                    to="/chat-ai" 
+                    className={`nav-item ${location.pathname === '/chat-ai' ? 'active' : ''}`}
+                  >
+                    <FaRobot />
+                    <span className="nav-text">AI Tư Vấn</span>
+                  </Link>
+                )}
               </>
             )}
           </div>
@@ -131,14 +172,12 @@ const NavBar = ({ isAuthenticated, onLogout, userRole }: NavBarProps) => {
           <div className="nav-section auth-nav">
             {isAuthenticated ? (
               <>
-                {/* Admin users only see logout */}
-                {normalizedRole === 'admin' ? (
+                {(normalizedRole === 'admin' || normalizedRole === 'event_manager') ? (
                   <button onClick={onLogout} className="auth-button logout" title="Đăng xuất">
                     <FaSignOutAlt />
                     <span className="auth-text">Đăng xuất</span>
                   </button>
                 ) : (
-                  /* Regular users see profile, premium, and logout */
                   <>
                     <Link 
                       to="/profile" 

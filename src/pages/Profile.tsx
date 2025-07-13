@@ -249,7 +249,7 @@ const Profile: React.FC = () => {
 
   if (loading) {
     return (
-      <LoadingSpinner
+     <LoadingSpinner
         size="medium"
         message="Đang tải thông tin cá nhân..."
       />
@@ -327,8 +327,8 @@ const Profile: React.FC = () => {
 
         <div className="profile-details">
           <div className="profile-section">
-            <h2 className="section-title">
-              <FaUser className="section-icon" />
+            <h2 className="profile-section-title">
+              <FaUser className="profile-section-icon" />
               Thông tin cá nhân
             </h2>
             <div className="profile-grid">
@@ -409,8 +409,8 @@ const Profile: React.FC = () => {
           </div>
 
           <div className="profile-section">
-            <h2 className="section-title">
-              <FaMapMarkerAlt className="section-icon" />
+            <h2 className="profile-section-title">
+              <FaMapMarkerAlt className="profile-section-icon" />
               Địa chỉ
             </h2>
             <div className="profile-grid">
