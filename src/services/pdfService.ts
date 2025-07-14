@@ -33,7 +33,7 @@ class PDFService {
     });
   }
 
-  private splitText(text: string, maxLength: number): string[] {
+  private splitText(doc: jsPDF, text: string, maxWidth: number): string[] {
     if (!text) return [];
     
     const words = text.split(' ');
@@ -41,13 +41,17 @@ class PDFService {
     let currentLine = '';
 
     for (const word of words) {
-      if ((currentLine + word).length <= maxLength) {
-        currentLine += (currentLine ? ' ' : '') + word;
+      const testLine = currentLine + (currentLine ? ' ' : '') + word;
+      const textWidth = doc.getTextWidth(testLine);
+      
+      if (textWidth <= maxWidth) {
+        currentLine = testLine;
       } else {
         if (currentLine) {
           lines.push(currentLine);
           currentLine = word;
         } else {
+          // If single word is too long, force break it
           lines.push(word);
         }
       }
@@ -61,7 +65,7 @@ class PDFService {
   }
 
   private addMultilineText(doc: jsPDF, text: string, x: number, y: number, maxWidth: number, lineHeight: number = 6): number {
-    const lines = this.splitText(text, Math.floor(maxWidth / 2.5)); // Rough character estimation
+    const lines = this.splitText(doc, text, maxWidth);
     let currentY = y;
 
     for (const line of lines) {
@@ -70,6 +74,33 @@ class PDFService {
     }
 
     return currentY;
+  }
+
+  // Convert Vietnamese text to compatible format
+  private sanitizeVietnameseText(text: string): string {
+    // Replace common Vietnamese characters that might cause issues
+    const replacements: { [key: string]: string } = {
+      'à': 'a', 'á': 'a', 'ả': 'a', 'ã': 'a', 'ạ': 'a',
+      'ă': 'a', 'ắ': 'a', 'ằ': 'a', 'ẳ': 'a', 'ẵ': 'a', 'ặ': 'a',
+      'â': 'a', 'ấ': 'a', 'ầ': 'a', 'ẩ': 'a', 'ẫ': 'a', 'ậ': 'a',
+      'è': 'e', 'é': 'e', 'ẻ': 'e', 'ẽ': 'e', 'ẹ': 'e',
+      'ê': 'e', 'ế': 'e', 'ề': 'e', 'ể': 'e', 'ễ': 'e', 'ệ': 'e',
+      'ì': 'i', 'í': 'i', 'ỉ': 'i', 'ĩ': 'i', 'ị': 'i',
+      'ò': 'o', 'ó': 'o', 'ỏ': 'o', 'õ': 'o', 'ọ': 'o',
+      'ô': 'o', 'ố': 'o', 'ồ': 'o', 'ổ': 'o', 'ỗ': 'o', 'ộ': 'o',
+      'ơ': 'o', 'ớ': 'o', 'ờ': 'o', 'ở': 'o', 'ỡ': 'o', 'ợ': 'o',
+      'ù': 'u', 'ú': 'u', 'ủ': 'u', 'ũ': 'u', 'ụ': 'u',
+      'ư': 'u', 'ứ': 'u', 'ừ': 'u', 'ử': 'u', 'ữ': 'u', 'ự': 'u',
+      'ỳ': 'y', 'ý': 'y', 'ỷ': 'y', 'ỹ': 'y', 'ỵ': 'y',
+      'đ': 'd', 'Đ': 'D'
+    };
+
+    let result = text;
+    Object.entries(replacements).forEach(([vietnamese, latin]) => {
+      result = result.replace(new RegExp(vietnamese, 'g'), latin);
+    });
+
+    return result;
   }
 
   public async downloadQuizResultPDF(userResults: UserQuizResults, result: QuizResult): Promise<void> {
@@ -81,8 +112,8 @@ class PDFService {
         format: 'a4'
       });
 
-      // Set up Vietnamese font (basic Latin characters)
-      doc.setFont('helvetica');
+      // Try to use a font that supports Vietnamese, fallback to helvetica
+      doc.setFont('helvetica', 'normal');
       
       // Page margins
       const margin = 20;
@@ -95,7 +126,8 @@ class PDFService {
       // Header
       doc.setFontSize(20);
       doc.setTextColor(44, 62, 80); // Dark blue
-      doc.text('BÁO CÁO KẾT QUẢ TRẮC NGHIỆM', pageWidth / 2, currentY, { align: 'center' });
+      const headerText = this.sanitizeVietnameseText('BÁO CÁO KẾT QUẢ TRẮC NGHIỆM');
+      doc.text(headerText, pageWidth / 2, currentY, { align: 'center' });
       currentY += 15;
 
       // Divider line
@@ -107,31 +139,31 @@ class PDFService {
       // Student Information
       doc.setFontSize(14);
       doc.setTextColor(52, 152, 219); // Blue
-      doc.text('THÔNG TIN HỌC SINH', margin, currentY);
+      doc.text(this.sanitizeVietnameseText('THÔNG TIN HỌC SINH'), margin, currentY);
       currentY += 8;
 
       doc.setFontSize(11);
       doc.setTextColor(44, 62, 80); // Dark
-      doc.text(`Họ và tên: ${userResults.fullName}`, margin, currentY);
+      doc.text(`Ho va ten: ${this.sanitizeVietnameseText(userResults.fullName)}`, margin, currentY);
       currentY += 6;
       doc.text(`Email: ${userResults.email}`, margin, currentY);
       currentY += 6;
-      doc.text(`Ngày làm bài: ${this.formatDate(result.submittedAt)}`, margin, currentY);
+      doc.text(`Ngay lam bai: ${this.sanitizeVietnameseText(this.formatDate(result.submittedAt))}`, margin, currentY);
       currentY += 6;
-      doc.text(`Loại trắc nghiệm: ${result.quizType}`, margin, currentY);
+      doc.text(`Loai trac nghiem: ${this.sanitizeVietnameseText(result.quizType)}`, margin, currentY);
       currentY += 15;
 
       // Quiz Results
       doc.setFontSize(14);
       doc.setTextColor(52, 152, 219); // Blue
-      doc.text('KẾT QUẢ TRẮC NGHIỆM', margin, currentY);
+      doc.text(this.sanitizeVietnameseText('KẾT QUẢ TRẮC NGHIỆM'), margin, currentY);
       currentY += 8;
 
       // Personality Code
       if (result.personalityCode) {
         doc.setFontSize(12);
         doc.setTextColor(230, 126, 34); // Orange
-        doc.text(`Mã tính cách: ${result.personalityCode}`, margin, currentY);
+        doc.text(`Ma tinh cach: ${result.personalityCode}`, margin, currentY);
         currentY += 8;
       }
 
@@ -139,7 +171,7 @@ class PDFService {
       if (result.nickname) {
         doc.setFontSize(11);
         doc.setTextColor(44, 62, 80); // Dark
-        doc.text(`Biệt danh: ${result.nickname}`, margin, currentY);
+        doc.text(`Biet danh: ${this.sanitizeVietnameseText(result.nickname)}`, margin, currentY);
         currentY += 6;
       }
 
@@ -147,9 +179,9 @@ class PDFService {
       if (result.keyTraits) {
         doc.setFontSize(11);
         doc.setTextColor(44, 62, 80); // Dark
-        doc.text('Đặc điểm nổi bật:', margin, currentY);
+        doc.text('Dac diem noi bat:', margin, currentY);
         currentY += 6;
-        currentY = this.addMultilineText(doc, result.keyTraits, margin + 5, currentY, contentWidth - 5);
+        currentY = this.addMultilineText(doc, this.sanitizeVietnameseText(result.keyTraits), margin + 5, currentY, contentWidth - 5);
         currentY += 5;
       }
 
@@ -157,9 +189,9 @@ class PDFService {
       if (result.description) {
         doc.setFontSize(11);
         doc.setTextColor(44, 62, 80); // Dark
-        doc.text('Mô tả chi tiết:', margin, currentY);
+        doc.text('Mo ta chi tiet:', margin, currentY);
         currentY += 6;
-        currentY = this.addMultilineText(doc, result.description, margin + 5, currentY, contentWidth - 5);
+        currentY = this.addMultilineText(doc, this.sanitizeVietnameseText(result.description), margin + 5, currentY, contentWidth - 5);
         currentY += 10;
       }
 
@@ -173,12 +205,12 @@ class PDFService {
 
         doc.setFontSize(12);
         doc.setTextColor(46, 204, 113); // Green
-        doc.text('KHUYẾN NGHỊ NGHỀ NGHIỆP', margin, currentY);
+        doc.text(this.sanitizeVietnameseText('KHUYẾN NGHỊ NGHỀ NGHIỆP'), margin, currentY);
         currentY += 8;
 
         doc.setFontSize(11);
         doc.setTextColor(44, 62, 80); // Dark
-        currentY = this.addMultilineText(doc, result.careerRecommendations, margin + 5, currentY, contentWidth - 5);
+        currentY = this.addMultilineText(doc, this.sanitizeVietnameseText(result.careerRecommendations), margin + 5, currentY, contentWidth - 5);
         currentY += 10;
       }
 
@@ -192,12 +224,12 @@ class PDFService {
 
         doc.setFontSize(12);
         doc.setTextColor(155, 89, 182); // Purple
-        doc.text('KHUYẾN NGHỊ TRƯỜNG ĐẠI HỌC', margin, currentY);
+        doc.text(this.sanitizeVietnameseText('KHUYẾN NGHỊ TRƯỜNG ĐẠI HỌC'), margin, currentY);
         currentY += 8;
 
         doc.setFontSize(11);
         doc.setTextColor(44, 62, 80); // Dark
-        currentY = this.addMultilineText(doc, result.universityRecommendations, margin + 5, currentY, contentWidth - 5);
+        currentY = this.addMultilineText(doc, this.sanitizeVietnameseText(result.universityRecommendations), margin + 5, currentY, contentWidth - 5);
         currentY += 10;
       }
 
@@ -211,14 +243,14 @@ class PDFService {
 
         doc.setFontSize(12);
         doc.setTextColor(231, 76, 60); // Red
-        doc.text('ĐIỂM SỐ CHI TIẾT', margin, currentY);
+        doc.text(this.sanitizeVietnameseText('ĐIỂM SỐ CHI TIẾT'), margin, currentY);
         currentY += 8;
 
         doc.setFontSize(11);
         doc.setTextColor(44, 62, 80); // Dark
 
         Object.entries(result.scores).forEach(([category, score]) => {
-          doc.text(`${category}: ${score}`, margin + 5, currentY);
+          doc.text(`${this.sanitizeVietnameseText(category)}: ${score}`, margin + 5, currentY);
           currentY += 6;
         });
         currentY += 10;
@@ -228,8 +260,8 @@ class PDFService {
       const footerY = pageHeight - 20;
       doc.setFontSize(9);
       doc.setTextColor(127, 140, 141); // Gray
-      doc.text('Báo cáo được tạo tự động bởi hệ thống trắc nghiệm tính cách', pageWidth / 2, footerY, { align: 'center' });
-      doc.text(`Ngày tạo: ${new Date().toLocaleDateString('vi-VN')}`, pageWidth / 2, footerY + 5, { align: 'center' });
+      doc.text(this.sanitizeVietnameseText('Báo cáo được tạo tự động bởi hệ thống trắc nghiệm tính cách'), pageWidth / 2, footerY, { align: 'center' });
+      doc.text(`Ngay tao: ${this.sanitizeVietnameseText(new Date().toLocaleDateString('vi-VN'))}`, pageWidth / 2, footerY + 5, { align: 'center' });
 
       // Generate filename
       const filename = `ket-qua-trac-nghiem-${userResults.fullName.replace(/\s+/g, '-').toLowerCase()}-${result.id}.pdf`;
@@ -252,8 +284,8 @@ class PDFService {
         format: 'a4'
       });
 
-      // Set up Vietnamese font (basic Latin characters)
-      doc.setFont('helvetica');
+      // Set font
+      doc.setFont('helvetica', 'normal');
       
       // Page margins
       const margin = 20;
@@ -266,7 +298,7 @@ class PDFService {
       // Header
       doc.setFontSize(20);
       doc.setTextColor(44, 62, 80); // Dark blue
-      doc.text('BÁO CÁO TỔNG HỢP KẾT QUẢ TRẮC NGHIỆM', pageWidth / 2, currentY, { align: 'center' });
+      doc.text(this.sanitizeVietnameseText('BÁO CÁO TỔNG HỢP KẾT QUẢ TRẮC NGHIỆM'), pageWidth / 2, currentY, { align: 'center' });
       currentY += 15;
 
       // Divider line
@@ -278,16 +310,16 @@ class PDFService {
       // Student Information
       doc.setFontSize(14);
       doc.setTextColor(52, 152, 219); // Blue
-      doc.text('THÔNG TIN HỌC SINH', margin, currentY);
+      doc.text(this.sanitizeVietnameseText('THÔNG TIN HỌC SINH'), margin, currentY);
       currentY += 8;
 
       doc.setFontSize(11);
       doc.setTextColor(44, 62, 80); // Dark
-      doc.text(`Họ và tên: ${userResults.fullName}`, margin, currentY);
+      doc.text(`Ho va ten: ${this.sanitizeVietnameseText(userResults.fullName)}`, margin, currentY);
       currentY += 6;
       doc.text(`Email: ${userResults.email}`, margin, currentY);
       currentY += 6;
-      doc.text(`Tổng số bài làm: ${userResults.results.length}`, margin, currentY);
+      doc.text(`Tong so bai lam: ${userResults.results.length}`, margin, currentY);
       currentY += 15;
 
       // Process each result
@@ -301,31 +333,31 @@ class PDFService {
         // Result header
         doc.setFontSize(14);
         doc.setTextColor(52, 152, 219); // Blue
-        doc.text(`KẾT QUẢ ${index + 1}: ${result.quizType}`, margin, currentY);
+        doc.text(`KET QUA ${index + 1}: ${this.sanitizeVietnameseText(result.quizType)}`, margin, currentY);
         currentY += 8;
 
         doc.setFontSize(11);
         doc.setTextColor(44, 62, 80); // Dark
-        doc.text(`Ngày làm bài: ${this.formatDate(result.submittedAt)}`, margin, currentY);
+        doc.text(`Ngay lam bai: ${this.sanitizeVietnameseText(this.formatDate(result.submittedAt))}`, margin, currentY);
         currentY += 6;
 
         if (result.personalityCode) {
           doc.setTextColor(230, 126, 34); // Orange
-          doc.text(`Mã tính cách: ${result.personalityCode}`, margin, currentY);
+          doc.text(`Ma tinh cach: ${result.personalityCode}`, margin, currentY);
           currentY += 6;
         }
 
         if (result.nickname) {
           doc.setTextColor(44, 62, 80); // Dark
-          doc.text(`Biệt danh: ${result.nickname}`, margin, currentY);
+          doc.text(`Biet danh: ${this.sanitizeVietnameseText(result.nickname)}`, margin, currentY);
           currentY += 6;
         }
 
         if (result.description) {
           doc.setTextColor(44, 62, 80); // Dark
-          doc.text('Mô tả:', margin, currentY);
+          doc.text('Mo ta:', margin, currentY);
           currentY += 6;
-          currentY = this.addMultilineText(doc, result.description, margin + 5, currentY, contentWidth - 5, 5);
+          currentY = this.addMultilineText(doc, this.sanitizeVietnameseText(result.description), margin + 5, currentY, contentWidth - 5, 5);
           currentY += 5;
         }
 
@@ -336,8 +368,8 @@ class PDFService {
       const footerY = pageHeight - 20;
       doc.setFontSize(9);
       doc.setTextColor(127, 140, 141); // Gray
-      doc.text('Báo cáo được tạo tự động bởi hệ thống trắc nghiệm tính cách', pageWidth / 2, footerY, { align: 'center' });
-      doc.text(`Ngày tạo: ${new Date().toLocaleDateString('vi-VN')}`, pageWidth / 2, footerY + 5, { align: 'center' });
+      doc.text(this.sanitizeVietnameseText('Báo cáo được tạo tự động bởi hệ thống trắc nghiệm tính cách'), pageWidth / 2, footerY, { align: 'center' });
+      doc.text(`Ngay tao: ${this.sanitizeVietnameseText(new Date().toLocaleDateString('vi-VN'))}`, pageWidth / 2, footerY + 5, { align: 'center' });
 
       // Generate filename
       const filename = `tong-hop-ket-qua-${userResults.fullName.replace(/\s+/g, '-').toLowerCase()}.pdf`;
