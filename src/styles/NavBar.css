@@ -23,7 +23,7 @@
   backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--glass-border);
   transition: var(--transition);
-  font-family: 'Orbitron', monospace;
+  font-family: Poppins, sans-serif;
   
   /* Beautiful gradient border animation */
   background-image: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
@@ -397,30 +397,26 @@
   transform: scale(1.2) rotate(10deg);
   filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.8));
 }
-
-.nav-item[href="/blog"] {
+.nav-item[href="/personality"] {
   position: relative;
-  background: linear-gradient(135deg, rgba(0, 191, 255, 0.1) 0%, rgba(30, 144, 255, 0.1) 100%);
-  border: 2px solid rgba(0, 191, 255, 0.3);
-  box-shadow: 0 4px 15px rgba(0, 191, 255, 0.2);
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+  border: 2px solid rgba(102, 126, 234, 0.3);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
 }
-
-.nav-item[href="/blog"]:hover {
-  background: linear-gradient(135deg, #00bfff 0%, #1e90ff 100%);
-  box-shadow: 0 8px 30px rgba(0, 191, 255, 0.5);
-  border-color: rgba(0, 191, 255, 0.8);
+.nav-item[href="/personality"]:hover {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  box-shadow: 0 8px 30px rgba(102, 126, 234, 0.5);
+  border-color: rgba(102, 126, 234, 0.8);
   transform: translateY(-3px) scale(1.05);
 }
-
-.nav-item[href="/blog"] svg {
-  color: #00bfff;
+.nav-item[href="/personality"] svg {
+  color: #667eea;
   transition: var(--transition);
-  filter: drop-shadow(0 0 8px rgba(0, 191, 255, 0.5));
+  filter: drop-shadow(0 0 8px rgba(102, 126, 234, 0.5));
 }
-
-.nav-item[href="/blog"]:hover svg {
+.nav-item[href="/personality"]:hover svg {
   color: var(--text-light);
-  transform: scale(1.2) rotate(-10deg);
+  transform: scale(1.2) rotate(15deg);
   filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.8));
 }
 

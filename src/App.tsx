@@ -28,7 +28,7 @@ import { logOut } from "./services/authService";
 import { useSetAtom } from "jotai";
 import { subscriptionAtom, userAtom } from "./atom/atom";
 import { getSubscriptions } from "./services/premiumService";
-
+import PersonalityPage from "./pages/PersonalityPages";
 interface User {
   id: string;
   email: string;
@@ -180,6 +180,9 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/register" element={<Register />} />
           <Route path="/premium" element={<PremiumPage isAuthenticated={isAuthenticated} />} />
+          <Route path="/personality" element={<PersonalityPage />} />
+          
+          {/* Public Routes */}
           
           {/* Event Routes */}
           <Route path="/events" element={<Event />} />
