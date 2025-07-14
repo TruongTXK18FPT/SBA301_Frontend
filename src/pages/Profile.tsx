@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { FaUser, FaCalendarAlt, FaPhone, FaMapMarkerAlt, FaEdit, FaEnvelope, FaSave, FaTimes } from "react-icons/fa";
+import { FaUser, FaCalendarAlt, FaPhone, FaMapMarkerAlt, FaEdit, FaEnvelope, FaSave, FaTimes, FaShoppingCart } from "react-icons/fa";
 import { getProfile } from "../services/authService";
 import { getProvinceName, getDistrictName } from "../services/locationService";
 import { getCurrentUser, updateProfile } from "../services/userService";
@@ -320,6 +320,10 @@ const Profile: React.FC = () => {
                     <span>{updateLoading ? "Đang lưu..." : "Lưu"}</span>
                   </button>
                 )}
+                <button className="edit-profile-btn" onClick={() => window.location.href = '/order'}>
+                  <FaShoppingCart />
+                  <span>Đơn hàng</span>
+                </button>
               </div>
             </div>
           </div>

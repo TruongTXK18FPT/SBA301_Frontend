@@ -20,6 +20,7 @@ import EventManagerDashboard from "./pages/EventManagerDashboard";
 import EventCreationForm from "./components/event/EventCreationForm";
 import EventDetails from "./pages/EventDetails";
 import Ticket from "./pages/Ticket";
+import Order from "./pages/Order";
 
 import { getToken, removeToken } from "./services/localStorageService";
 import { getCurrentUser } from "./services/userService";
@@ -255,6 +256,14 @@ function App() {
             element={
               <ProtectedRoute isAuthenticated={isAuthenticated}>
                 <Profile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/order"
+            element={
+              <ProtectedRoute isAuthenticated={isAuthenticated}>
+                <Order />
               </ProtectedRoute>
             }
           />
