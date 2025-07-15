@@ -31,6 +31,8 @@ import { subscriptionAtom, userAtom } from "./atom/atom";
 import { getSubscriptions } from "./services/premiumService";
 import PersonalityPage from "./pages/PersonalityPages";
 import MyResult from "./pages/MyResult";
+import EventPublicDetail from "./components/event/EventPublicDetail";
+import EventPrivateDetail from "./components/admin/EventPrivateDetail";
 interface User {
   id: string;
   email: string;
