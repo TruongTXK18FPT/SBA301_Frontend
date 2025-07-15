@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Sparkles, Star, Zap } from 'lucide-react';
 import '../styles/PersonalityCard.css';
 
 interface PersonalityCardProps {
@@ -6,7 +7,7 @@ interface PersonalityCardProps {
   title: string;
   subtitle: string;
   description: string;
-  delay: number;
+  delay?: number;
 }
 
 const PersonalityCard: React.FC<PersonalityCardProps> = ({
@@ -14,110 +15,109 @@ const PersonalityCard: React.FC<PersonalityCardProps> = ({
   title,
   subtitle,
   description,
-  delay
+  delay = 0
 }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
-  
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsVisible(true);
     }, delay);
-    
+
     return () => clearTimeout(timer);
   }, [delay]);
 
-  const cardStyle = {
-    transform: isVisible ? 'translateY(0) scale(1)' : 'translateY(60px) scale(0.9)',
-    opacity: isVisible ? 1 : 0,
-    transition: 'all 0.8s cubic-bezier(0.16, 1, 0.3, 1)',
-    transitionDelay: `${delay}ms`
-  };
-
-  const titleStyle = {
-    transform: isHovered ? 'translateY(-2px)' : 'translateY(0)',
-    transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
-  };
-
-  const subtitleStyle = {
-    transform: isHovered ? 'translateY(-1px)' : 'translateY(0)',
-    transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) 0.1s'
-  };
-
-  const descriptionStyle = {
-    transform: isHovered ? 'translateY(-1px)' : 'translateY(0)',
-    transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) 0.2s'
-  };
-
   return (
     <div 
-      className="personality-card"
-      style={cardStyle}
+      className={`personality-card ${isVisible ? 'visible' : ''}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       <div className="personality-card-inner">
-        {/* Animated background gradient */}
-        <div className="personality-card-bg-gradient" />
+        {/* Animated background layers */}
+        <div className="personality-card-bg-gradient"></div>
+        <div className="personality-card-mesh-gradient"></div>
+        <div className="personality-card-shimmer"></div>
+        <div className="personality-card-border"></div>
+        <div className="personality-card-glow"></div>
         
         {/* Floating particles */}
         <div className="personality-card-particles">
           {[...Array(6)].map((_, i) => (
             <div 
-              key={i}
-              className="particle"
+              key={i} 
+              className="particle" 
               style={{
-                animationDelay: `${i * 0.5}s`,
                 left: `${20 + i * 15}%`,
+                animationDelay: `${i * 0.5}s`,
                 animationDuration: `${3 + i * 0.5}s`
               }}
             />
           ))}
         </div>
-        
-        {/* Shimmer effect */}
-        <div className="personality-card-shimmer" />
-        
-        {/* Image container with enhanced effects */}
+
+        {/* Floating icons */}
+        <div className="personality-card-floating-icons">
+          <Sparkles className="floating-icon icon-1" />
+          <Star className="floating-icon icon-2" />
+          <Zap className="floating-icon icon-3" />
+        </div>
+
+        {/* Image section with advanced effects */}
         <div className="personality-card-image-container">
-          <div className="personality-card-image-ring" />
-          <div className="personality-card-image-ring-2" />
+          <div className="personality-card-image-glow"></div>
+          <div className="personality-card-image-ring"></div>
+          <div className="personality-card-image-ring-2"></div>
+          <div className="personality-card-image-ring-3"></div>
+          <div className="personality-card-image-overlay"></div>
           <img 
             src={image} 
             alt={title}
             className="personality-card-image"
+            onError={(e) => {
+              e.currentTarget.src = `https://images.pexels.com/photos/3184291/pexels-photo-3184291.jpeg?auto=compress&cs=tinysrgb&w=400`;
+            }}
           />
-          <div className="personality-card-image-overlay" />
-          <div className="personality-card-image-glow" />
+          <div className="personality-card-image-pulse"></div>
         </div>
-        
-        {/* Content with staggered animations */}
+
+        {/* Content with enhanced typography */}
         <div className="personality-card-content">
-          <h3 
-            className="personality-card-title"
-            style={titleStyle}
-          >
-            {title}
+          <h3 className="personality-card-title">
+            <span className="title-text">{title}</span>
+            <div className="title-underline"></div>
           </h3>
-          <p 
-            className="personality-card-subtitle"
-            style={subtitleStyle}
-          >
+          
+          <p className="personality-card-subtitle">
+            <span className="subtitle-bg"></span>
             {subtitle}
           </p>
-          <p 
-            className="personality-card-description"
-            style={descriptionStyle}
-          >
+          
+          <p className="personality-card-description">
             {description}
           </p>
+
+          {/* Interactive elements */}
+          <div className="personality-card-actions">
+            <button className="card-action-btn primary">
+              <span>Explore</span>
+              <div className="btn-ripple"></div>
+            </button>
+            <button className="card-action-btn secondary">
+              <span>Learn More</span>
+              <div className="btn-ripple"></div>
+            </button>
+          </div>
         </div>
-        
-        {/* Interactive glow effect */}
-        <div className="personality-card-glow" />
-        
-        {/* Border animation */}
-        <div className="personality-card-border" />
+
+        {/* Hover reveal elements */}
+        <div className="personality-card-hover-reveal">
+          <div className="reveal-line line-1"></div>
+          <div className="reveal-line line-2"></div>
+          <div className="reveal-line line-3"></div>
+          <div className="reveal-line line-4"></div>
+        </div>
       </div>
     </div>
   );

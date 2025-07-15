@@ -34,14 +34,7 @@ export const analystTypes: PersonalityType[] = [
     title: 'The Debater',
     subtitle: 'ENTP-A / ENTP-T',
     description: 'Smart and curious thinkers who cannot resist an intellectual challenge. They are quick-witted, versatile, and love to brainstorm new possibilities.'
-  },
-  {
-  id: 'strategist',
-  image: '/src/assets/Strategist.webp',
-  title: 'The Strategist',
-  subtitle: 'D + C',
-  description: 'Decisive and analytical individuals who combine a drive for results with a respect for structure.'
-}
+  }
 ]
 export const diplomatTypes: PersonalityType[] = [
   {
@@ -71,14 +64,7 @@ export const diplomatTypes: PersonalityType[] = [
     title: 'The Campaigner',
     subtitle: 'ENFP-A / ENFP-T',
     description: 'Enthusiastic, creative and sociable free spirits who can always find a reason to smile. They are curious, energetic, and love exploring new ideas.'
-  },
-  {
-  id: 'supportive-influencer',
-  image: '/src/assets/SupportiveInfluencer.webp',
-  title: 'The Supportive Influencer',
-  subtitle: 'I + S',
-  description: 'Warm, empathetic, and socially engaging individuals who connect easily with others.'
-}
+  }
 ];
 export const sentinelTypes: PersonalityType[] = [
   {
@@ -108,14 +94,7 @@ export const sentinelTypes: PersonalityType[] = [
     title: 'The Consul',
     subtitle: 'ESFJ-A / ESFJ-T',
     description: 'Extraordinarily caring, social and popular people, always eager to help. They are warm-hearted, cooperative, and value community.'
-  },
-  {
-  id: 'reliable-planner',
-  image: '/src/assets/ReliablePlanner.webp',
-  title: 'The Reliable Planner',
-  subtitle: 'S + C',
-  description: 'Calm and conscientious individuals who prioritize accuracy, consistency, and responsibility.'
-}
+  }
 
 ];
 export const explorerTypes: PersonalityType[] = [
@@ -146,13 +125,5 @@ export const explorerTypes: PersonalityType[] = [
     title: 'The Entertainer',
     subtitle: 'ESFP-A / ESFP-T',
     description: 'Spontaneous, energetic and enthusiastic people – life is never boring around them. They are playful, sociable, and love to entertain others.'
-  },
-  {
-  id: 'bold-motivator',
-  image: '/src/assets/Bold.webp',
-  title: 'The Bold Motivator',
-  subtitle: 'D + I',
-  description: 'Confident and charismatic individuals who thrive on action, influence, and results.'
-}
-
+  }
 ];
