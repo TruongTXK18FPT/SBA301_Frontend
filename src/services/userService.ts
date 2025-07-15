@@ -1,6 +1,37 @@
-import axios from "axios";
-import { getToken } from "./localStorageService";
 import api from "./axiosInstance";
+import { registerUser } from "./authService";
+
+export interface User {
+  id: string;
+  email: string;
+  password?: string;
+  emailVerified: boolean;
+  isActive: boolean;  // Backend UserResponse uses isActive
+  role: 'STUDENT' | 'PARENT' | 'EVENT_MANAGER' | 'ADMIN';
+}
+
+// Backend UserResponse DTO
+export interface UserResponse {
+  id: string;
+  email: string;
+  noPassword: boolean;
+  role: 'STUDENT' | 'PARENT' | 'EVENT_MANAGER' | 'ADMIN';
+  emailVerified: boolean;
+  isActive: boolean;
+}
+
+// For admin user creation - use the registration endpoint
+export interface CreateUserRequest {
+  email: string;
+  password: string;
+  fullName: string;
+  phone: string;
+  birthDate: string;
+  address: string;
+  districtCode: number;
+  provinceCode: number;
+  isParent: boolean;
+}
 
 export const getCurrentUser = async () => {
   const response = await api.get("/authenticate/users/me");
@@ -22,7 +53,9 @@ export const updateProfile = async (data: {
     console.error("Profile update error:", error.response?.data ?? error.message);
     throw error;
   }
-  export const getAllUsers = async (page = 0, size = 10) => {
+};
+
+export const getAllUsers = async (page = 0, size = 10): Promise<{ content: UserResponse[]; totalElements: number }> => {
   try {
     const response = await api.get(`/authenticate/users`, {
       params: { page, size },
@@ -34,12 +67,22 @@ export const updateProfile = async (data: {
   }
 };
 
-// ✅ Kích hoạt hoặc vô hiệu hóa tài khoản người dùng
-export const toggleUserActiveStatus = async (userId: string, active: boolean) => {
+// Create new user using registration endpoint
+export const createUser = async (userData: CreateUserRequest): Promise<any> => {
   try {
-    await api.patch(`/authenticate/users/${userId}/active`, null, {
-      params: { active },
-    });
+    // Use the register API from authService
+    const response = await registerUser(userData);
+    return response;
+  } catch (error: any) {
+    console.error("Create user failed:", error.response?.data ?? error.message);
+    throw error;
+  }
+};
+
+// ✅ Kích hoạt hoặc vô hiệu hóa tài khoản người dùng
+export const toggleUserActiveStatus = async (userId: string, isActive: boolean) => {
+  try {
+    await api.patch(`/authenticate/users/${userId}/status`, { active: isActive });
   } catch (error: any) {
     console.error("Toggle user active status failed:", error.response?.data ?? error.message);
     throw error;
