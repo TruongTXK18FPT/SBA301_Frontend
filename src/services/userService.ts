@@ -22,6 +22,28 @@ export const updateProfile = async (data: {
     console.error("Profile update error:", error.response?.data ?? error.message);
     throw error;
   }
+  export const getAllUsers = async (page = 0, size = 10) => {
+  try {
+    const response = await api.get(`/authenticate/users`, {
+      params: { page, size },
+    });
+    return response.data.result;
+  } catch (error: any) {
+    console.error("Get users failed:", error.response?.data ?? error.message);
+    throw error;
+  }
+};
+
+// ✅ Kích hoạt hoặc vô hiệu hóa tài khoản người dùng
+export const toggleUserActiveStatus = async (userId: string, active: boolean) => {
+  try {
+    await api.patch(`/authenticate/users/${userId}/active`, null, {
+      params: { active },
+    });
+  } catch (error: any) {
+    console.error("Toggle user active status failed:", error.response?.data ?? error.message);
+    throw error;
+  }
 };
 
 
