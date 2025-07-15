@@ -583,16 +583,6 @@ async getQuizResultById(resultId: number): Promise<QuizResult> {
     }
   }
 
-  // Create new quiz
-  async createQuiz(quizData: QuizCreateRequest): Promise<QuizData> {
-    // Clear cache after creating
-    this.cache.clear();
-    return this.fetchAPI<QuizData>('/quiz', {
-      method: 'POST',
-      data: quizData
-    });
-  }
-
   // Update existing quiz
   async updateQuiz(quizId: number, quizData: QuizUpdateRequest): Promise<QuizData> {
     // Clear cache after updating
@@ -600,15 +590,6 @@ async getQuizResultById(resultId: number): Promise<QuizResult> {
     return this.fetchAPI<QuizData>(`/quiz/${quizId}`, {
       method: 'PUT',
       data: quizData
-    });
-  }
-
-  // Delete quiz
-  async deleteQuiz(quizId: number): Promise<void> {
-    // Clear cache after deleting
-    this.cache.clear();
-    return this.fetchAPI<void>(`/quiz/${quizId}`, {
-      method: 'DELETE'
     });
   }
 
