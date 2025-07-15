@@ -1,12 +1,12 @@
-import axios from "axios";
-import { getToken } from "./localStorageService";
 import api from "./axiosInstance";
 
+// Lấy thông tin user hiện tại
 export const getCurrentUser = async () => {
   const response = await api.get("/authenticate/users/me");
   return response.data.result;
 };
 
+// Cập nhật profile
 export const updateProfile = async (data: {
   fullName?: string;
   phone?: string;
@@ -22,7 +22,9 @@ export const updateProfile = async (data: {
     console.error("Profile update error:", error.response?.data ?? error.message);
     throw error;
   }
-  export const getAllUsers = async (page = 0, size = 10) => {
+};
+
+export const getAllUsers = async (page = 0, size = 10) => {
   try {
     const response = await api.get(`/authenticate/users`, {
       params: { page, size },
@@ -34,17 +36,12 @@ export const updateProfile = async (data: {
   }
 };
 
-// ✅ Kích hoạt hoặc vô hiệu hóa tài khoản người dùng
-export const toggleUserActiveStatus = async (userId: string, active: boolean) => {
+export const toggleUserActiveStatus = async (userId: string) => {
   try {
-    await api.patch(`/authenticate/users/${userId}/active`, null, {
-      params: { active },
-    });
+    await api.patch(`/authenticate/users/${userId}/active`);
   } catch (error: any) {
     console.error("Toggle user active status failed:", error.response?.data ?? error.message);
     throw error;
   }
 };
-
-
 
