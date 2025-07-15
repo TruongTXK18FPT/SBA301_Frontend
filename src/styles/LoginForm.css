@@ -234,7 +234,11 @@
   z-index: 5;
   pointer-events: none;
 }
-
+/* Add to LoginForm.css */
+.show-password-btn:focus {
+  outline: none;
+  color: var(--electric-blue);
+}
 .login-form-input:focus ~ .input-icon {
   color: var(--electric-blue);
   transform: translateY(-50%) scale(1.1);
