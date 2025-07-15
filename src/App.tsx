@@ -28,6 +28,8 @@ import { logOut } from "./services/authService";
 import { useSetAtom } from "jotai";
 import { subscriptionAtom, userAtom } from "./atom/atom";
 import { getSubscriptions } from "./services/premiumService";
+import EventPrivateDetail from "./components/event/EventPrivateDetail";
+import EventPublicDetail from "./components/event/EventPublicDetail";
 
 interface User {
   id: string;
@@ -183,7 +185,7 @@ function App() {
           
           {/* Event Routes */}
           <Route path="/events" element={<Event />} />
-          <Route path="/event-details/:id" element={<EventDetails />} />
+          <Route path="/events/:slug" element={<EventPublicDetail />} />
           <Route path="/ticket/:eventId" element={<Ticket />} />
           
           {/* Event Manager Routes */}
@@ -237,6 +239,8 @@ function App() {
           <Route path="/moderator/events/:id" element={<EventPrivateDetail />} />
           <Route path="/moderator/events/:id" element={<EventPrivateDetail />} /> */}
           
+          <Route path="/organizer/events/:id" element={<EventPrivateDetail />} />  
+          <Route path="/moderator/events/:id" element={<EventPrivateDetail />} />
           <Route path="/admin/premium" />
           <Route path="/admin/premiums/:id" />
           

@@ -575,7 +575,7 @@ const EventPublicDetail = () => {
 
 
       {/* Event Description */}
-      <div className='flex bg-[#f5f7fc] !py-8 !px-4'>
+      <div className='flex bg-[#f5f7fc] !py-8 !px-4 !text-black'>
         <div className='flex-7/10'>
           <div className="bg-white rounded-lg !p-4">
             <div className="">
@@ -589,7 +589,7 @@ const EventPublicDetail = () => {
 
           {/* Ticket Information */}
           <div className='bg-[#27272A] rounded-lg !p-4 !mt-6 !space-y-1' id='ticket-info'>
-            <h2 className="text-xl text-white font-bold bg-[#27272A]">Thông tin vé</h2>
+            <h2 className="text-xl text-white font-bold !bg-[#27272A]">Thông tin vé</h2>
             {
               event.showtimes && event.showtimes.length > 0 ? (
                 <div className="w-full">
@@ -597,7 +597,7 @@ const EventPublicDetail = () => {
                     <div key={showtime.id} className="border-0">
                       <button
                         onClick={() => toggleShowtime(showtime.id)}
-                        className="w-full bg-[#38383D] hover:bg-[#404048] p-4 rounded-lg transition-colors"
+                        className="w-full !bg-[#38383D] hover:bg-[#404048] p-4 rounded-lg transition-colors"
                       >
                         <div className="flex items-center gap-2 w-full justify-start">
                           <div className={`transform transition-transform duration-200 ${

@@ -4,6 +4,8 @@ import { TicketResponse } from "@/components/event/dto/ticket.dto";
 import camelcaseKeys from "camelcase-keys";
 import axios from "axios";
 import api from "./axiosInstance";
+import snakecaseKeys from "snakecase-keys";
+import { s } from "node_modules/framer-motion/dist/types.d-CtuPurYT";
 
 
 export const getEvents = async (params: {
@@ -45,37 +47,37 @@ export const createDraftEvent = async (data: EventCreateDto): Promise<void> => {
   await api.post("/event/events", data);
 };
 
-// PUT: Submit draft event (create and submit)
+// PUT: Submit draft event (create and submit) * only use this
 export const createAndSubmitEvent = async (data: EventCreateDto): Promise<void> => {
-  await api.put("/event/events", data);
+  await api.put("/event/events", snakecaseKeys(data, { deep: true }));
 };
 
 // PUT: Update draft event
 export const updateDraftEvent = async (id: number, data: EventUpdateDto): Promise<EventPrivateDetailResponse> => {
-  const response = await api.put<EventPrivateDetailResponse>(`/event/events/${id}`, data);
+  const response = await api.put<EventPrivateDetailResponse>(`/event/events/${id}`, snakecaseKeys(data, { deep: true }));
   return camelcaseKeys(response.data as any, { deep: true }) as unknown as EventPrivateDetailResponse;
 };
 
 // PUT: Submit draft event by ID
 export const submitDraftEvent = async (id: number, data: EventUpdateDto): Promise<void> => {
-  await api.put(`/event/events/${id}/submit`, data);
+  await api.put(`/event/events/${id}/submit`, snakecaseKeys(data, { deep: true }));
 };
 
 // PUT: Approve event
 export const approveEvent = async (id: number, data: { notes?: string }): Promise<EventPrivateDetailResponse> => {
-  const response = await api.put<EventPrivateDetailResponse>(`/event/events/${id}/approve`, data);
+  const response = await api.put<EventPrivateDetailResponse>(`/event/events/${id}/approve`, snakecaseKeys(data, { deep: true }));
   return camelcaseKeys(response.data as any, { deep: true }) as unknown as EventPrivateDetailResponse;
 };
 
 // PUT: Reject event
 export const rejectEvent = async (id: number, data: { notes?: string }): Promise<EventPrivateDetailResponse> => {
-  const response = await api.put<EventPrivateDetailResponse>(`/event/events/${id}/reject`, data);
+  const response = await api.put<EventPrivateDetailResponse>(`/event/events/${id}/reject`, snakecaseKeys(data, { deep: true }));
   return camelcaseKeys(response.data as any, { deep: true }) as unknown as EventPrivateDetailResponse;
 };
 
 // PUT: Cancel event
 export const cancelEvent = async (id: number, data: { notes?: string }): Promise<EventPrivateDetailResponse> => {
-  const response = await api.put<EventPrivateDetailResponse>(`/event/events/${id}/cancel`, data);
+  const response = await api.put<EventPrivateDetailResponse>(`/event/events/${id}/cancel`, snakecaseKeys(data, { deep: true }));
   return camelcaseKeys(response.data as any, { deep: true }) as unknown as EventPrivateDetailResponse;
 };
 
