@@ -60,7 +60,7 @@ const QuizManagement: React.FC<QuizManagementProps> = ({ onAlert }) => {
           title: 'DISC Behavioral Assessment',
           categoryId: discCategory.id,
           description: 'DISC assessment to understand your behavioral style and communication preferences',
-          questionQuantity: 28,
+          questionQuantity: 24,
           categoryName: discCategory.name
         });
       }
