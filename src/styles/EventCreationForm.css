@@ -1,0 +1,15 @@
+/* Field group for ticket time fields */
+.event-creation-form__field-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 12px;
+}
+
+@media (max-width: 768px) {
+    .event-creation-form__field-group {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ... existing styles ... */

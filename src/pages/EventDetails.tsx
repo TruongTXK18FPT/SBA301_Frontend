@@ -7,7 +7,7 @@ import Alert from '../components/Alert';
 import '../styles/EventDetails.css';
 
 const EventDetails: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { slug } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [event, setEvent] = useState<EventPrivateDetailResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -16,15 +16,15 @@ const EventDetails: React.FC = () => {
   const [bookingLoading, setBookingLoading] = useState(false);
 
   useEffect(() => {
-    if (id) {
+    if (slug) {
       fetchEvent();
     }
-  }, [id]);
+  }, [slug]);
 
   const fetchEvent = async () => {
     try {
       setLoading(true);
-      const response = await eventService.getEventById(parseInt(id!));
+      const response = await eventService.getEventBySlug(slug!);
       setEvent(response);
     } catch (err: any) {
       setError('Không thể tải thông tin sự kiện. Vui lòng thử lại.');

@@ -9,13 +9,12 @@ import { createAndSubmitEvent } from '../../services/eventService';
 import Alert from '../Alert';
 import LoadingSpinner from '../LoadingSpinner';
 import './EventCreationForm.css';
-
+import axios from 'axios';
 
 interface ShowtimeFormData {
   id: string;
   startTime: string;
   endTime: string;
-  capacity: number;
   tickets: TicketFormData[];
 }
 
@@ -25,12 +24,15 @@ interface TicketFormData {
   price: number;
   quantity: number;
   description: string;
+  startTime?: string;
+  endTime?: string;
 }
 
 const EventCreationForm: React.FC = () => {
   const navigate = useNavigate();
   const bannerRef = useRef<HTMLInputElement>(null);
-
+  const [uploading, setUploading] = useState(false);
+  
   // Form state
   const [formData, setFormData] = useState({
     name: '',
@@ -61,10 +63,7 @@ const EventCreationForm: React.FC = () => {
   const [showPersonalityDropdown, setShowPersonalityDropdown] = useState(false);
 
   // Bank data state
-  const [banks, setBanks] = useState<Array<{name: string, branches: string[]}>>([]);
-  const [selectedBank, setSelectedBank] = useState('');
   const [availableBranches, setAvailableBranches] = useState<string[]>([]);
-  const [loadingBanks, setLoadingBanks] = useState(false);
 
   // Predefined personality types
   const predefinedPersonalities = [
@@ -73,7 +72,7 @@ const EventCreationForm: React.FC = () => {
   ];
 
   // Predefined bank data
-  const vietnameseBanks = [
+  const vietnameseBanks = React.useMemo(() => [
     {
        name: 'Vietcombank (VCB)',
     branches: [
@@ -452,15 +451,15 @@ const EventCreationForm: React.FC = () => {
       'PGD Hiệp Thành – 3A Nguyễn Ảnh Thủ, P. Hiệp Thành, Q.12'
     ]
   }
-  ];
+  ], []);
 
   // Event handlers
-  const handleInputChange = (field: string, value: any) => {
+  const handleInputChange = (field: string, value: string | number | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     
     // Auto-generate slug from name
     if (field === 'name') {
-      const slugValue = value.toLowerCase()
+      const slugValue = value.toString().toLowerCase()
         .replace(/[^\w\s-]/g, '')
         .replace(/\s+/g, '-')
         .trim();
@@ -474,7 +473,6 @@ const EventCreationForm: React.FC = () => {
 
   const handleBankSelect = (bankName: string) => {
     const selectedBankData = vietnameseBanks.find(bank => bank.name === bankName);
-    setSelectedBank(bankName);
     setPaymentData(prev => ({ ...prev, bankName }));
     
     if (selectedBankData) {
@@ -488,21 +486,70 @@ const EventCreationForm: React.FC = () => {
     setPaymentData(prev => ({ ...prev, bankBranch: branchName }));
   };
 
-  // Initialize bank data
-  React.useEffect(() => {
-    setBanks(vietnameseBanks);
-  }, []);
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setUploading(true);
+            
+            // Show preview immediately
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                setPreviewImage(event.target?.result as string);
+            };
+            reader.readAsDataURL(file);
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setPreviewImage(e.target?.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
+            try {
+                // Convert file to base64 for upload
+                const base64 = await new Promise<string>((resolve) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                        const base64String = reader.result as string;
+                        // Remove data:image/jpeg;base64, prefix
+                        const base64Data = base64String.split(',')[1];
+                        resolve(base64Data);
+                    };
+                    reader.readAsDataURL(file);
+                });
+
+                // Upload to freeimage.host using a proxy or direct approach
+                const formData = new FormData();
+                formData.append('key', '6d207e02198a847aa98d0a2a901485a5');
+                formData.append('action', 'upload');
+                formData.append('source', base64);
+                formData.append('format', 'json');
+
+                // Try with fetch and proper headers
+                const response = await axios.post('https://cors-anywhere.herokuapp.com/https://freeimage.host/api/1/upload', formData, {
+                    headers: {
+                        'Content-Type': 'multipart/form-data'
+                    }
+                });
+
+                if (!response.status || response.status !== 200) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.data;
+
+                if (result.status_code === 200 && result.success) {
+                    setPreviewImage(result.image.url);
+                    console.log('Image uploaded successfully:', result.image.url);
+                } else {
+                    console.error('Upload failed:', result);
+                    // For now, use a placeholder URL when upload fails
+                    setPreviewImage('https://via.placeholder.com/800x400?text=Event+Banner');
+                    alert('Tải ảnh lên thất bại. Sử dụng ảnh mẫu tạm thời.');
+                }
+            } catch (error) {
+                console.error('Upload error:', error);
+                // For development, use a placeholder URL
+                setPreviewImage('https://via.placeholder.com/800x400?text=Event+Banner');
+                alert('Có lỗi CORS khi tải ảnh lên. Sử dụng ảnh mẫu tạm thời cho demo.');
+            } finally {
+                setUploading(false);
+            }
+        }
+    };
 
   const addPersonalityType = (type: string) => {
     if (!formData.personalityTypes.includes(type)) {
@@ -527,13 +574,12 @@ const EventCreationForm: React.FC = () => {
       id: Date.now().toString(),
       startTime: '',
       endTime: '',
-      capacity: 100,
       tickets: []
     };
     setShowtimes(prev => [...prev, newShowtime]);
   };
 
-  const updateShowtime = (id: string, field: string, value: any) => {
+  const updateShowtime = (id: string, field: string, value: string | number) => {
     setShowtimes(prev => prev.map(showtime => 
       showtime.id === id ? { ...showtime, [field]: value } : showtime
     ));
@@ -549,7 +595,9 @@ const EventCreationForm: React.FC = () => {
       name: '',
       price: 0,
       quantity: 0,
-      description: ''
+      description: '',
+      startTime: '',
+      endTime: ''
     };
     
     setShowtimes(prev => prev.map(showtime => 
@@ -559,7 +607,7 @@ const EventCreationForm: React.FC = () => {
     ));
   };
 
-  const updateTicket = (showtimeId: string, ticketId: string, field: string, value: any) => {
+  const updateTicket = (showtimeId: string, ticketId: string, field: string, value: string | number) => {
     setShowtimes(prev => prev.map(showtime => 
       showtime.id === showtimeId
         ? {
@@ -600,6 +648,7 @@ const EventCreationForm: React.FC = () => {
         name: formData.name,
         slug: formData.slug,
         description: formData.description,
+        bannerUrl: previewImage || undefined,
         personalityTypes: formData.personalityTypes.join(','),
         showtimes: showtimes.map(showtime => ({
           startTime: showtime.startTime,
@@ -608,7 +657,9 @@ const EventCreationForm: React.FC = () => {
             name: ticket.name,
             price: ticket.price,
             quantity: ticket.quantity,
-            description: ticket.description
+            description: ticket.description,
+            startTime: ticket.startTime,
+            endTime: ticket.endTime
           }))
         } as ShowTimeCreateDto)),
         // Include payment data
@@ -622,6 +673,7 @@ const EventCreationForm: React.FC = () => {
         taxCode: paymentData.taxCode || undefined,
       };
 
+      console.log('Submitting event data:', eventData);
       await createAndSubmitEvent(eventData);
       
       setAlert({ type: 'success', message: 'Tạo sự kiện thành công!' });
@@ -629,11 +681,14 @@ const EventCreationForm: React.FC = () => {
         navigate('/event-manager');
       }, 2000);
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error creating event:', error);
+      const errorMessage = error instanceof Error && 'response' in error 
+        ? (error as { response?: { data?: { message?: string } } }).response?.data?.message || 'Có lỗi xảy ra khi tạo sự kiện'
+        : 'Có lỗi xảy ra khi tạo sự kiện';
       setAlert({ 
         type: 'error', 
-        message: error.response?.data?.message || 'Có lỗi xảy ra khi tạo sự kiện' 
+        message: errorMessage
       });
     } finally {
       setLoading(false);
@@ -933,19 +988,6 @@ const EventCreationForm: React.FC = () => {
                           />
                         </div>
 
-                        <div className="event-creation-form__field">
-                          <label className="event-creation-form__label">
-                            <span className="event-creation-form__label-icon">👥</span>
-                            Sức chứa
-                          </label>
-                          <input
-                            type="number"
-                            value={showtime.capacity}
-                            onChange={(e) => updateShowtime(showtime.id, 'capacity', Number(e.target.value))}
-                            className="event-creation-form__input"
-                            min="1"
-                          />
-                        </div>
                       </div>
 
                       {/* Tickets for this showtime */}
@@ -1012,6 +1054,34 @@ const EventCreationForm: React.FC = () => {
                                 placeholder="Mô tả chi tiết về loại vé này..."
                                 className="event-creation-form__input"
                               />
+                            </div>
+                            
+                            {/* Optional ticket time fields */}
+                            <div className="event-creation-form__field-group">
+                              <div className="event-creation-form__field">
+                                <label className="event-creation-form__label">
+                                  <FaClock className="event-creation-form__label-icon" />
+                                  Thời gian bắt đầu bán vé (tuỳ chọn)
+                                </label>
+                                <input
+                                  type="datetime-local"
+                                  value={ticket.startTime || ''}
+                                  onChange={(e) => updateTicket(showtime.id, ticket.id, 'startTime', e.target.value)}
+                                  className="event-creation-form__input"
+                                />
+                              </div>
+                              <div className="event-creation-form__field">
+                                <label className="event-creation-form__label">
+                                  <FaClock className="event-creation-form__label-icon" />
+                                  Thời gian kết thúc bán vé (tuỳ chọn)
+                                </label>
+                                <input
+                                  type="datetime-local"
+                                  value={ticket.endTime || ''}
+                                  onChange={(e) => updateTicket(showtime.id, ticket.id, 'endTime', e.target.value)}
+                                  className="event-creation-form__input"
+                                />
+                              </div>
                             </div>
                           </div>
                         ))}

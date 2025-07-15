@@ -31,6 +31,8 @@ import { subscriptionAtom, userAtom } from "./atom/atom";
 import { getSubscriptions } from "./services/premiumService";
 import PersonalityPage from "./pages/PersonalityPages";
 import MyResult from "./pages/MyResult";
+import EventPublicDetail from "./components/event/EventPublicDetail";
+import EventPrivateDetail from "./components/admin/EventPrivateDetail";
 interface User {
   id: string;
   email: string;
@@ -188,7 +190,7 @@ function App() {
           
           {/* Event Routes */}
           <Route path="/events" element={<Event />} />
-          <Route path="/event-details/:id" element={<EventDetails />} />
+          <Route path="/events/:slug" element={<EventPublicDetail />} />
           <Route path="/ticket/:eventId" element={<Ticket />} />
           
           {/* Event Manager Routes */}
@@ -242,6 +244,8 @@ function App() {
           <Route path="/moderator/events/:id" element={<EventPrivateDetail />} />
           <Route path="/moderator/events/:id" element={<EventPrivateDetail />} /> */}
           
+          <Route path="/organizer/events/:id" element={<EventPrivateDetail />} />  
+          <Route path="/moderator/events/:id" element={<EventPrivateDetail />} />
           <Route path="/admin/premium" />
           <Route path="/admin/premiums/:id" />
           

@@ -56,8 +56,8 @@ const Event: React.FC = () => {
     // navigate(`/events/${eventSlug}/book`);
   };
 
-  const handleViewDetails = (eventId: number) => {
-    navigate(`/event-details/${eventId}`);
+  const handleViewDetails = (eventSlug: string) => {
+    navigate(`/events/${eventSlug}`);
   };
 
   const formatDate = (dateString?: string) => {
@@ -220,7 +220,7 @@ const Event: React.FC = () => {
 
                     <div className="event-page__event-actions">
                       <button
-                        onClick={() => handleViewDetails(event.id)}
+                        onClick={() => handleViewDetails(event.slug)}
                         className="event-page__btn event-page__btn--outline"
                       >
                         <FaEye />

@@ -245,11 +245,11 @@
   letter-spacing: 0.02em;
 }
 
-/* Events Grid */
+/* Events List */
 .event-manager-dashboard__events-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
-  gap: 2.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
   margin-bottom: 3rem;
 }
 
@@ -261,17 +261,27 @@
   transition: all 0.4s ease;
   position: relative;
   border: 1px solid rgba(255, 255, 255, 0.2);
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  min-height: 200px;
+  padding: 1.5rem;
+  gap: 2rem;
 }
 
 .event-manager-dashboard__event-card:hover {
-  transform: translateY(-10px);
-  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.2);
+  transform: translateY(-5px);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
 }
 
 .event-manager-dashboard__event-image {
   position: relative;
-  height: 220px;
+  width: 280px;
+  height: 160px;
+  flex-shrink: 0;
   overflow: hidden;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
 }
 
 .event-manager-dashboard__event-image img {
@@ -349,7 +359,11 @@
 }
 
 .event-manager-dashboard__event-content {
-  padding: 2.5rem;
+  padding: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
 .event-manager-dashboard__event-title {
@@ -387,6 +401,7 @@
   display: flex;
   gap: 1rem;
   align-items: center;
+  margin-top: 1rem;
 }
 
 /* Enhanced Button Styles */
@@ -564,7 +579,19 @@
   }
 
   .event-manager-dashboard__events-grid {
-    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .event-manager-dashboard__event-card {
+    flex-direction: column;
+    min-height: auto;
+    padding: 1.5rem;
+    gap: 1.5rem;
+  }
+
+  .event-manager-dashboard__event-image {
+    width: 100%;
+    height: 200px;
   }
 }
 
@@ -587,8 +614,19 @@
   }
 
   .event-manager-dashboard__events-grid {
-    grid-template-columns: 1fr;
     gap: 1.5rem;
+  }
+
+  .event-manager-dashboard__event-card {
+    flex-direction: column;
+    min-height: auto;
+    padding: 1rem;
+    gap: 1rem;
+  }
+
+  .event-manager-dashboard__event-image {
+    width: 100%;
+    height: 180px;
   }
 
   .event-manager-dashboard__event-actions {

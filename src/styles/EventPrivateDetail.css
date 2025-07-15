@@ -1,0 +1,213 @@
+/* EventPrivateDetail specific styles */
+
+/* Display styles for read-only fields */
+.event-creation-form__display {
+    padding: 0.875rem 1rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    background: #f7fafc;
+    color: #2d3748;
+    font-size: 1rem;
+    min-height: 2.75rem;
+    display: flex;
+    align-items: center;
+    word-break: break-word;
+}
+
+/* No image placeholder */
+.event-creation-form__no-image {
+    padding: 3rem 2rem;
+    text-align: center;
+    color: #718096;
+    background: #f7fafc;
+    border: 2px dashed #cbd5e0;
+    border-radius: 16px;
+    font-size: 0.9rem;
+}
+
+/* Admin actions */
+.event-creation-form__admin-actions {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+/* Additional button styles */
+.event-creation-form__btn--success {
+    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(72, 187, 120, 0.3);
+}
+
+.event-creation-form__btn--success:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(72, 187, 120, 0.4);
+}
+
+.event-creation-form__btn--danger {
+    background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(245, 101, 101, 0.3);
+}
+
+.event-creation-form__btn--danger:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(245, 101, 101, 0.4);
+}
+
+/* Dialog styles */
+.event-creation-form__dialog-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(4px);
+}
+
+.event-creation-form__dialog {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    min-width: 500px;
+    max-width: 90vw;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    animation: dialogSlideIn 0.3s ease-out;
+}
+
+.event-creation-form__dialog h3 {
+    margin: 0 0 1rem 0;
+    color: #2d3748;
+    font-size: 1.5rem;
+}
+
+.event-creation-form__dialog p {
+    margin: 0 0 1.5rem 0;
+    color: #4a5568;
+    line-height: 1.6;
+}
+
+.event-creation-form__textarea {
+    width: 100%;
+    min-height: 100px;
+    padding: 0.875rem 1rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-family: inherit;
+    resize: vertical;
+    transition: all 0.3s ease;
+}
+
+.event-creation-form__textarea:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.event-creation-form__dialog-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    margin-top: 2rem;
+}
+
+/* Status badges */
+.badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.badge-pending {
+    background: #fed7aa;
+    color: #ea580c;
+}
+
+.badge-approved {
+    background: #bbf7d0;
+    color: #16a34a;
+}
+
+.badge-rejected {
+    background: #fecaca;
+    color: #dc2626;
+}
+
+/* Showtime and ticket specific styles */
+.event-creation-form__showtime {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: #f8fafc;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+}
+
+.event-creation-form__showtime:last-child {
+    margin-bottom: 0;
+}
+
+.event-creation-form__tickets {
+    margin-top: 1rem;
+}
+
+.event-creation-form__ticket {
+    margin-bottom: 1rem;
+    padding: 1rem;
+    background: white;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+}
+
+.event-creation-form__ticket:last-child {
+    margin-bottom: 0;
+}
+
+.event-creation-form__no-data {
+    padding: 2rem;
+    text-align: center;
+    color: #718096;
+    background: #f7fafc;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+}
+
+/* Animation */
+@keyframes dialogSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .event-creation-form__admin-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .event-creation-form__dialog {
+        min-width: auto;
+        margin: 1rem;
+        padding: 1.5rem;
+    }
+    
+    .event-creation-form__dialog-actions {
+        flex-direction: column;
+    }
+}

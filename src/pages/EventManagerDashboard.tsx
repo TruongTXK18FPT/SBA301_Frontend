@@ -5,6 +5,8 @@ import { EventStatus, EventOverviewResponse } from '../components/event/dto/even
 import LoadingSpinner from '../components/LoadingSpinner';
 import Alert from '../components/Alert';
 import '../styles/EventManagerDashboard.css';
+import { useAtomValue } from 'jotai';
+import { userAtom } from '@/atom/atom';
 
 const EventManagerDashboard: React.FC = () => {
   const [events, setEvents] = useState<EventOverviewResponse[]>([]);
@@ -17,7 +19,7 @@ const EventManagerDashboard: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [sortBy, setSortBy] = useState<'name' | 'startTime' | 'status'>('startTime');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
-  
+  const user = useAtomValue(userAtom);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -28,12 +30,13 @@ const EventManagerDashboard: React.FC = () => {
     try {
       setLoading(true);
       const params = {
-        page: currentPage,
+        page: currentPage - 1,
         size: 12,
         name: searchTerm || undefined,
-        status: statusFilter as EventStatus || undefined,
-        sortBy: 'startTime',
-        sortDirection: sortOrder
+        status: statusFilter as EventStatus || 'PENDING',
+        sortBy: 'id',
+        sortDirection: sortOrder,
+        organizerId: user?.id || undefined
       };
       
       const response = await eventService.getEvents(params);
@@ -64,7 +67,6 @@ const EventManagerDashboard: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     const statusMap = {
-      'DRAFT': { text: 'Bản nháp', class: 'draft' },
       'PENDING': { text: 'Chờ duyệt', class: 'pending' },
       'UPCOMING': { text: 'Sắp diễn ra', class: 'approved' },
       'ONGOING': { text: 'Đang diễn ra', class: 'ongoing' },
@@ -85,13 +87,24 @@ const EventManagerDashboard: React.FC = () => {
   const formatDate = (dateString?: string) => {
     if (!dateString) return 'Chưa có thông tin';
     const date = new Date(dateString);
-    return date.toLocaleDateString('vi-VN', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
+    
+    // Vietnamese day names
+    const dayNames = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+    const dayName = dayNames[date.getDay()];
+    
+    // Format time as HH:mm
+    const time = date.toLocaleTimeString('vi-VN', {
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
+      hour12: false
     });
+    
+    // Format date as DD tháng MM YYYY
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = date.getMonth() + 1;
+    const year = date.getFullYear();
+    
+    return `${time}, ${dayName}, ${day} tháng ${month.toString().padStart(2, '0')} ${year}`;
   };
 
   const formatPrice = (price?: number) => {
@@ -179,8 +192,6 @@ const EventManagerDashboard: React.FC = () => {
                 }}
                 className="event-manager-dashboard__filter-select"
               >
-                <option value="">Tất cả trạng thái</option>
-                <option value="DRAFT">Bản nháp</option>
                 <option value="PENDING">Chờ duyệt</option>
                 <option value="UPCOMING">Sắp diễn ra</option>
                 <option value="ONGOING">Đang diễn ra</option>
@@ -205,15 +216,13 @@ const EventManagerDashboard: React.FC = () => {
                 <option value="startTime-asc">Cũ nhất</option>
                 <option value="name-asc">Tên A-Z</option>
                 <option value="name-desc">Tên Z-A</option>
-                <option value="status-asc">Trạng thái A-Z</option>
-                <option value="status-desc">Trạng thái Z-A</option>
               </select>
             </div>
           </div>
         </div>
 
         {/* Stats Cards */}
-        <div className="event-manager-dashboard__stats-grid">
+        {/* <div className="event-manager-dashboard__stats-grid">
           <div className="event-manager-dashboard__stat-card">
             <div className="event-manager-dashboard__stat-icon">📊</div>
             <div className="event-manager-dashboard__stat-content">
@@ -242,14 +251,15 @@ const EventManagerDashboard: React.FC = () => {
               <p>Bản nháp</p>
             </div>
           </div>
-        </div>
+        </div> */}
 
         {/* Events Grid */}
         {events.length > 0 ? (
           <>
             <div className="event-manager-dashboard__events-grid">
               {events.map((event) => (
-                <div key={event.id} className="event-manager-dashboard__event-card">
+                <div key={event.id} className="event-manager-dashboard__event-card" onClick={() => navigate(`/organizer/events/${event.id}`)}>
+                  
                   <div className="event-manager-dashboard__event-image">
                     {event.bannerUrl ? (
                       <img src={event.bannerUrl} alt={event.name} />
@@ -258,9 +268,6 @@ const EventManagerDashboard: React.FC = () => {
                         <span>🎪</span>
                       </div>
                     )}
-                    <div className="event-manager-dashboard__status-overlay">
-                      {getStatusBadge(event.status)}
-                    </div>
                   </div>
                   
                   <div className="event-manager-dashboard__event-content">
@@ -273,36 +280,6 @@ const EventManagerDashboard: React.FC = () => {
                           <span>{formatDate(event.startTime)}</span>
                         </div>
                       )}
-                      {event.price && (
-                        <div className="event-manager-dashboard__meta-item">
-                          <span className="event-manager-dashboard__meta-icon">💰</span>
-                          <span>{formatPrice(event.price)}</span>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="event-manager-dashboard__event-actions">
-                      <button
-                        onClick={() => navigate(`/event-details/${event.slug}`)}
-                        className="event-manager-dashboard__btn event-manager-dashboard__btn--outline"
-                      >
-                        <span>👁️</span>
-                        Xem
-                      </button>
-                      <button
-                        onClick={() => navigate(`/event-manager/edit/${event.id}`)}
-                        className="event-manager-dashboard__btn event-manager-dashboard__btn--primary"
-                      >
-                        <span>✏️</span>
-                        Chỉnh sửa
-                      </button>
-                      <button
-                        onClick={() => handleDeleteEvent(event.id)}
-                        className="event-manager-dashboard__btn event-manager-dashboard__btn--danger"
-                      >
-                        <span>🗑️</span>
-                        Xóa
-                      </button>
                     </div>
                   </div>
                 </div>
