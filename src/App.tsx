@@ -20,6 +20,7 @@ import EventManagerDashboard from "./pages/EventManagerDashboard";
 import EventCreationForm from "./components/event/EventCreationForm";
 import EventDetails from "./pages/EventDetails";
 import Ticket from "./pages/Ticket";
+import Order from "./pages/Order";
 
 import { getToken, removeToken } from "./services/localStorageService";
 import { getCurrentUser } from "./services/userService";
@@ -28,9 +29,8 @@ import { logOut } from "./services/authService";
 import { useSetAtom } from "jotai";
 import { subscriptionAtom, userAtom } from "./atom/atom";
 import { getSubscriptions } from "./services/premiumService";
-import EventPrivateDetail from "./components/event/EventPrivateDetail";
-import EventPublicDetail from "./components/event/EventPublicDetail";
-
+import PersonalityPage from "./pages/PersonalityPages";
+import MyResult from "./pages/MyResult";
 interface User {
   id: string;
   email: string;
@@ -182,6 +182,9 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/register" element={<Register />} />
           <Route path="/premium" element={<PremiumPage isAuthenticated={isAuthenticated} />} />
+          <Route path="/personality" element={<PersonalityPage />} />
+          <Route path="/my-result" element={<MyResult />} />
+          {/* Public Routes */}
           
           {/* Event Routes */}
           <Route path="/events" element={<Event />} />
@@ -259,6 +262,14 @@ function App() {
             element={
               <ProtectedRoute isAuthenticated={isAuthenticated}>
                 <Profile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/order"
+            element={
+              <ProtectedRoute isAuthenticated={isAuthenticated}>
+                <Order />
               </ProtectedRoute>
             }
           />

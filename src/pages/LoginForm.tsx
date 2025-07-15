@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { FaGoogle } from "react-icons/fa";
+import { FaGoogle,FaEye,FaEyeSlash } from "react-icons/fa";
 import { useNavigate, Link } from "react-router-dom";
 import Button from "../components/Button";
 import Alert from "../components/Alert";
@@ -18,6 +18,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [alert, setAlert] = useState<{
     show: boolean;
     type: "success" | "error" | "warning";
@@ -296,7 +297,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
 
               <div className="form-group">
                 <input
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   placeholder="Mật khẩu"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -304,6 +305,27 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
                   className="login-form-input"
                 />
                 <div className="input-icon">🔒</div>
+                <button
+                  type="button"
+                  className="show-password-btn"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  tabIndex={-1}
+                  style={{
+                    position: "absolute",
+                    right: "1.2rem",
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    color: "#94a3b8",
+                    fontSize: "1.2rem",
+                    zIndex: 10,
+                  }}
+                  aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                >
+                  {showPassword ? <FaEyeSlash /> : <FaEye />}
+                </button>
               </div>
 
               <div className="form-options">

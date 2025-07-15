@@ -62,13 +62,16 @@ export interface QuizSubmissionData {
 }
 
 export interface QuizResult {
+  id: number;
   personalityCode: string;
   nickname?: string;
   keyTraits?: string;
   description: string;
   careerRecommendations?: string;
-  scores?: Record<string, number>;
   universityRecommendations?: string;
+  scores?: Record<string, number>;
+  submittedAt: string;
+  quizType: string;
 }
 
 // Quiz Management Types
@@ -482,7 +485,6 @@ class QuizService {
       if (!response) {
         throw new Error('No response received from server');
       }
-
       // Transform the response to match expected format
       return {
         userId: response.userId,
@@ -504,7 +506,66 @@ class QuizService {
       throw error;
     }
   }
+  // Get quiz results by ID for management
+  async getMyQuizResults(): Promise<{
+  userId: string;
+  email: string;
+  fullName: string;
+  results: Array<{
+    id: number;
+    personalityCode: string;
+    nickname?: string;
+    keyTraits?: string;
+    description: string;
+    careerRecommendations?: string;
+    universityRecommendations?: string;
+    scores?: Record<string, number>;
+    submittedAt: string;
+    quizType: string;
+  }>;
+}> {
+  try {
+    const response = await this.fetchAPI<{
+      userId: string;
+      email: string;
+      fullName: string;
+      quizResults: Array<{
+        resultId: number;
+        personalityCode?: string;
+        resultType: string;
+        personalityName?: string;
+        personalityDescription?: string;
+        timeSubmit: string;
+        resultJson?: string;
+      }>;
+    }>('/quiz-results/user/me');
 
+    if (!response) {
+      throw new Error('No response received from server');
+    }
+    return {
+      userId: response.userId,
+      email: response.email,
+      fullName: response.fullName,
+      results: response.quizResults?.map(result => ({
+        id: result.resultId,
+        personalityCode: result.personalityCode || result.resultType,
+        nickname: result.personalityName,
+        description: result.personalityDescription || '',
+        submittedAt: result.timeSubmit,
+        quizType: result.resultType,
+        ...(result.resultJson ? JSON.parse(result.resultJson) : {})
+      })) || []
+    };
+  } catch (error) {
+    console.error('API request failed:', error);
+    throw error;
+  }
+}
+async getQuizResultById(resultId: number): Promise<QuizResult> {
+  const response = await this.fetchAPI<QuizResult>(`/quiz-results/${resultId}`);
+  return response;
+}
   // Get all quizzes for management
   async getAllQuizzes(): Promise<QuizData[]> {
     return this.fetchAPI<QuizData[]>('/quiz', {}, this.DEFAULT_CACHE_TTL);
@@ -522,16 +583,6 @@ class QuizService {
     }
   }
 
-  // Create new quiz
-  async createQuiz(quizData: QuizCreateRequest): Promise<QuizData> {
-    // Clear cache after creating
-    this.cache.clear();
-    return this.fetchAPI<QuizData>('/quiz', {
-      method: 'POST',
-      data: quizData
-    });
-  }
-
   // Update existing quiz
   async updateQuiz(quizId: number, quizData: QuizUpdateRequest): Promise<QuizData> {
     // Clear cache after updating
@@ -539,15 +590,6 @@ class QuizService {
     return this.fetchAPI<QuizData>(`/quiz/${quizId}`, {
       method: 'PUT',
       data: quizData
-    });
-  }
-
-  // Delete quiz
-  async deleteQuiz(quizId: number): Promise<void> {
-    // Clear cache after deleting
-    this.cache.clear();
-    return this.fetchAPI<void>(`/quiz/${quizId}`, {
-      method: 'DELETE'
     });
   }
 

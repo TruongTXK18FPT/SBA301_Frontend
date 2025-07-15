@@ -50,9 +50,10 @@ const Event: React.FC = () => {
     loadEvents(0);
   };
 
-  const handleBookNow = (eventSlug: string) => {
+  const handleBookNow = (event: EventOverviewResponse) => {
+    console.log("slug event", event);
     // Navigate to booking page (you can implement this later)
-    navigate(`/events/${eventSlug}/book`);
+    // navigate(`/events/${eventSlug}/book`);
   };
 
   const handleViewDetails = (eventSlug: string) => {
@@ -226,7 +227,7 @@ const Event: React.FC = () => {
                         Xem Chi Tiết
                       </button>
                       <button
-                        onClick={() => handleBookNow(event.slug)}
+                        onClick={() => handleBookNow(event)}
                         className="event-page__btn event-page__btn--primary"
                         disabled={event.status !== 'UPCOMING' && event.status !== 'ONGOING'}
                       >
