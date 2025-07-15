@@ -25,47 +25,26 @@ const QuizManagement: React.FC<QuizManagementProps> = ({ onAlert }) => {
   const loadQuizzes = async () => {
     try {
       setLoading(true);
-
-      // For this implementation, we'll create a hardcoded list of 2 quizzes
-      // that correspond to the main personality test types
+      
+      // Get all quizzes from backend using the existing method
+      const quizzesData = await quizService.getAllQuizzes();
+      
+      // Get categories to match with quizzes
       const categoriesData = await quizService.getAllCategories();
+      
+      // Create quiz list with question quantity from backend
+      const quizzesWithQuantity = quizzesData.map(quiz => {
+        return {
+          id: quiz.id,
+          title: quiz.title,
+          categoryId: quiz.categoryId,
+          description: quiz.description,
+          questionQuantity: quiz.questionQuantity,
+          categoryName: categoriesData.find(cat => cat.id === quiz.categoryId)?.name
+        };
+      });
 
-      // Find MBTI and DISC categories
-      const mbtiCategory = categoriesData.find(cat =>
-        cat.name.toUpperCase().includes('MBTI') ||
-        cat.name.toUpperCase().includes('MYERS')
-      );
-
-      const discCategory = categoriesData.find(cat =>
-        cat.name.toUpperCase().includes('DISC')
-      );
-
-      // Create the 2 fixed quizzes
-      const fixedQuizzes: QuizData[] = [];
-
-      if (mbtiCategory) {
-        fixedQuizzes.push({
-          id: 1,
-          title: 'MBTI Personality Assessment',
-          categoryId: mbtiCategory.id,
-          description: 'Comprehensive Myers-Briggs Type Indicator personality test to discover your personality type',
-          questionQuantity: 60,
-          categoryName: mbtiCategory.name
-        });
-      }
-
-      if (discCategory) {
-        fixedQuizzes.push({
-          id: 2,
-          title: 'DISC Behavioral Assessment',
-          categoryId: discCategory.id,
-          description: 'DISC assessment to understand your behavioral style and communication preferences',
-          questionQuantity: 24,
-          categoryName: discCategory.name
-        });
-      }
-
-      setQuizzes(fixedQuizzes);
+      setQuizzes(quizzesWithQuantity);
     } catch (error: any) {
       onAlert('error', 'Failed to load quizzes: ' + (error.message || 'Unknown error'));
     } finally {
@@ -205,4 +184,3 @@ const QuizManagement: React.FC<QuizManagementProps> = ({ onAlert }) => {
 };
 
 export default QuizManagement;
-

@@ -91,7 +91,7 @@ export interface QuizCreateRequest {
   questionQuantity: number;
 }
 
-export interface QuizUpdateRequest {
+export interface QuizRequestDTO {
   title: string;
   categoryId: number;
   description: string;
@@ -126,6 +126,22 @@ export interface QuizOptionResponse {
   optionText: string;
   targetTrait?: string;
   scoreValue: number;
+  questionId: number;
+}
+
+// Add new interfaces for quiz options management
+export interface QuizOptionsDTO {
+  id?: number;
+  optionText: string;
+  targetTrait?: string;
+  scoreValue: 'NEGATIVE_ONE' | 'ZERO' | 'POSITIVE_ONE' | 'DISC_TWO';
+  questionId: number;
+}
+
+export interface QuizOptionUpdateRequest {
+  optionText: string;
+  targetTrait?: string;
+  scoreValue: 'NEGATIVE_ONE' | 'ZERO' | 'POSITIVE_ONE' | 'DISC_TWO';
   questionId: number;
 }
 
@@ -584,7 +600,7 @@ async getQuizResultById(resultId: number): Promise<QuizResult> {
   }
 
   // Update existing quiz
-  async updateQuiz(quizId: number, quizData: QuizUpdateRequest): Promise<QuizData> {
+  async updateQuiz(quizId: number, quizData: QuizRequestDTO): Promise<QuizData> {
     // Clear cache after updating
     this.cache.clear();
     return this.fetchAPI<QuizData>(`/quiz/${quizId}`, {
@@ -613,6 +629,10 @@ async getQuizResultById(resultId: number): Promise<QuizResult> {
     return this.fetchAPI<QuizQuestionResponse[]>(`/quiz-questions/quiz/${quizId}`, {}, this.DEFAULT_CACHE_TTL);
   }
 
+  async getQuizQuestionById(questionId: number): Promise<QuizQuestionResponse> {
+  return quizService.fetchAPI<QuizQuestionResponse>(`/quiz-questions/${questionId}`);
+}
+
   // Update quiz question
   async updateQuizQuestion(questionId: number, questionData: QuizQuestionCreateRequest): Promise<QuizQuestionResponse> {
     this.cache.clear();
@@ -628,6 +648,141 @@ async getQuizResultById(resultId: number): Promise<QuizResult> {
     return this.fetchAPI<void>(`/quiz-questions/${questionId}`, {
       method: 'DELETE'
     });
+  }
+
+  // === Quiz Options Management Functions ===
+
+  // Get options by question ID
+  async getOptionsByQuestionId(questionId: number): Promise<QuizOptionsDTO[]> {
+    return this.fetchAPI<QuizOptionsDTO[]>(`/quiz-options/question/${questionId}`, {}, this.DEFAULT_CACHE_TTL);
+  }
+
+  // Get options by multiple question IDs
+  async getOptionsByQuestionIds(questionIds: number[]): Promise<QuizOptionsDTO[]> {
+    return this.fetchAPI<QuizOptionsDTO[]>(`/quiz-options/questions?questionIds=${questionIds.join(',')}`, {}, this.DEFAULT_CACHE_TTL);
+  }
+
+  // Get specific option by ID
+  async getOptionById(optionId: number): Promise<QuizOptionsDTO> {
+    return this.fetchAPI<QuizOptionsDTO>(`/quiz-options/${optionId}`, {}, this.DEFAULT_CACHE_TTL);
+  }
+
+  // Create a new quiz option
+  async createQuizOption(optionData: QuizOptionsDTO): Promise<QuizOptionsDTO> {
+    this.cache.clear();
+    return this.fetchAPI<QuizOptionsDTO>('/quiz-options', {
+      method: 'POST',
+      data: optionData
+    });
+  }
+
+  // Create multiple quiz options
+  async createQuizOptions(optionsData: QuizOptionsDTO[]): Promise<QuizOptionsDTO[]> {
+    this.cache.clear();
+    return this.fetchAPI<QuizOptionsDTO[]>('/quiz-options/bulk', {
+      method: 'POST',
+      data: optionsData
+    });
+  }
+
+  // Update a quiz option
+  async updateQuizOption(optionId: number, optionData: QuizOptionUpdateRequest): Promise<QuizOptionsDTO> {
+    this.cache.clear();
+    return this.fetchAPI<QuizOptionsDTO>(`/quiz-options/${optionId}`, {
+      method: 'PUT',
+      data: optionData
+    });
+  }
+
+  // Delete a quiz option
+  async deleteQuizOption(optionId: number): Promise<void> {
+    this.cache.clear();
+    return this.fetchAPI<void>(`/quiz-options/${optionId}`, {
+      method: 'DELETE'
+    });
+  }
+
+  // Delete all options for a question
+  async deleteOptionsByQuestionId(questionId: number): Promise<void> {
+    this.cache.clear();
+    return this.fetchAPI<void>(`/quiz-options/question/${questionId}`, {
+      method: 'DELETE'
+    });
+  }
+
+  // Get options by target trait
+  async getOptionsByTargetTrait(targetTrait: string): Promise<QuizOptionsDTO[]> {
+    return this.fetchAPI<QuizOptionsDTO[]>(`/quiz-options/target-trait/${targetTrait}`, {}, this.DEFAULT_CACHE_TTL);
+  }
+
+  // Get options by score value
+  async getOptionsByScoreValue(scoreValue: 'NEGATIVE_ONE' | 'ZERO' | 'POSITIVE_ONE' | 'DISC_TWO'): Promise<QuizOptionsDTO[]> {
+    return this.fetchAPI<QuizOptionsDTO[]>(`/quiz-options/score-value/${scoreValue}`, {}, this.DEFAULT_CACHE_TTL);
+  }
+
+  // Count options for a question
+  async countOptionsByQuestionId(questionId: number): Promise<{ count: number }> {
+    return this.fetchAPI<{ count: number }>(`/quiz-options/question/${questionId}/count`, {}, this.DEFAULT_CACHE_TTL);
+  }
+
+  // Check if option exists
+  async optionExists(optionId: number): Promise<{ exists: boolean }> {
+    return this.fetchAPI<{ exists: boolean }>(`/quiz-options/${optionId}/exists`, {}, this.DEFAULT_CACHE_TTL);
+  }
+
+  // Get available score values
+  async getAvailableScoreValues(): Promise<('NEGATIVE_ONE' | 'ZERO' | 'POSITIVE_ONE' | 'DISC_TWO')[]> {
+    return this.fetchAPI<('NEGATIVE_ONE' | 'ZERO' | 'POSITIVE_ONE' | 'DISC_TWO')[]>('/quiz-options/score-values', {}, this.DEFAULT_CACHE_TTL);
+  }
+
+  // === Helper Functions for Quiz Types ===
+
+  // Get appropriate score values based on quiz type
+  getScoreValuesForQuizType(isDiscQuiz: boolean): { value: 'NEGATIVE_ONE' | 'ZERO' | 'POSITIVE_ONE' | 'DISC_TWO', label: string, numericValue: number }[] {
+    if (isDiscQuiz) {
+      return [
+        { value: 'DISC_TWO', label: 'Most Like Me (2)', numericValue: 2 }
+      ];
+    } else {
+      // MBTI quiz
+      return [
+        { value: 'NEGATIVE_ONE', label: 'Disagree (-1)', numericValue: -1 },
+        { value: 'ZERO', label: 'Neutral (0)', numericValue: 0 },
+        { value: 'POSITIVE_ONE', label: 'Agree (1)', numericValue: 1 }
+      ];
+    }
+  }
+
+  // Get appropriate traits based on quiz type
+  getTraitsForQuizType(isDiscQuiz: boolean): string[] {
+    if (isDiscQuiz) {
+      return ['D', 'I', 'S', 'C'];
+    } else {
+      // MBTI quiz
+      return ['E', 'I', 'S', 'N', 'T', 'F', 'J', 'P'];
+    }
+  }
+
+  // Convert score value enum to numeric value
+  convertScoreValueToNumber(scoreValue: 'NEGATIVE_ONE' | 'ZERO' | 'POSITIVE_ONE' | 'DISC_TWO'): number {
+    switch (scoreValue) {
+      case 'NEGATIVE_ONE': return -1;
+      case 'ZERO': return 0;
+      case 'POSITIVE_ONE': return 1;
+      case 'DISC_TWO': return 2;
+      default: return 0;
+    }
+  }
+
+  // Convert numeric value to score value enum
+  convertNumberToScoreValue(numericValue: number): 'NEGATIVE_ONE' | 'ZERO' | 'POSITIVE_ONE' | 'DISC_TWO' {
+    switch (numericValue) {
+      case -1: return 'NEGATIVE_ONE';
+      case 0: return 'ZERO';
+      case 1: return 'POSITIVE_ONE';
+      case 2: return 'DISC_TWO';
+      default: return 'ZERO';
+    }
   }
 }
 
