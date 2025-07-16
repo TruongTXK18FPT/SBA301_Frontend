@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
-import { useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { EventPublicDetailResponse } from './dto/event.dto'
 import { ShowTimeResponse } from './dto/showtime.dto'
 import axios from 'axios'
@@ -12,7 +12,7 @@ declare global {
   interface Window {
     JitsiMeetExternalAPI: {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      new (domain: string, options: any): any;
+      new(domain: string, options: any): any;
     };
   }
 }
@@ -27,7 +27,7 @@ const EventPublicDetail = () => {
   const [jitsiApi, setJitsiApi] = useState<any>(null);
   const [lastConnectionAttempt, setLastConnectionAttempt] = useState<number>(0);
   const [connectionCooldown, setConnectionCooldown] = useState<boolean>(false);
-
+  const navigate = useNavigate();
   const toggleShowtime = (showtimeId: number) => {
     setExpandedShowtime(expandedShowtime === showtimeId ? null : showtimeId);
   };
@@ -46,12 +46,12 @@ const EventPublicDetail = () => {
     const now = Date.now();
     const timeSinceLastAttempt = now - lastConnectionAttempt;
     const minInterval = 30000; // 30 seconds minimum between attempts
-    
+
     if (timeSinceLastAttempt < minInterval) {
       console.log(`Rate limit: ${Math.ceil((minInterval - timeSinceLastAttempt) / 1000)}s remaining`);
       return false;
     }
-    
+
     return true;
   }, [lastConnectionAttempt]);
 
@@ -59,14 +59,14 @@ const EventPublicDetail = () => {
   const checkCurrentShowtime = (showtimes: ShowTimeResponse[]) => {
     const now = new Date();
     console.log('Checking current showtime at:', now);
-    
+
     for (const showtime of showtimes) {
       const startTime = new Date(showtime.startTime);
       const endTime = new Date(showtime.endTime);
-      
+
       console.log(`Showtime ${showtime.id}: ${startTime} - ${endTime}, meetingId: ${showtime.meetingId}`);
       console.log(`Is active: ${now >= startTime && now <= endTime && showtime.meetingId}`);
-      
+
       if (now >= startTime && now <= endTime && showtime.meetingId) {
         console.log('Found active showtime:', showtime);
         return showtime;
@@ -83,7 +83,7 @@ const EventPublicDetail = () => {
       retryCount,
       maxRetries
     });
-    
+
     if (window.JitsiMeetExternalAPI && typeof window.JitsiMeetExternalAPI === 'function') {
       console.log('JitsiMeetExternalAPI is available and ready');
       callback();
@@ -99,7 +99,7 @@ const EventPublicDetail = () => {
   // Create Jitsi Meeting
   const createJitsiMeeting = useCallback((meetingId: string, meetingPassword?: string) => {
     console.log('=== Creating Jitsi Meeting ===');
-    
+
     // Check rate limiting
     if (!checkRateLimit()) {
       console.log('❌ Rate limited - too many connection attempts');
@@ -107,10 +107,10 @@ const EventPublicDetail = () => {
       setTimeout(() => setConnectionCooldown(false), 30000);
       return;
     }
-    
+
     // Update last attempt time
     setLastConnectionAttempt(Date.now());
-    
+
     // Clean the meeting ID
     const cleanedMeetingId = cleanMeetingId(meetingId);
     console.log('Meeting ID:', meetingId);
@@ -118,7 +118,7 @@ const EventPublicDetail = () => {
     console.log('Password:', meetingPassword);
     console.log('JitsiMeetExternalAPI available:', !!window.JitsiMeetExternalAPI);
     console.log('JitsiMeetExternalAPI type:', typeof window.JitsiMeetExternalAPI);
-    
+
     // Dispose existing API first
     if (jitsiApi) {
       console.log('Disposing existing Jitsi API');
@@ -156,7 +156,7 @@ const EventPublicDetail = () => {
     try {
       // Follow exact documentation format
       const domain = 'meet.jit.si';
-            
+
       const options = {
         roomName: cleanedMeetingId, // Use cleaned meeting ID
         width: '100%',
@@ -198,10 +198,10 @@ const EventPublicDetail = () => {
 
       console.log('Creating JitsiMeetExternalAPI with options:', options);
       console.log('Original meeting ID:', meetingId);
-      
+
       // Create the API exactly as in documentation
       const api = new window.JitsiMeetExternalAPI(domain, options);
-      
+
       console.log('✅ Jitsi API created successfully:', api);
 
       // Add comprehensive event listeners for debugging
@@ -285,22 +285,22 @@ const EventPublicDetail = () => {
     console.log('=== Initializing Jitsi ===');
     console.log('Meeting ID:', meetingId);
     console.log('Password:', meetingPassword);
-    
+
     // Since script is already in HTML, check if API is available
     if (window.JitsiMeetExternalAPI) {
       console.log('✅ JitsiMeetExternalAPI is available, creating meeting immediately');
       createJitsiMeeting(meetingId, meetingPassword);
     } else {
       console.log('❌ JitsiMeetExternalAPI not available, waiting...');
-      
+
       // Wait for API to be available (script might still be loading)
       let retries = 0;
       const maxRetries = 10;
-      
+
       const checkApi = () => {
         retries++;
         console.log(`Checking API availability... attempt ${retries}/${maxRetries}`);
-        
+
         if (window.JitsiMeetExternalAPI) {
           console.log('✅ JitsiMeetExternalAPI is now available!');
           createJitsiMeeting(meetingId, meetingPassword);
@@ -312,7 +312,7 @@ const EventPublicDetail = () => {
           console.log('Available window properties:', Object.keys(window).filter(key => key.toLowerCase().includes('jitsi')));
         }
       };
-      
+
       checkApi();
     }
   }, [createJitsiMeeting]);
@@ -332,19 +332,19 @@ const EventPublicDetail = () => {
 
     const interval = setInterval(() => {
       const activeShowtime = checkCurrentShowtime(event.showtimes);
-      
+
       // If showtime status changed
-      if ((!currentShowtime && activeShowtime) || (currentShowtime && !activeShowtime) || 
-          (currentShowtime && activeShowtime && currentShowtime.id !== activeShowtime.id)) {
-        
+      if ((!currentShowtime && activeShowtime) || (currentShowtime && !activeShowtime) ||
+        (currentShowtime && activeShowtime && currentShowtime.id !== activeShowtime.id)) {
+
         setCurrentShowtime(activeShowtime);
-        
+
         // Dispose current meeting and start new one if needed
         if (jitsiApi) {
           jitsiApi.dispose();
           setJitsiApi(null);
         }
-        
+
         if (activeShowtime && activeShowtime.meetingId) {
           setTimeout(() => {
             initializeJitsi(activeShowtime.meetingId!, activeShowtime.meetingPassword);
@@ -372,7 +372,7 @@ const EventPublicDetail = () => {
         const activeShowtime = checkCurrentShowtime(fetchedEvent.showtimes);
         console.log('Active showtime found on load:', activeShowtime);
         setCurrentShowtime(activeShowtime);
-        
+
         // Initialize Jitsi if there's an active showtime
         if (activeShowtime && activeShowtime.meetingId) {
           console.log('Initializing Jitsi on load with meeting ID:', activeShowtime.meetingId);
@@ -534,21 +534,21 @@ const EventPublicDetail = () => {
                     <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
                     <h2 className="text-xl font-bold">Sự kiện đang diễn ra TRỰC TIẾP</h2>
                   </div>
-                  <button 
+                  <button
                     onClick={async () => {
                       console.log('Manual Jitsi init button clicked');
                       console.log('Current showtime:', currentShowtime);
-                      
+
                       if (connectionCooldown) {
                         alert('Đang trong thời gian chờ. Vui lòng thử lại sau 30 giây.');
                         return;
                       }
-                      
+
                       if (!checkRateLimit()) {
                         alert('Vui lòng chờ trước khi thử lại.');
                         return;
                       }
-                      
+
                       if (currentShowtime?.meetingId) {
                         await initializeJitsi(currentShowtime.meetingId, currentShowtime.meetingPassword);
                       }
@@ -599,17 +599,25 @@ const EventPublicDetail = () => {
                         onClick={() => toggleShowtime(showtime.id)}
                         className="w-full !bg-[#38383D] hover:bg-[#404048] p-4 rounded-lg transition-colors"
                       >
-                        <div className="flex items-center gap-2 w-full justify-start">
-                          <div className={`transform transition-transform duration-200 ${
-                            expandedShowtime === showtime.id ? 'rotate-90' : ''
-                          }`}>
+                        <div className="flex items-center gap-2 w-full">
+
+                          <div className={`transform transition-transform duration-200 ${expandedShowtime === showtime.id ? 'rotate-90' : ''
+                            }`}>
                             <svg className="h-4 w-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                             </svg>
+
                           </div>
-                          <span className="text-white font-medium">
-                            {formatTime(showtime.startTime)} - {formatTime(showtime.endTime)}, {formatDate(showtime.startTime)}
-                          </span>
+                          <div className='flex grow-1 justify-between items-center'>
+                            <span className="text-white font-medium">
+                              {formatTime(showtime.startTime)} - {formatTime(showtime.endTime)}, {formatDate(showtime.startTime)}
+                            </span>
+                            <div>
+                              <button className="w-full !bg-[#2dc275] hover:bg-green-600 font-bold py-4 px-12 rounded-xl text-lg text-white transition-colors duration-200 shadow-lg border-none" onClick={() => navigate(`/events/${slug}/showtimes/${showtime.id}/tickets`)}>
+                                Mua vé
+                              </button>
+                            </div>
+                          </div>
                         </div>
                       </button>
 

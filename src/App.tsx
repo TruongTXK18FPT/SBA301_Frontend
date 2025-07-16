@@ -32,7 +32,8 @@ import { getSubscriptions } from "./services/premiumService";
 import PersonalityPage from "./pages/PersonalityPages";
 import MyResult from "./pages/MyResult";
 import EventPublicDetail from "./components/event/EventPublicDetail";
-import EventPrivateDetail from "./components/admin/EventPrivateDetail";
+import EventPrivateDetail from "./components/event/EventPrivateDetail";
+import ShowtimeTickets from "./components/event/ShowtimeTickets";
 interface User {
   id: string;
   email: string;
@@ -191,6 +192,7 @@ function App() {
           {/* Event Routes */}
           <Route path="/events" element={<Event />} />
           <Route path="/events/:slug" element={<EventPublicDetail />} />
+          <Route path="/events/:slug/showtimes/:showtimeId/tickets" element={<ShowtimeTickets />} />
           <Route path="/ticket/:eventId" element={<Ticket />} />
           
           {/* Event Manager Routes */}

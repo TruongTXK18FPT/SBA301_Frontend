@@ -1024,7 +1024,6 @@ const EventCreationForm: React.FC = () => {
                                   value={ticket.price}
                                   onChange={(e) => updateTicket(showtime.id, ticket.id, 'price', Number(e.target.value))}
                                   className="event-creation-form__input"
-                                  min="0"
                                 />
                               </div>
                               <div className="event-creation-form__field">
@@ -1034,7 +1033,6 @@ const EventCreationForm: React.FC = () => {
                                   value={ticket.quantity}
                                   onChange={(e) => updateTicket(showtime.id, ticket.id, 'quantity', Number(e.target.value))}
                                   className="event-creation-form__input"
-                                  min="0"
                                 />
                               </div>
                               <button

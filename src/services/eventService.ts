@@ -98,6 +98,11 @@ export const getEventTickets = async (id: number): Promise<TicketResponse> => {
   return camelcaseKeys(response.data as any, { deep: true }) as unknown as TicketResponse;
 };
 
+export const getShowtimeTickets = async (showtimeId: number): Promise<TicketResponse[]> => {
+  const response = await api.get<TicketResponse[]>(`/event/events/showtimes/${showtimeId}/tickets`);
+  return camelcaseKeys(response.data as any, { deep: true }) as unknown as TicketResponse[];
+};
+
 // Create eventService object for easier imports
 export const eventService = {
   getEvents,
@@ -113,4 +118,5 @@ export const eventService = {
   updateEvent,
   deleteEvent,
   getEventTickets,
+  getShowtimeTickets
 };

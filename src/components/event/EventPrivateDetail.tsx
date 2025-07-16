@@ -10,6 +10,7 @@ import './EventCreationForm.css'
 import '../../styles/EventPrivateDetail.css'
 import { useAtomValue } from 'jotai'
 import { userAtom } from '@/atom/atom'
+import { FaClock } from 'react-icons/fa'
 
 interface ShowtimeData {
     id: number
@@ -314,7 +315,7 @@ const EventPrivateDetail = () => {
     }
 
     const updateShowtime = (id: string, field: string, value: string | number) => {
-        setShowtimes(prev => prev.map(showtime => 
+        setShowtimes(prev => prev.map(showtime =>
             showtime.tempId === id ? { ...showtime, [field]: value } : showtime
         ))
     }
@@ -332,16 +333,16 @@ const EventPrivateDetail = () => {
             quantity: 0,
             description: ''
         }
-        
-        setShowtimes(prev => prev.map(showtime => 
-            showtime.tempId === showtimeId 
+
+        setShowtimes(prev => prev.map(showtime =>
+            showtime.tempId === showtimeId
                 ? { ...showtime, tickets: [...(showtime.tickets || []), newTicket] }
                 : showtime
         ))
     }
 
     const updateTicket = (showtimeId: string, ticketId: string, field: string, value: string | number) => {
-        setShowtimes(prev => prev.map(showtime => 
+        setShowtimes(prev => prev.map(showtime =>
             showtime.tempId === showtimeId
                 ? {
                     ...showtime,
@@ -354,7 +355,7 @@ const EventPrivateDetail = () => {
     }
 
     const removeTicket = (showtimeId: string, ticketId: string) => {
-        setShowtimes(prev => prev.map(showtime => 
+        setShowtimes(prev => prev.map(showtime =>
             showtime.tempId === showtimeId
                 ? { ...showtime, tickets: (showtime.tickets || []).filter(t => t.tempId !== ticketId) }
                 : showtime
@@ -787,57 +788,6 @@ const EventPrivateDetail = () => {
                                                         </div>
                                                     )}
                                                 </div>
-
-                                                <div className="event-creation-form__field">
-                                                    <label className="event-creation-form__label">
-                                                        <span className="event-creation-form__label-icon">👥</span>
-                                                        Sức chứa
-                                                    </label>
-                                                    {isEditing ? (
-                                                        <input
-                                                            type="number"
-                                                            value={showtime.capacity || 0}
-                                                            onChange={(e) => updateShowtime(showtime.tempId, 'capacity', Number(e.target.value))}
-                                                            className="event-creation-form__input"
-                                                            min="1"
-                                                        />
-                                                    ) : (
-                                                        <div className="event-creation-form__display">
-                                                            {showtime.capacity || 'Chưa đặt'}
-                                                        </div>
-                                                    )}
-                                                </div>
-
-                                                <div className="event-creation-form__field">
-                                                    <label className="event-creation-form__label">
-                                                        <span className="event-creation-form__label-icon">🖼️</span>
-                                                        Hình ảnh suất chiếu
-                                                    </label>
-                                                    {isEditing ? (
-                                                        <input
-                                                            type="text"
-                                                            value={showtime.imageUrl || ''}
-                                                            onChange={(e) => updateShowtime(showtime.tempId, 'imageUrl', e.target.value)}
-                                                            placeholder="URL hình ảnh cho suất chiếu này..."
-                                                            className="event-creation-form__input"
-                                                        />
-                                                    ) : (
-                                                        <div className="event-creation-form__display">
-                                                            {showtime.imageUrl || 'Chưa có hình ảnh'}
-                                                        </div>
-                                                    )}
-                                                    {showtime.imageUrl && (
-                                                        <div className="event-creation-form__showtime-image-preview">
-                                                            <img 
-                                                                src={showtime.imageUrl} 
-                                                                alt="Showtime preview" 
-                                                                onError={(e) => {
-                                                                    e.currentTarget.style.display = 'none';
-                                                                }}
-                                                            />
-                                                        </div>
-                                                    )}
-                                                </div>
                                             </div>
 
                                             {/* Tickets for this showtime */}
@@ -875,15 +825,23 @@ const EventPrivateDetail = () => {
                                                                             className="event-creation-form__input"
                                                                         />
                                                                     </div>
+                                                                     <div className="event-creation-form__field">
+                                                                        <label className="event-creation-form__label">Mô tả</label>
+                                                                        <input
+                                                                            type="text"
+                                                                            value={ticket.description || ''}
+                                                                            onChange={(e) => updateTicket(showtime.tempId, ticket.tempId, 'description', e.target.value)}
+                                                                            placeholder="Mô tả chi tiết về loại vé này..."
+                                                                            className="event-creation-form__input"
+                                                                        />
+                                                                    </div>
                                                                     <div className="event-creation-form__field">
                                                                         <label className="event-creation-form__label">Giá (VND)</label>
                                                                         <input
                                                                             type="number"
                                                                             value={ticket.price || 0}
                                                                             onChange={(e) => updateTicket(showtime.tempId, ticket.tempId, 'price', Number(e.target.value))}
-                                                                            className="event-creation-form__input"
-                                                                            min="0"
-                                                                        />
+                                                                            className="event-creation-form__input" />
                                                                     </div>
                                                                     <div className="event-creation-form__field">
                                                                         <label className="event-creation-form__label">Số lượng</label>
@@ -891,10 +849,34 @@ const EventPrivateDetail = () => {
                                                                             type="number"
                                                                             value={ticket.quantity || 0}
                                                                             onChange={(e) => updateTicket(showtime.tempId, ticket.tempId, 'quantity', Number(e.target.value))}
-                                                                            className="event-creation-form__input"
-                                                                            min="0"
-                                                                        />
+                                                                            className="event-creation-form__input" />
                                                                     </div>
+                                                                   
+                                                                    <div className="event-creation-form__field-group">
+                                                                        <div className="event-creation-form__field">
+                                                                            <label className="event-creation-form__label">
+                                                                                Thời gian bắt đầu bán vé
+                                                                            </label>
+                                                                            <input
+                                                                                type="datetime-local"
+                                                                                value={ticket.startTime || ''}
+                                                                                onChange={(e) => updateTicket(showtime.tempId, ticket.tempId, 'startTime', e.target.value)}
+                                                                                className="event-creation-form__input"
+                                                                            />
+                                                                        </div>
+                                                                        <div className="event-creation-form__field">
+                                                                            <label className="event-creation-form__label">
+                                                                                Thời gian kết thúc bán vé
+                                                                            </label>
+                                                                            <input
+                                                                                type="datetime-local"
+                                                                                value={ticket.endTime || ''}
+                                                                                onChange={(e) => updateTicket(showtime.tempId, ticket.tempId, 'endTime', e.target.value)}
+                                                                                className="event-creation-form__input"
+                                                                            />
+                                                                        </div>
+                                                                    </div>
+
                                                                     <button
                                                                         type="button"
                                                                         onClick={() => removeTicket(showtime.tempId, ticket.tempId)}
@@ -905,26 +887,10 @@ const EventPrivateDetail = () => {
                                                                 </div>
                                                             ) : (
                                                                 <div className="event-creation-form__ticket-info">
-                                                                    <h6>{ticket.name || 'Chưa đặt tên'}</h6>
-                                                                    <p>{ticket.description || 'Chưa có mô tả'}</p>
-                                                                    <div className="event-creation-form__ticket-details">
-                                                                        <span>Giá: {ticket.price ? `${ticket.price} VND` : 'Chưa đặt'}</span>
-                                                                        <span>SL: {ticket.quantity || 'Chưa đặt'}</span>
-                                                                    </div>
+                                                                    
                                                                 </div>
                                                             )}
-                                                            {isEditing && (
-                                                                <div className="event-creation-form__field">
-                                                                    <label className="event-creation-form__label">Mô tả vé</label>
-                                                                    <input
-                                                                        type="text"
-                                                                        value={ticket.description || ''}
-                                                                        onChange={(e) => updateTicket(showtime.tempId, ticket.tempId, 'description', e.target.value)}
-                                                                        placeholder="Mô tả chi tiết về loại vé này..."
-                                                                        className="event-creation-form__input"
-                                                                    />
-                                                                </div>
-                                                            )}
+                                                            
                                                         </div>
                                                     ))
                                                 )}
@@ -1057,9 +1023,9 @@ const EventPrivateDetail = () => {
                                             <input
                                                 type="text"
                                                 value={invoiceInfo.businessType === 'individual' ? invoiceInfo.fullName : invoiceInfo.companyName || ''}
-                                                onChange={(e) => setInvoiceInfo(prev => ({ 
-                                                    ...prev, 
-                                                    [invoiceInfo.businessType === 'individual' ? 'fullName' : 'companyName']: e.target.value 
+                                                onChange={(e) => setInvoiceInfo(prev => ({
+                                                    ...prev,
+                                                    [invoiceInfo.businessType === 'individual' ? 'fullName' : 'companyName']: e.target.value
                                                 }))}
                                                 placeholder={invoiceInfo.businessType === 'individual' ? 'Nhập tên cá nhân...' : 'Nhập tên doanh nghiệp...'}
                                                 className="event-creation-form__input"
