@@ -149,6 +149,15 @@ const NavBar = ({ isAuthenticated, onLogout, userRole }: NavBarProps) => {
                   <span className="nav-text">Loại Tính Cách</span>
                 </Link>
                 {isAuthenticated && (
+                    <Link
+                        to="/my-result"
+                        className={`nav-item ${location.pathname === '/my-result' ? 'active' : ''}`}
+                    >
+                      <FaNewspaper />
+                      <span className="nav-text">Kết quả của tôi</span>
+                    </Link>
+                )}
+                {isAuthenticated && (
                   <Link 
                     to="/chat-ai" 
                     className={`nav-item ${location.pathname === '/chat-ai' ? 'active' : ''}`}
