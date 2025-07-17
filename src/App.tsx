@@ -34,6 +34,12 @@ import MyResult from "./pages/MyResult";
 import EventPublicDetail from "./components/event/EventPublicDetail";
 import EventPrivateDetail from "./components/event/EventPrivateDetail";
 import ShowtimeTickets from "./components/event/ShowtimeTickets";
+import About from "./pages/About";
+import Careers from "./pages/Careers";
+import Contact from "./pages/Contact";
+import Products from "./pages/Products";
+import Solutions from "./pages/Solutions";
+import Support from "./pages/Support";
 interface User {
   id: string;
   email: string;
@@ -188,6 +194,12 @@ function App() {
           <Route path="/personality" element={<PersonalityPage />} />
           <Route path="/my-result" element={<MyResult />} />
           {/* Public Routes */}
+          <Route path="/about" element={<About />} />
+          <Route path="/careers" element={<Careers />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/products" element={<Products />} />
+          <Route path="/solutions" element={<Solutions />} />
+          <Route path="/support" element={<Support />} />
           
           {/* Event Routes */}
           <Route path="/events" element={<Event />} />

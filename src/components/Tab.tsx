@@ -29,15 +29,10 @@ const Tab: React.FC<TabProps> = ({ activeTab: externalActiveTab, onTabChange }) 
   const [isExpanded, setIsExpanded] = useState(true);
 
   const tabs: TabItem[] = [
-    { id: 'dashboard', icon: <FaHome />, label: 'Dashboard' },
     { id: 'users', icon: <FaUsers />, label: 'Users', notification: 3 },
     { id: 'quizzes', icon: <FaQuestionCircle />, label: 'Quizzes', notification: 4 },
     { id: 'events', icon: <FaCalendar />, label: 'Events', notification: 1 },
     { id: 'premium', icon: <FaCrown />, label: 'Premium', notification: 2 },
-    { id: 'analytics', icon: <FaChartBar />, label: 'Analytics' },
-    { id: 'calendar', icon: <FaCalendar />, label: 'Calendar', notification: 2 },
-    { id: 'notifications', icon: <FaBell />, label: 'Notifications', notification: 5 },
-    { id: 'settings', icon: <FaCog />, label: 'Settings' },
   ];
 
   const toggleSidebar = () => {

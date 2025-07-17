@@ -266,10 +266,6 @@ const Home: React.FC = () => {
               <FaPlay />
               Bắt đầu bài test
             </button>
-            <button className="btn-secondary" onClick={handleParentExplore}>
-              <FaHeart />
-              Khám phá cho phụ huynh
-            </button>
           </motion.div>
         </div>
       </section>
@@ -415,25 +411,22 @@ const Home: React.FC = () => {
           </motion.p>
         </div>
 
-        <div className="process-flow">
+        <div className="process-timeline">
           {processSteps.map((step, index) => (
             <React.Fragment key={step.id}>
-              <motion.div
-                className="process-step"
-                initial={{ opacity: 0, scale: 0.8 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.2 }}
-                whileHover={{ scale: 1.05 }}
-              >
-                <div className="step-number">{step.number}</div>
+              <div className="process-step-card">
+                <div className="step-circle">{step.number}</div>
                 <div className="step-icon">{step.icon}</div>
-                <h3>{step.title}</h3>
-                <p>{step.description}</p>
-              </motion.div>
+                <div className="step-content">
+                  <h3>{step.title}</h3>
+                  <p>{step.description}</p>
+                </div>
+              </div>
               {index < processSteps.length - 1 && (
-                <div className="process-arrow">
-                  <FaArrowRight />
+                <div className="process-connector">
+                  <span className="connector-line" />
+                  <FaArrowRight className="connector-arrow" />
+                  <span className="connector-line" />
                 </div>
               )}
             </React.Fragment>

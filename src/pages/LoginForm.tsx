@@ -339,10 +339,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
               </div>
 
               <div className="form-options">
-                <label className="remember-me">
-                  <input type="checkbox" />
-                  <span>Ghi nhớ đăng nhập</span>
-                </label>
+                {/* Removed 'Ghi nhớ đăng nhập' and 'Xác thực tài khoản?' as requested */}
                 <div
                   style={{
                     display: "flex",
@@ -354,32 +351,6 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
                   <Link to="/forgot-password" className="forgot-password">
                     Quên mật khẩu?
                   </Link>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (email) {
-                        setUnverifiedEmail(email);
-                        setShowOtpVerification(true);
-                      } else {
-                        setAlert({
-                          show: true,
-                          type: "error",
-                          message: "Vui lòng nhập email trước",
-                          description: "Nhập email để xác thực tài khoản",
-                        });
-                      }
-                    }}
-                    className="forgot-password"
-                    style={{
-                      background: "none",
-                      border: "none",
-                      padding: 0,
-                      fontSize: "0.9rem",
-                      cursor: "pointer",
-                    }}
-                  >
-                    Xác thực tài khoản?
-                  </button>
                 </div>
               </div>
 

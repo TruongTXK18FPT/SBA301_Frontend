@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { FaSave, FaEdit, FaEye, FaEyeSlash, FaPlus, FaTrash } from 'react-icons/fa';
-import Button from '../Button';
 import quizService, { Category, QuizOptionsDTO } from '../../services/quizService';
 import '../../styles/QuizEditPage.css';
 import '../../styles/QuizEditPage2.css';
@@ -46,6 +45,7 @@ const QuizEditPage: React.FC<QuizEditPageProps> = ({ quizId, onBack, onAlert }) 
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [expandedQuestions, setExpandedQuestions] = useState<Set<number>>(new Set());
   const [editingQuestion, setEditingQuestion] = useState<EditableQuestion | null>(null);
+  const [editingQuestionIndex, setEditingQuestionIndex] = useState<number | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingOptions, setEditingOptions] = useState<Set<string>>(new Set()); // questionIndex-optionIndex
 
@@ -98,10 +98,9 @@ const QuizEditPage: React.FC<QuizEditPageProps> = ({ quizId, onBack, onAlert }) 
               optionText: opt.optionText,
               targetTrait: opt.targetTrait,
               scoreValue: quizService.convertNumberToScoreValue(
-                typeof opt.scoreValue === 'number' ? opt.scoreValue :
-                quizService.convertScoreValueToNumber(opt.scoreValue as any)
-              ),
-              questionId: opt.questionId
+                typeof opt.scoreValue === 'number' ? opt.scoreValue : (typeof opt.scoreValue === 'string' ? quizService.convertScoreValueToNumber(opt.scoreValue as any) : 0)
+              ) as 'NEGATIVE_ONE' | 'ZERO' | 'POSITIVE_ONE' | 'DISC_TWO',
+              questionId: (opt.questionId !== undefined ? opt.questionId : 0)
             }))
           };
         })
@@ -223,7 +222,7 @@ const QuizEditPage: React.FC<QuizEditPageProps> = ({ quizId, onBack, onAlert }) 
     try {
       const isDiscQuiz = selectedCategory.name.toUpperCase().includes('DISC');
       const newQuestion: EditableQuestion = {
-        id: null,
+        id: undefined,
         content: '',
         orderNumber: quiz.questions.length, // This will be the correct order number
         dimension: isDiscQuiz ? 'DISC' : 'E/I',
@@ -234,16 +233,16 @@ const QuizEditPage: React.FC<QuizEditPageProps> = ({ quizId, onBack, onAlert }) 
       // Create appropriate options based on quiz type
       if (isDiscQuiz) {
         newQuestion.options = [
-          { id: null, optionText: '', targetTrait: 'D', scoreValue: 'DISC_TWO', questionId: quiz.id },
-          { id: null, optionText: '', targetTrait: 'I', scoreValue: 'DISC_TWO', questionId: quiz.id },
-          { id: null, optionText: '', targetTrait: 'S', scoreValue: 'DISC_TWO', questionId: quiz.id },
-          { id: null, optionText: '', targetTrait: 'C', scoreValue: 'DISC_TWO', questionId: quiz.id }
+          { id: undefined, optionText: '', targetTrait: 'D', scoreValue: 'DISC_TWO', questionId: quiz.id },
+          { id: undefined, optionText: '', targetTrait: 'I', scoreValue: 'DISC_TWO', questionId: quiz.id },
+          { id: undefined, optionText: '', targetTrait: 'S', scoreValue: 'DISC_TWO', questionId: quiz.id },
+          { id: undefined, optionText: '', targetTrait: 'C', scoreValue: 'DISC_TWO', questionId: quiz.id }
         ];
       } else {
         newQuestion.options = [
-          { id: null, optionText: '', scoreValue: 'NEGATIVE_ONE', questionId: quiz.id },
-          { id: null, optionText: '', scoreValue: 'ZERO', questionId: quiz.id },
-          { id: null, optionText: '', scoreValue: 'POSITIVE_ONE', questionId: quiz.id }
+          { id: undefined, optionText: '', scoreValue: 'NEGATIVE_ONE', questionId: quiz.id },
+          { id: undefined, optionText: '', scoreValue: 'ZERO', questionId: quiz.id },
+          { id: undefined, optionText: '', scoreValue: 'POSITIVE_ONE', questionId: quiz.id }
         ];
       }
 
@@ -308,48 +307,6 @@ const QuizEditPage: React.FC<QuizEditPageProps> = ({ quizId, onBack, onAlert }) 
     }
   };
 
-  // Delete question
-  const deleteQuestion = async (questionIndex: number) => {
-    if (!quiz) return;
-
-    if (confirm('Are you sure you want to delete this question? This action cannot be undone.')) {
-      const questionToDelete = quiz.questions[questionIndex];
-
-      try {
-        setSaving(true);
-
-        // If it's an existing question, delete from backend
-        if (questionToDelete.id) {
-          await quizService.deleteQuizQuestion(questionToDelete.id);
-        }
-
-        // Update local state
-        setQuiz(prev => {
-          if (!prev) return prev;
-          const updatedQuestions = prev.questions.filter((_, index) => index !== questionIndex);
-          // Reorder remaining questions
-          const reorderedQuestions = updatedQuestions.map((q, index) => ({
-            ...q,
-            orderNumber: index + 1
-          }));
-
-          return {
-            ...prev,
-            questions: reorderedQuestions,
-            questionQuantity: reorderedQuestions.length
-          };
-        });
-
-        onAlert('success', 'Question deleted successfully!');
-
-      } catch (error: any) {
-        onAlert('error', 'Failed to delete question: ' + (error.message || 'Unknown error'));
-      } finally {
-        setSaving(false);
-      }
-    }
-  };
-
   // Toggle question expansion
   const toggleQuestionExpansion = (questionIndex: number) => {
     setExpandedQuestions(prev => {
@@ -365,39 +322,23 @@ const QuizEditPage: React.FC<QuizEditPageProps> = ({ quizId, onBack, onAlert }) 
 
   // Open edit modal for question
   const openEditModal = (question: EditableQuestion, index: number) => {
-    setEditingQuestion({ ...question, index });
+    setEditingQuestion({ ...question });
+    setEditingQuestionIndex(index);
     setShowEditModal(true);
   };
 
   // Close edit modal
   const closeEditModal = () => {
     setEditingQuestion(null);
+    setEditingQuestionIndex(null);
     setShowEditModal(false);
   };
 
   const saveQuestionFromModal = async () => {
   if (!editingQuestion || !quiz) return;
 
-  const errors: string[] = [];
-
-  if (!editingQuestion.content.trim()) {
-    errors.push('Question content is required');
-  }
-
-  if (!editingQuestion.dimension.trim()) {
-    errors.push('Dimension is required');
-  }
-
-  // Validate options
-  const validOptions = editingQuestion.options.filter(opt => opt.optionText.trim());
-  if (validOptions.length === 0) {
-    errors.push('At least one option is required');
-  }
-
-  if (errors.length > 0) {
-    onAlert('error', 'Please fix the following errors:\n' + errors.join('\n'));
-    return;
-  }
+  // Allow partial save: do not require content or options here
+  const validOptions = editingQuestion.options; // allow empty or incomplete options
 
   try {
     setSaving(true);
@@ -406,8 +347,16 @@ const QuizEditPage: React.FC<QuizEditPageProps> = ({ quizId, onBack, onAlert }) 
     setQuiz(prev => {
       if (!prev) return prev;
       const updatedQuestions = prev.questions.map((q, idx) =>
-        idx === editingQuestion.index
-          ? { ...q, ...editingQuestion, options: validOptions }
+        editingQuestionIndex !== null && idx === editingQuestionIndex
+          ? {
+              ...q,
+              ...editingQuestion,
+              options: validOptions.map(opt => ({
+                ...opt,
+                scoreValue: opt.scoreValue as 'NEGATIVE_ONE' | 'ZERO' | 'POSITIVE_ONE' | 'DISC_TWO',
+                questionId: (typeof opt.questionId === 'number' ? opt.questionId : (quiz.id !== undefined ? quiz.id : 0))
+              }))
+            }
           : q
       );
       return { ...prev, questions: updatedQuestions };
@@ -535,7 +484,9 @@ const createQuestion = async () => {
             id: opt.id,
             optionText: opt.optionText,
             targetTrait: opt.targetTrait,
-            scoreValue: quizService.convertNumberToScoreValue(opt.scoreValue),
+            scoreValue: quizService.convertNumberToScoreValue(
+              typeof opt.scoreValue === 'number' ? opt.scoreValue : (typeof opt.scoreValue === 'string' ? quizService.convertScoreValueToNumber(opt.scoreValue as any) : 0)
+            ),
             questionId: opt.questionId
           }))
         }
@@ -568,6 +519,10 @@ const updateQuestion = async (questionId: number) => {
 
     const question = quiz.questions[questionIndex];
 
+    if (typeof question.id !== 'number') {
+      onAlert('error', 'Invalid question ID.');
+      return;
+    }
     // Update existing question
     await quizService.updateQuizQuestion(question.id, {
       content: question.content,
@@ -585,13 +540,13 @@ const updateQuestion = async (questionId: number) => {
 
     // Update options in bulk
     const optionsToUpdate = question.options
-      .filter(opt => opt.id && opt.optionText.trim())
+      .filter(opt => opt.id && opt.optionText.trim() && typeof question.id === 'number')
       .map(opt => ({
         id: opt.id,
         optionText: opt.optionText,
         targetTrait: opt.targetTrait,
-        scoreValue: opt.scoreValue,
-        questionId: question.id
+        scoreValue: opt.scoreValue as 'NEGATIVE_ONE' | 'ZERO' | 'POSITIVE_ONE' | 'DISC_TWO',
+        questionId: question.id as number
       }));
 
     if (optionsToUpdate.length > 0) {
@@ -599,31 +554,35 @@ const updateQuestion = async (questionId: number) => {
     }
 
     // Fetch the updated question and options from backend
-    const updatedQuestion = await quizService.getQuizQuestionById(question.id);
-    const updatedOptions = await quizService.getOptionsByQuestionId(question.id);
+    if (typeof question.id === 'number') {
+      const updatedQuestion = await quizService.getQuizQuestionById(question.id);
+      const updatedOptions = await quizService.getOptionsByQuestionId(question.id);
 
-    // Update local state for just this question
-    setQuiz(prev => {
-      if (!prev) return prev;
-      const updatedQuestions = prev.questions.map(q =>
-        q.id === question.id
-          ? {
-              ...q,
-              ...updatedQuestion,
-              options: updatedOptions.map(opt => ({
-                id: opt.id,
-                optionText: opt.optionText,
-                targetTrait: opt.targetTrait,
-                scoreValue: quizService.convertNumberToScoreValue(opt.scoreValue),
-                questionId: opt.questionId
-              }))
-            }
-          : q
-      );
-      return { ...prev, questions: updatedQuestions };
-    });
+      // Update local state for just this question
+      setQuiz(prev => {
+        if (!prev) return prev;
+        const updatedQuestions = prev.questions.map(q =>
+          q.id === question.id
+            ? {
+                ...q,
+                ...updatedQuestion,
+                options: updatedOptions.map(opt => ({
+                  id: opt.id,
+                  optionText: opt.optionText,
+                  targetTrait: opt.targetTrait,
+                  scoreValue: quizService.convertNumberToScoreValue(
+                    typeof opt.scoreValue === 'number' ? opt.scoreValue : (typeof opt.scoreValue === 'string' ? quizService.convertScoreValueToNumber(opt.scoreValue as any) : 0)
+                  ),
+                  questionId: opt.questionId
+                }))
+              }
+            : q
+        );
+        return { ...prev, questions: updatedQuestions };
+      });
 
-    onAlert('success', `Question ${question.orderNumber} updated successfully!`);
+      onAlert('success', `Question ${question.orderNumber} updated successfully!`);
+    }
   } catch (error: any) {
     onAlert('error', 'Failed to update question: ' + (error.message || 'Unknown error'));
   } finally {
@@ -637,13 +596,7 @@ const saveOption = async (questionIndex: number, optionIndex: number) => {
   const question = quiz.questions[questionIndex];
   const option = question.options[optionIndex];
 
-  if (!option.optionText.trim()) {
-    onAlert('error', 'Option text is required');
-    return;
-  }
-
-  // Prevent saving if question does not have a valid ID
-  if (!question.id) {
+  if (typeof question.id !== 'number') {
     onAlert('error', 'Please save the question first before saving its options.');
     return;
   }
@@ -657,7 +610,7 @@ const saveOption = async (questionIndex: number, optionIndex: number) => {
         optionText: option.optionText,
         targetTrait: option.targetTrait,
         scoreValue: option.scoreValue,
-        questionId: option.questionId
+        questionId: (option.questionId !== undefined ? option.questionId : (typeof question.id === 'number' ? question.id : 0))
       });
 
       onAlert('success', `Option ${optionIndex + 1} updated successfully!`);
@@ -667,7 +620,7 @@ const saveOption = async (questionIndex: number, optionIndex: number) => {
         optionText: option.optionText,
         targetTrait: option.targetTrait,
         scoreValue: option.scoreValue,
-        questionId: question.id
+        questionId: (typeof question.id === 'number' ? question.id : 0)
       });
 
       // Update local state with new option ID
@@ -816,10 +769,10 @@ const saveQuestion = async (questionId: number | null) => {
         ...q,
         options: q.options.map(opt => ({
           ...opt,
-          scoreValue: 'DISC_TWO'
+          scoreValue: 'DISC_TWO' as 'DISC_TWO',
         }))
       }));
-      return { ...prev, questions: updatedQuestions };
+      return { ...prev, questions: updatedQuestions, questionQuantity: updatedQuestions.length };
     });
   }
 
@@ -851,12 +804,12 @@ const saveQuestion = async (questionId: number | null) => {
         const mbtiScoreValues = ['NEGATIVE_ONE', 'ZERO', 'POSITIVE_ONE'];
         question.options = question.options.map((opt, idx) => ({
           ...opt,
-          scoreValue: mbtiScoreValues[idx] || opt.scoreValue
+          scoreValue: (mbtiScoreValues[idx] || opt.scoreValue) as 'NEGATIVE_ONE' | 'ZERO' | 'POSITIVE_ONE' | 'DISC_TWO'
         }));
       }
 
       // First update the question
-      await quizService.updateQuizQuestion(question.id, {
+      await quizService.updateQuizQuestion(typeof question.id === 'number' ? question.id : 0, {
         content: question.content,
         orderNumber: question.orderNumber,
         dimension: question.dimension,
@@ -865,7 +818,7 @@ const saveQuestion = async (questionId: number | null) => {
       });
 
       // Get existing options for this question
-      const existingOptions = await quizService.getOptionsByQuestionId(question.id);
+      const existingOptions = await quizService.getOptionsByQuestionId(typeof question.id === 'number' ? question.id : 0);
 
       // Process options
       const optionsToUpdate: QuizOptionsDTO[] = [];
@@ -881,7 +834,7 @@ const saveQuestion = async (questionId: number | null) => {
               optionText: option.optionText,
               targetTrait: option.targetTrait,
               scoreValue: option.scoreValue,
-              questionId: question.id
+              questionId: (typeof question.id === 'number' ? question.id : 0)
             });
           }
         } else {
@@ -890,7 +843,7 @@ const saveQuestion = async (questionId: number | null) => {
             optionText: option.optionText,
             targetTrait: option.targetTrait,
             scoreValue: option.scoreValue,
-            questionId: question.id
+            questionId: (typeof question.id === 'number' ? question.id : 0)
           });
         }
       }
@@ -1007,8 +960,9 @@ const saveQuestion = async (questionId: number | null) => {
                 min="1"
                 max="100"
                 value={quiz.questionQuantity}
-                onChange={(e) => handleQuizInfoChange('questionQuantity', parseInt(e.target.value) || 1)}
-                required
+                readOnly
+                tabIndex={-1}
+                style={{ background: '#f3f4f6', cursor: 'not-allowed', pointerEvents: 'none' }}
               />
             </div>
 
@@ -1043,14 +997,6 @@ const saveQuestion = async (questionId: number | null) => {
         <div className="questions-section">
           <div className="questions-header">
             <h3>Questions ({quiz.questions.length})</h3>
-            <Button
-              variant="primary"
-              icon={<FaPlus />}
-              onClick={addNewQuestion}
-              disabled={saving}
-            >
-              Add Question
-            </Button>
           </div>
 
           <div className="questions-list">
@@ -1063,45 +1009,33 @@ const saveQuestion = async (questionId: number | null) => {
                     {question.id === null && <span className="new-indicator">NEW</span>}
                   </div>
                   <div className="question-actions-modern">
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      icon={<FaEdit />}
-                      onClick={() => openEditModal(question, index)}
-                      title="Edit Question"
-                    >
-                      Edit
-                    </Button>
-                    <Button
-                      variant={expandedQuestions.has(index) ? "primary" : "outline"}
-                      size="sm"
-                      icon={expandedQuestions.has(index) ? <FaEyeSlash /> : <FaEye />}
-                      onClick={() => toggleQuestionExpansion(index)}
-                      title={expandedQuestions.has(index) ? "Hide Options" : "Show Options"}
-                    >
-                      {expandedQuestions.has(index) ? 'Hide' : 'Show'} Options
-                    </Button>
-                    <Button
-                      variant="danger"
-                      size="sm"
-                      icon={<FaTrash />}
-                      onClick={() => deleteQuestion(index)}
-                      title="Delete Question"
-                      disabled={saving}
-                    >
-                      Delete
-                    </Button>
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      icon={<FaSave />}
-                      onClick={() => saveQuestion(question.id)}
-                      title="Save Question"
-                      disabled={savingQuestionId === question.id}
-                    >
-                      {savingQuestionId === question.id ? 'Saving...' : 'Save Question'}
-                    </Button>
-                  </div>
+                      <button
+                        type="button"
+                        className="secondary-btn action-btn"
+                        onClick={() => openEditModal(question, index)}
+                        title="Edit Question"
+                      >
+                        <FaEdit style={{ marginRight: '0.4em' }} /> Edit
+                      </button>
+                      <button
+                        type="button"
+                        className={expandedQuestions.has(index) ? "primary-btn action-btn" : "outline-btn action-btn"}
+                        onClick={() => toggleQuestionExpansion(index)}
+                        title={expandedQuestions.has(index) ? "Hide Options" : "Show Options"}
+                      >
+                        {expandedQuestions.has(index) ? <FaEyeSlash style={{ marginRight: '0.4em' }} /> : <FaEye style={{ marginRight: '0.4em' }} />}
+                        {expandedQuestions.has(index) ? 'Hide' : 'Show'} Options
+                      </button>
+                      <button
+                        type="button"
+                        className="primary-btn action-btn"
+                        onClick={() => saveQuestion(question.id ?? null)}
+                        title="Save Question"
+                        disabled={savingQuestionId === question.id}
+                      >
+                        <FaSave style={{ marginRight: '0.4em' }} /> {savingQuestionId === question.id ? 'Saving...' : 'Save Question'}
+                      </button>
+                    </div>
                 </div>
 
                 <div className="question-content-modern">
@@ -1112,7 +1046,15 @@ const saveQuestion = async (questionId: number | null) => {
                         <textarea
                           id={`question-content-${index}`}
                           value={question.content}
-                          onChange={(e) => handleQuizInfoChange('content', e.target.value)}
+                          onChange={(e) => {
+                            const newContent = e.target.value;
+                            setQuiz(prev => {
+                              if (!prev) return prev;
+                              const updatedQuestions = [...prev.questions];
+                              updatedQuestions[index] = { ...updatedQuestions[index], content: newContent };
+                              return { ...prev, questions: updatedQuestions };
+                            });
+                          }}
                           placeholder="Enter question text..."
                           rows={3}
                           required
@@ -1153,16 +1095,15 @@ const saveQuestion = async (questionId: number | null) => {
                                 )}
                                 {option.id === null && <span className="new-indicator">NEW</span>}
                               </div>
-                              <Button
-                                variant={isEditing ? "primary" : "outline"}
-                                size="sm"
-                                icon={<FaEdit />}
+                              <button
+                                type="button"
+                                className={isEditing ? "primary-btn action-btn" : "outline-btn action-btn"}
                                 onClick={() => isEditing ? saveOption(index, optionIndex) : toggleOptionEditing(index, optionIndex)}
                                 title={isEditing ? "Save Option" : "Edit Option"}
                                 disabled={saving}
                               >
-                                {isEditing ? 'Save' : 'Edit'}
-                              </Button>
+                                <FaEdit style={{ marginRight: '0.4em' }} /> {isEditing ? 'Save' : 'Edit'}
+                              </button>
                             </div>
 
                             <div className="option-content-modern">
@@ -1239,13 +1180,14 @@ const saveQuestion = async (questionId: number | null) => {
             <div className="modal-content-modern">
               <div className="modal-header-modern">
                 <h3>Edit Question {editingQuestion.orderNumber}</h3>
-                <Button
-                  variant="outline"
-                  size="sm"
+                <button
+                  type="button"
+                  className="outline-btn action-btn modal-close-btn"
                   onClick={closeEditModal}
+                  title="Close"
                 >
                   ×
-                </Button>
+                </button>
               </div>
 
               <div className="modal-body-modern">
@@ -1281,21 +1223,22 @@ const saveQuestion = async (questionId: number | null) => {
               </div>
 
               <div className="modal-footer-modern">
-                <Button
-                  variant="outline"
+                <button
+                  type="button"
+                  className="outline-btn action-btn"
                   onClick={closeEditModal}
                   disabled={saving}
                 >
                   Cancel
-                </Button>
-                <Button
-                  variant="primary"
-                  icon={<FaSave />}
+                </button>
+                <button
+                  type="button"
+                  className="primary-btn action-btn"
                   onClick={saveQuestionFromModal}
                   disabled={saving}
                 >
-                  {saving ? 'Saving...' : 'Save Changes'}
-                </Button>
+                  <FaSave style={{ marginRight: '0.4em' }} /> {saving ? 'Saving...' : 'Save Changes'}
+                </button>
               </div>
             </div>
           </div>
@@ -1303,21 +1246,24 @@ const saveQuestion = async (questionId: number | null) => {
 
         {/* Action Buttons */}
         <div className="quiz-edit-actions">
-          <Button
-            variant="outline"
-            onClick={onBack}
-            disabled={saving}
-          >
-            Cancel
-          </Button>
-          <Button
-            variant="primary"
-            icon={<FaSave />}
-            onClick={handleSave}
-            disabled={saving}
-          >
-            {saving ? 'Saving...' : 'Save All Changes'}
-          </Button>
+          <div className="quiz-edit-actions-group">
+            <button
+              type="button"
+              className="outline-btn action-btn"
+              onClick={onBack}
+              disabled={saving}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              className="primary-btn action-btn"
+              onClick={handleSave}
+              disabled={saving}
+            >
+              <FaSave style={{ marginRight: '0.4em' }} /> {saving ? 'Saving...' : 'Save All Changes'}
+            </button>
+          </div>
         </div>
       </div>
     </div>

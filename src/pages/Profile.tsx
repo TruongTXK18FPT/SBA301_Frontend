@@ -324,6 +324,10 @@ const Profile: React.FC = () => {
                   <FaShoppingCart />
                   <span>Đơn hàng</span>
                 </button>
+                <button className="edit-profile-btn" onClick={() => window.location.href = '/my-result'}>
+                  <FaUser />
+                  <span>Kết quả</span>
+                </button>
               </div>
             </div>
           </div>

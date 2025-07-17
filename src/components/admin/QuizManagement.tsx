@@ -110,63 +110,69 @@ const QuizManagement: React.FC<QuizManagementProps> = ({ onAlert }) => {
         </div>
       </div>
 
-      {loading && <div className="loading-spinner">Loading...</div>}
+      {loading && (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '2rem 0' }}>
+          <div className="simple-spinner" />
+          <div style={{ marginTop: '1rem', color: '#888', fontSize: '1rem' }}>Đang tải danh sách quiz...</div>
+        </div>
+      )}
 
-      <div className="table-container">
-        <table className="management-table">
-          <thead>
-            <tr>
-              <th>Title</th>
-              <th>Category</th>
-              <th>Description</th>
-              <th>Questions</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredQuizzes.map((quiz) => (
-              <tr key={quiz.id}>
-                <td className="title-cell">
-                  <strong>{quiz.title}</strong>
-                </td>
-                <td>
-                  <span className="category-badge">
-                    {quiz.categoryName}
-                  </span>
-                </td>
-                <td className="description-cell">
-                  {quiz.description || 'No description'}
-                </td>
-                <td className="questions-cell">
-                  <span className="question-count-badge">
-                    {quiz.questionQuantity} questions
-                  </span>
-                </td>
-                <td>
-                  <div className="action-buttons">
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      icon={<FaEdit />}
-                      onClick={() => handleEditQuiz(quiz.id)}
-                      disabled={loading}
-                      title="Edit Quiz & Questions"
-                    >
-                      Edit Quiz
-                    </Button>
-                  </div>
-                </td>
+      {!loading && (
+        <div className="table-container">
+          <table className="management-table">
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Category</th>
+                <th>Description</th>
+                <th>Questions</th>
+                <th>Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {filteredQuizzes.map((quiz) => (
+                <tr key={quiz.id}>
+                  <td className="title-cell">
+                    <strong>{quiz.title}</strong>
+                  </td>
+                  <td>
+                    <span className="category-badge">
+                      {quiz.categoryName}
+                    </span>
+                  </td>
+                  <td className="description-cell">
+                    {quiz.description || 'No description'}
+                  </td>
+                  <td className="questions-cell">
+                    <span className="question-count-badge">
+                      {quiz.questionQuantity} questions
+                    </span>
+                  </td>
+                  <td>
+                    <div className="action-buttons">
+                      <button
+                        type="button"
+                        className="edit-quiz-btn"
+                        onClick={() => handleEditQuiz(quiz.id)}
+                        disabled={loading}
+                        title="Edit Quiz & Questions"
+                      >
+                        <FaEdit style={{ marginRight: '0.5em' }} /> Edit Quiz
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
 
-        {filteredQuizzes.length === 0 && !loading && (
-          <div className="empty-state">
-            {searchTerm ? 'No quizzes found matching your search' : 'No quizzes available'}
-          </div>
-        )}
-      </div>
+          {filteredQuizzes.length === 0 && !loading && (
+            <div className="empty-state">
+              {searchTerm ? 'No quizzes found matching your search' : 'No quizzes available'}
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="quiz-management-info">
         <div className="info-card">
