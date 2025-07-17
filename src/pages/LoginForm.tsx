@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { FaGoogle,FaEye,FaEyeSlash } from "react-icons/fa";
+import { FaGoogle, FaEye, FaEyeSlash } from "react-icons/fa";
 import { useNavigate, Link } from "react-router-dom";
 import Button from "../components/Button";
 import Alert from "../components/Alert";
@@ -9,6 +9,7 @@ import Login from "../assets/Login.mp4";
 import OAuthConfig from "../configurations/configuration";
 import { login, resendOtp, verifyOtp } from "../services/authService";
 import { getCurrentUser } from "../services/userService";
+import { getToken } from "../services/localStorageService";
 
 interface LoginPageProps {
   onLoginSuccess?: () => Promise<void>;
@@ -37,6 +38,13 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
   const [otpSent, setOtpSent] = useState(false);
 
   const navigate = useNavigate();
+
+  React.useEffect(() => {
+    const token = getToken();
+    if (token) {
+      navigate("/home", { replace: true }); // prevent going back to /login
+    }
+  }, []);
 
   // Auto-send OTP when verification screen is shown
   React.useEffect(() => {
@@ -253,10 +261,12 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
       {isLoading && (
         <LoadingSpinner
           size="medium"
-          message={showOtpVerification ? "Đang xử lý OTP..." : "Đang đăng nhập..."}
+          message={
+            showOtpVerification ? "Đang xử lý OTP..." : "Đang đăng nhập..."
+          }
         />
       )}
-      
+
       <video autoPlay muted loop className="login-background">
         <source src={Login} type="video/mp4" />
       </video>
@@ -280,7 +290,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
               Đăng nhập để khám phá tính cách của bạn
             </p>
           </div>
-          
+
           {!showOtpVerification ? (
             <form onSubmit={handleSubmit} className="login-form">
               <div className="form-group">
@@ -452,7 +462,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
               </form>
             </div>
           )}
-          
+
           {!showOtpVerification && (
             <div className="social-login">
               <div className="divider">
@@ -472,7 +482,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
               </div>
             </div>
           )}
-          
+
           <div className="register-link">
             Chưa có tài khoản? <Link to="/register">Đăng ký ngay</Link>
           </div>

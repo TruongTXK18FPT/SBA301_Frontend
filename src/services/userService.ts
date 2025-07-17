@@ -17,7 +17,7 @@ export interface UserResponse {
   noPassword: boolean;
   role: 'STUDENT' | 'PARENT' | 'EVENT_MANAGER' | 'ADMIN';
   emailVerified: boolean;
-  isActive: boolean;
+  active: boolean;
 }
 
 // For admin user creation - use the registration endpoint
@@ -82,7 +82,7 @@ export const createUser = async (userData: CreateUserRequest): Promise<any> => {
 
 export const toggleUserActiveStatus = async (userId: string) => {
   try {
-    await api.patch(`/authenticate/users/${userId}/active`);
+    await api.patch(`/authenticate/users/${userId}/status`);
   } catch (error: any) {
     console.error("Toggle user active status failed:", error.response?.data ?? error.message);
     throw error;
