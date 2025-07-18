@@ -229,28 +229,22 @@ import quizService, {
         const quizzes = await quizService.getQuizzesByCategory(categoryId || 0);
         const quizId = quizzes[0].id;
 
-        // Convert answers to the format expected by backend (questionId -> optionId)
+        // Convert answers to the format expected by backend
         const formattedAnswers: Record<number, number> = {};
-        
+
         for (const question of questions) {
           const questionId = question.id;
           const answer = answers[questionId];
-          
+
           if (answer) {
             if (quizType === 'MBTI') {
-              // For MBTI, the answer is the option text - we need to find the option ID
-              // This will be handled by the service layer
-              formattedAnswers[questionId] = answer as any; // Service will handle the conversion
+              formattedAnswers[questionId] = answer as any; // Service will handle conversion
             } else if (quizType === 'DISC') {
-              // For DISC, we need to handle the most/least selection
-              const discAnswer = answer as DISCAnswer;
-              // Service will handle the conversion based on the most selection
-              formattedAnswers[questionId] = discAnswer as any;
+              formattedAnswers[questionId] = answer as any; // Service will handle conversion
             }
           }
         }
 
-        // Prepare submission data - remove quizType as it's not expected by backend
         const submissionData: QuizSubmissionData = {
           quizId,
           answers: formattedAnswers
@@ -258,27 +252,33 @@ import quizService, {
 
         // Submit quiz
         const quizResult = await quizService.submitQuiz(submissionData);
+        console.log('quizResult:', quizResult); // Kiểm tra dữ liệu từ backend
 
         // Transform the backend data to match frontend expectations
         const transformedResult: TransformedResult = {
           type: quizResult.personalityCode || 'Unknown',
           personalityCode: quizResult.personalityCode,
-          description: quizResult.description,
-          careers: quizResult.careerRecommendations
-            ? quizResult.careerRecommendations.split(', ').filter(career => career.trim() !== '')
-            : [],
-          universities: quizResult.universityRecommendations
-            ? quizResult.universityRecommendations.split(', ').filter(uni => uni.trim() !== '')
-            : [],
-          keyTraits: quizResult.keyTraits,
-          nickname: quizResult.nickname,
-          scores: quizResult.scores
+          description: quizResult.description || '',
+          careers: Array.isArray(quizResult.careerRecommendations)
+              ? quizResult.careerRecommendations.filter((career: string) => career.trim() !== '')
+              : typeof quizResult.careerRecommendations === 'string'
+                  ? quizResult.careerRecommendations.split(', ').filter(career => career.trim() !== '')
+                  : [],
+          universities: Array.isArray(quizResult.universityRecommendations)
+              ? quizResult.universityRecommendations.filter((uni: string) => uni.trim() !== '')
+              : typeof quizResult.universityRecommendations === 'string'
+                  ? quizResult.universityRecommendations.split(', ').filter(uni => uni.trim() !== '')
+                  : [],
+          keyTraits: quizResult.keyTraits || '',
+          nickname: quizResult.nickname || '',
+          scores: quizResult.scores || null
         };
 
         setResult(transformedResult);
         setQuizStep('result');
       } catch (error) {
         console.error('Failed to submit quiz:', error);
+        alert(`Failed to submit quiz: ${error instanceof Error ? error.message : 'Unknown error'}`);
       } finally {
         setLoading(false);
       }
