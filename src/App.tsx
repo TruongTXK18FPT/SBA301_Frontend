@@ -21,7 +21,7 @@ import EventCreationForm from "./components/event/EventCreationForm";
 import EventDetails from "./pages/EventDetails";
 import Ticket from "./pages/Ticket";
 import Order from "./pages/Order";
-
+import PremiumGuard from "./components/PremiumGuard";
 import { getToken, removeToken } from "./services/localStorageService";
 import { getCurrentUser } from "./services/userService";
 import ChatAi from "./pages/ChatAi";
@@ -319,7 +319,9 @@ function App() {
             path="/chat-ai"
             element={
               <ProtectedRoute isAuthenticated={isAuthenticated}>
-                <ChatAi />
+                <PremiumGuard>
+                  <ChatAi />
+                </PremiumGuard>
               </ProtectedRoute>
             }
           />

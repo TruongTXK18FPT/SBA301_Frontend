@@ -353,6 +353,7 @@ import quizService, {
                     Trước
                   </button>
 
+
                   <span className="question-indicator">
                     {currentQuestion + 1} of {questions.length}
                   </span>

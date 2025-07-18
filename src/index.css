@@ -33,7 +33,7 @@ body {
   margin: 0;
   min-height: 100vh;
   overflow-x: hidden;
-  overflow-y: scroll !important; /* Force scrolling */
+  overflow-y: scroll !important; 
   height: auto !important;
 }
 
@@ -74,7 +74,7 @@ button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
-/* Responsive breakpoints */
+
 @media screen and (max-width: 768px) {
   body {
     font-size: 14px;

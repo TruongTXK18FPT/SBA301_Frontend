@@ -146,12 +146,9 @@ const Event: React.FC = () => {
                   onChange={(e) => setStatusFilter(e.target.value as EventStatus | '')}
                   className="event-page__filter-select"
                 >
-                  <option value="">Tất cả trạng thái</option>
                   <option value="UPCOMING">Sắp diễn ra</option>
                   <option value="ONGOING">Đang diễn ra</option>
                   <option value="COMPLETED">Đã hoàn thành</option>
-                  <option value="PENDING">Chờ duyệt</option>
-                  <option value="DRAFT">Bản nháp</option>
                 </select>
               </div>
             </div>

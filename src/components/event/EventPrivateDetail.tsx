@@ -97,6 +97,12 @@ const EventPrivateDetail = () => {
             .replace(/-+/g, '-')
             .trim()
     }
+    const toDatetimeLocal = (dateString?: string) => {
+  if (!dateString) return ''
+  const date = new Date(dateString)
+  date.setMinutes(date.getMinutes() - date.getTimezoneOffset())
+  return date.toISOString().slice(0, 16)
+}
 
     // Handle event name change and auto-generate slug
     const handleEventNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -759,7 +765,7 @@ const EventPrivateDetail = () => {
                                                     {isEditing ? (
                                                         <input
                                                             type="datetime-local"
-                                                            value={showtime.startTime ? new Date(showtime.startTime).toISOString().slice(0, 16) : ''}
+                                                            value={isEditing ? toDatetimeLocal(showtime.startTime) : ''}
                                                             onChange={(e) => updateShowtime(showtime.tempId, 'startTime', e.target.value)}
                                                             className="event-creation-form__input"
                                                         />
@@ -778,7 +784,7 @@ const EventPrivateDetail = () => {
                                                     {isEditing ? (
                                                         <input
                                                             type="datetime-local"
-                                                            value={showtime.endTime ? new Date(showtime.endTime).toISOString().slice(0, 16) : ''}
+                                                            value={isEditing ? toDatetimeLocal(showtime.endTime) : ''}
                                                             onChange={(e) => updateShowtime(showtime.tempId, 'endTime', e.target.value)}
                                                             className="event-creation-form__input"
                                                         />
@@ -859,7 +865,7 @@ const EventPrivateDetail = () => {
                                                                             </label>
                                                                             <input
                                                                                 type="datetime-local"
-                                                                                value={ticket.startTime || ''}
+                                                                                value={isEditing ? toDatetimeLocal(ticket.startTime) : ''}
                                                                                 onChange={(e) => updateTicket(showtime.tempId, ticket.tempId, 'startTime', e.target.value)}
                                                                                 className="event-creation-form__input"
                                                                             />
@@ -870,7 +876,7 @@ const EventPrivateDetail = () => {
                                                                             </label>
                                                                             <input
                                                                                 type="datetime-local"
-                                                                                value={ticket.endTime || ''}
+                                                                                value={isEditing ? toDatetimeLocal(ticket.endTime) : ''}
                                                                                 onChange={(e) => updateTicket(showtime.tempId, ticket.tempId, 'endTime', e.target.value)}
                                                                                 className="event-creation-form__input"
                                                                             />
@@ -1223,4 +1229,4 @@ const EventPrivateDetail = () => {
     )
 }
 
-export default EventPrivateDetail
+export default EventPrivateDetail;

@@ -43,24 +43,23 @@ const PremiumPage: React.FC<PremiumPageProps> = ({ isAuthenticated = false }) =>
       id: 1, //student
       name: 'Sinh Viên',
       icon: <FaGraduationCap />,
-      price: 99000,
+      price: 1000,
       period: 'tháng',
-      originalPrice: 199000,
+      originalPrice: 100000,
       discount: '50%',
       popular: false,
       features: [
         'Không giới hạn bài test',
         'AI Chatbot cá nhân',
         'Báo cáo chi tiết',
-        'Tư vấn nghề nghiệp',
-        'Hỗ trợ email'
+        'Tư vấn nghề nghiệp'
       ]
     },
     {
       id: 2, //monthly
       name: 'Hàng Tháng',
       icon: <FaCalendarAlt />,
-      price: 199000,
+      price: 2000,
       period: 'tháng',
       originalPrice: null,
       discount: null,
@@ -78,9 +77,9 @@ const PremiumPage: React.FC<PremiumPageProps> = ({ isAuthenticated = false }) =>
       id: 3, //yearly
       name: 'Hàng Năm',
       icon: <FaInfinity />,
-      price: 1990000,
+      price: 3000,
       period: 'năm',
-      originalPrice: 2388000,
+      originalPrice: 3000000,
       discount: '17%',
       popular: false,
       features: [

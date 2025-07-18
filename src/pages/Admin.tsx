@@ -1,18 +1,12 @@
 import { useState, useEffect } from 'react';
 import Tab from '../components/Tab';
 import Alert from '../components/Alert';
-import Button from '../components/Button';
 import { 
-  FaSearch, FaBell, FaUserCircle, FaPlus, 
   FaUsers, FaQuestionCircle, FaCalendarAlt,
-  FaChartLine, FaCog, FaCrown, FaArrowUp,
-  FaChevronDown
+ FaArrowUp,
 } from 'react-icons/fa';
 import UserManagement from '../components/admin/UserManagement';
 import QuizManagement from '../components/admin/QuizManagement';
-import EventManagement from '../components/admin/EventManagement';
-import Analytics from '../components/admin/Analytics';
-import Settings from '../components/admin/Settings';
 import '../styles/Admin.css';
 import EventPrivateList from '@/components/event/EventPrivateList';
 
@@ -22,13 +16,11 @@ type ActiveView = 'dashboard' | 'users' | 'quizzes' | 'events' | 'analytics' | '
                  'premium' | 'calendar' | 'notifications';
 
 const Admin = () => {
-  const [activeView, setActiveView] = useState<ActiveView>('dashboard');
+  const [activeView, setActiveView] = useState<ActiveView>('users');
   const [alerts, setAlerts] = useState<Array<{ id: number; type: AlertType; message: string }>>([]);
-  const [searchQuery, setSearchQuery] = useState('');
   const [showScrollTop, setShowScrollTop] = useState(false);
 
   const navItems = [
-    { id: 'dashboard', icon: <FaChartLine />, label: 'Dashboard' },
     { id: 'users', icon: <FaUsers />, label: 'Users', notification: 2 },
     { id: 'quizzes', icon: <FaQuestionCircle />, label: 'Quizzes', notification: 3 },
     { id: 'events', icon: <FaCalendarAlt />, label: 'Events', notification: 5 },

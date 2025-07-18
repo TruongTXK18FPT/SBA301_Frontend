@@ -139,23 +139,23 @@ const UserManagement: React.FC<UserManagementProps> = ({ onAlert }) => {
     setDistricts([]); // Clear districts when canceling
   };
 
-  const handleToggleStatus = async (userId: string, currentStatus: boolean) => {
-    try {
-      await toggleUserActiveStatus(userId, !currentStatus);
-      setUsers((prev) =>
-        prev.map((user) =>
-          user.id === userId ? { ...user, isActive: !currentStatus } : user
-        )
-      );
-      onAlert(
-        "success",
-        `User ${!currentStatus ? "activated" : "deactivated"} successfully`
-      );
-    } catch (error: any) {
-      console.error("Failed to toggle user status:", error);
-      onAlert("error", "Failed to toggle user status");
-    }
-  };
+const handleToggleStatus = async (userId: string, currentStatus: boolean) => {
+  try {
+    await toggleUserActiveStatus(userId, !currentStatus);
+    setUsers((prev) =>
+      prev.map((user) =>
+        user.id === userId ? { ...user, active: !currentStatus } : user
+      )
+    );
+    onAlert(
+      "success",
+      `User ${!currentStatus ? "activated" : "deactivated"} successfully`
+    );
+  } catch (error: any) {
+    console.error("Failed to toggle user status:", error);
+    onAlert("error", "Failed to toggle user status");
+  }
+};
 
   return (
     <div className="management-container">
