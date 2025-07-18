@@ -442,6 +442,49 @@
 .animate-fade-in {
   animation: fadeIn 0.5s ease-out;
 }
+.avatar-crown-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.premium-crown {
+  position: absolute;
+  top: -26px;  /* Điều chỉnh phù hợp avatar */
+  left: 50%;
+  transform: translateX(-50%);
+  color: gold;
+  font-size: 2.3rem; /* Chỉnh tùy avatar */
+  filter: drop-shadow(0 0 8px gold) drop-shadow(0 0 4px orange);
+  z-index: 11;
+  pointer-events: none;
+  animation: crown-bounce 1.2s cubic-bezier(0.22, 1, 0.36, 1) 1;
+}
+
+@keyframes crown-bounce {
+  0% { transform: translateX(-50%) scale(0.6) translateY(-70%); opacity: 0;}
+  70% { transform: translateX(-50%) scale(1.12) translateY(0); opacity: 1;}
+  100% { transform: translateX(-50%) scale(1) translateY(0);}
+}
+
+/* Border vàng khi Premium */
+.profile-avatar-large.premium,
+.profile-avatar-placeholder.premium {
+  border: 4px solid gold;
+  box-shadow: 0 0 40px gold, 0 0 15px orange;
+}
+.premium-badge {
+  background: linear-gradient(90deg, gold 0%, orange 100%);
+  color: #fff;
+  font-weight: 700;
+  padding: 0.35rem 1rem;
+  border-radius: 1.2em;
+  margin-right: 8px;
+  font-size: 0.92rem;
+  text-shadow: 0 1px 6px rgba(204,160,0,0.35);
+  box-shadow: 0 2px 12px gold;
+  font-family: 'Poppins',sans-serif;
+  letter-spacing: 1px;
+}
 
 @keyframes fadeIn {
   from { opacity: 0; }

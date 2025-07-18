@@ -1,5 +1,4 @@
 import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 
 export interface QuizResult {
   id: number;
@@ -25,361 +24,486 @@ class PDFService {
   private formatDate(dateString: string): string {
     const date = new Date(dateString);
     return date.toLocaleDateString('vi-VN', {
-      year: 'numeric',
-      month: 'long',
+      year: 'numeric', 
+      month: 'long', 
       day: 'numeric',
-      hour: '2-digit',
+      hour: '2-digit', 
       minute: '2-digit'
     });
   }
 
-  private splitText(doc: jsPDF, text: string, maxWidth: number): string[] {
-    if (!text) return [];
+  private addMultilineText(
+    doc: jsPDF, 
+    text: string, 
+    x: number, 
+    y: number, 
+    maxWidth: number, 
+    lineHeight: number = 8
+  ): number {
+    const lines = doc.splitTextToSize(text, maxWidth);
     
-    const words = text.split(' ');
-    const lines: string[] = [];
-    let currentLine = '';
-
-    for (const word of words) {
-      const testLine = currentLine + (currentLine ? ' ' : '') + word;
-      const textWidth = doc.getTextWidth(testLine);
-      
-      if (textWidth <= maxWidth) {
-        currentLine = testLine;
-      } else {
-        if (currentLine) {
-          lines.push(currentLine);
-          currentLine = word;
-        } else {
-          // If single word is too long, force break it
-          lines.push(word);
-        }
+    for (let line of lines) {
+      // Check if we need a new page with more margin
+      if (y > doc.internal.pageSize.height - 40) {
+        doc.addPage();
+        y = 30; // More generous top margin
       }
-    }
-
-    if (currentLine) {
-      lines.push(currentLine);
-    }
-
-    return lines;
-  }
-
-  private addMultilineText(doc: jsPDF, text: string, x: number, y: number, maxWidth: number, lineHeight: number = 6): number {
-    const lines = this.splitText(doc, text, maxWidth);
-    let currentY = y;
-
-    for (const line of lines) {
-      doc.text(line, x, currentY);
-      currentY += lineHeight;
-    }
-
-    return currentY;
-  }
-
-  // Convert Vietnamese text to compatible format
-  private sanitizeVietnameseText(text: string): string {
-    // Replace common Vietnamese characters that might cause issues
-    const replacements: { [key: string]: string } = {
-      'à': 'a', 'á': 'a', 'ả': 'a', 'ã': 'a', 'ạ': 'a',
-      'ă': 'a', 'ắ': 'a', 'ằ': 'a', 'ẳ': 'a', 'ẵ': 'a', 'ặ': 'a',
-      'â': 'a', 'ấ': 'a', 'ầ': 'a', 'ẩ': 'a', 'ẫ': 'a', 'ậ': 'a',
-      'è': 'e', 'é': 'e', 'ẻ': 'e', 'ẽ': 'e', 'ẹ': 'e',
-      'ê': 'e', 'ế': 'e', 'ề': 'e', 'ể': 'e', 'ễ': 'e', 'ệ': 'e',
-      'ì': 'i', 'í': 'i', 'ỉ': 'i', 'ĩ': 'i', 'ị': 'i',
-      'ò': 'o', 'ó': 'o', 'ỏ': 'o', 'õ': 'o', 'ọ': 'o',
-      'ô': 'o', 'ố': 'o', 'ồ': 'o', 'ổ': 'o', 'ỗ': 'o', 'ộ': 'o',
-      'ơ': 'o', 'ớ': 'o', 'ờ': 'o', 'ở': 'o', 'ỡ': 'o', 'ợ': 'o',
-      'ù': 'u', 'ú': 'u', 'ủ': 'u', 'ũ': 'u', 'ụ': 'u',
-      'ư': 'u', 'ứ': 'u', 'ừ': 'u', 'ử': 'u', 'ữ': 'u', 'ự': 'u',
-      'ỳ': 'y', 'ý': 'y', 'ỷ': 'y', 'ỹ': 'y', 'ỵ': 'y',
-      'đ': 'd', 'Đ': 'D'
-    };
-
-    let result = text;
-    Object.entries(replacements).forEach(([vietnamese, latin]) => {
-      result = result.replace(new RegExp(vietnamese, 'g'), latin);
-    });
-
-    return result;
-  }
-
-  public async downloadQuizResultPDF(userResults: UserQuizResults, result: QuizResult): Promise<void> {
-    try {
-      // Create new PDF document
-      const doc = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4'
-      });
-
-      // Try to use a font that supports Vietnamese, fallback to helvetica
-      doc.setFont('helvetica', 'normal');
       
-      // Page margins
-      const margin = 20;
+      doc.text(line, x, y);
+      y += lineHeight;
+    }
+    return y;
+  }
+
+  private addSection(
+    doc: jsPDF,
+    title: string,
+    content: string,
+    x: number,
+    y: number,
+    maxWidth: number,
+    titleFontSize: number = 14,
+    contentFontSize: number = 11,
+    titleColor: [number, number, number] = [41, 128, 185],
+    contentColor: [number, number, number] = [52, 73, 94]
+  ): number {
+    // Check if we need a new page for the section with more generous spacing
+    if (y > doc.internal.pageSize.height - 70) {
+      doc.addPage();
+      y = 30;
+    }
+
+    // Add some spacing before section
+    y += 5;
+
+    // Add title with background box
+    doc.setFillColor(245, 246, 250);
+    doc.rect(x - 5, y - 5, maxWidth + 10, 12, 'F');
+    
+    doc.setFontSize(titleFontSize);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(titleColor[0], titleColor[1], titleColor[2]);
+    y = this.addMultilineText(doc, title, x, y + 3, maxWidth, 9);
+    y += 8;
+
+    // Add content with proper spacing
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(contentFontSize);
+    doc.setTextColor(contentColor[0], contentColor[1], contentColor[2]);
+    y = this.addMultilineText(doc, content, x + 3, y, maxWidth - 6, 7);
+    y += 12; // More spacing after content
+
+    return y;
+  }
+
+  private addInfoRow(
+    doc: jsPDF,
+    label: string,
+    value: string,
+    x: number,
+    y: number,
+    maxWidth: number
+  ): number {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.setTextColor(44, 62, 80);
+    doc.text(label, x, y);
+    
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(85, 85, 85);
+    y = this.addMultilineText(doc, value, x + 50, y, maxWidth - 50, 6);
+    
+    return y + 3;
+  }
+
+  private addHeaderWithLine(
+    doc: jsPDF,
+    title: string,
+    x: number,
+    y: number,
+    maxWidth: number,
+    fontSize: number = 16,
+    color: [number, number, number] = [31, 81, 255]
+  ): number {
+    doc.setFontSize(fontSize);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(color[0], color[1], color[2]);
+    y = this.addMultilineText(doc, title, x, y, maxWidth, 10);
+    
+    // Add decorative line
+    doc.setLineWidth(1);
+    doc.setDrawColor(color[0], color[1], color[2]);
+    doc.line(x, y + 2, x + maxWidth, y + 2);
+    
+    return y + 12;
+  }
+
+  public async downloadQuizResultPDF(userResults: UserQuizResults, result: QuizResult) {
+    try {
+      const doc = new jsPDF();
+      doc.setFont('helvetica');
+      
+      const margin = 25;
       const pageWidth = doc.internal.pageSize.width;
       const pageHeight = doc.internal.pageSize.height;
-      const contentWidth = pageWidth - 2 * margin;
+      const contentWidth = pageWidth - margin * 2;
+      let y = 30;
+
+      // MAIN HEADER with better styling
+      doc.setFontSize(24);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(31, 81, 255);
+      doc.text('BÁO CÁO KẾT QUẢ TRẮC NGHIỆM', pageWidth / 2, y, { align: 'center' });
+      y += 8;
       
-      let currentY = margin;
+      // Subtitle
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(127, 140, 141);
+      doc.text('Phân tích tính cách và khuyến nghị nghề nghiệp', pageWidth / 2, y, { align: 'center' });
+      y += 15;
+      
+      // Decorative header line
+      doc.setLineWidth(2);
+      doc.setDrawColor(31, 81, 255);
+      doc.line(margin, y, pageWidth - margin, y);
+      y += 20;
 
-      // Header
-      doc.setFontSize(20);
-      doc.setTextColor(44, 62, 80); // Dark blue
-      const headerText = this.sanitizeVietnameseText('BÁO CÁO KẾT QUẢ TRẮC NGHIỆM');
-      doc.text(headerText, pageWidth / 2, currentY, { align: 'center' });
-      currentY += 15;
+      // USER INFO SECTION with better layout
+      y = this.addHeaderWithLine(doc, 'THÔNG TIN NGƯỜI DÙNG', margin, y, contentWidth, 16, [46, 125, 50]);
+      
+      // Create info box
+      doc.setFillColor(248, 249, 250);
+      doc.rect(margin, y, contentWidth, 50, 'F');
+      
+      y += 10;
+      y = this.addInfoRow(doc, 'Họ và tên:', userResults.fullName, margin + 10, y, contentWidth - 20);
+      y = this.addInfoRow(doc, 'Email:', userResults.email, margin + 10, y, contentWidth - 20);
+      y = this.addInfoRow(doc, 'Ngày làm bài:', this.formatDate(result.submittedAt), margin + 10, y, contentWidth - 20);
+      y = this.addInfoRow(doc, 'Loại trắc nghiệm:', result.quizType, margin + 10, y, contentWidth - 20);
+      y += 15;
 
-      // Divider line
-      doc.setLineWidth(0.5);
-      doc.setDrawColor(52, 152, 219); // Blue
-      doc.line(margin, currentY, pageWidth - margin, currentY);
-      currentY += 10;
+      // MAIN RESULT SECTION
+      y = this.addHeaderWithLine(doc, 'KẾT QUẢ TRẮC NGHIỆM', margin, y, contentWidth, 16, [220, 53, 69]);
 
-      // Student Information
-      doc.setFontSize(14);
-      doc.setTextColor(52, 152, 219); // Blue
-      doc.text(this.sanitizeVietnameseText('THÔNG TIN HỌC SINH'), margin, currentY);
-      currentY += 8;
+      // Personality code in highlighted box
+      doc.setFillColor(255, 235, 59);
+      doc.rect(margin, y, contentWidth, 20, 'F');
+      doc.setFontSize(18);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(183, 28, 28);
+      doc.text(`Mã tính cách: ${result.personalityCode || "Không xác định"}`, margin + 10, y + 13);
+      y += 30;
 
-      doc.setFontSize(11);
-      doc.setTextColor(44, 62, 80); // Dark
-      doc.text(`Ho va ten: ${this.sanitizeVietnameseText(userResults.fullName)}`, margin, currentY);
-      currentY += 6;
-      doc.text(`Email: ${userResults.email}`, margin, currentY);
-      currentY += 6;
-      doc.text(`Ngay lam bai: ${this.sanitizeVietnameseText(this.formatDate(result.submittedAt))}`, margin, currentY);
-      currentY += 6;
-      doc.text(`Loai trac nghiem: ${this.sanitizeVietnameseText(result.quizType)}`, margin, currentY);
-      currentY += 15;
-
-      // Quiz Results
-      doc.setFontSize(14);
-      doc.setTextColor(52, 152, 219); // Blue
-      doc.text(this.sanitizeVietnameseText('KẾT QUẢ TRẮC NGHIỆM'), margin, currentY);
-      currentY += 8;
-
-      // Personality Code
-      if (result.personalityCode) {
-        doc.setFontSize(12);
-        doc.setTextColor(230, 126, 34); // Orange
-        doc.text(`Ma tinh cach: ${result.personalityCode}`, margin, currentY);
-        currentY += 8;
-      }
-
-      // Nickname
+      // Nickname section
       if (result.nickname) {
-        doc.setFontSize(11);
-        doc.setTextColor(44, 62, 80); // Dark
-        doc.text(`Biet danh: ${this.sanitizeVietnameseText(result.nickname)}`, margin, currentY);
-        currentY += 6;
+        y = this.addSection(
+          doc,
+          '🏷️ BIỆT DANH',
+          result.nickname,
+          margin,
+          y,
+          contentWidth,
+          14,
+          12,
+          [46, 204, 113],
+          [44, 62, 80]
+        );
       }
 
-      // Key Traits
+      // Key traits section
       if (result.keyTraits) {
-        doc.setFontSize(11);
-        doc.setTextColor(44, 62, 80); // Dark
-        doc.text('Dac diem noi bat:', margin, currentY);
-        currentY += 6;
-        currentY = this.addMultilineText(doc, this.sanitizeVietnameseText(result.keyTraits), margin + 5, currentY, contentWidth - 5);
-        currentY += 5;
+        y = this.addSection(
+          doc,
+          '⭐ ĐẶC ĐIỂM NỔI BẬT',
+          result.keyTraits,
+          margin,
+          y,
+          contentWidth,
+          14,
+          12,
+          [155, 89, 182],
+          [44, 62, 80]
+        );
       }
 
-      // Description
+      // Description section
       if (result.description) {
-        doc.setFontSize(11);
-        doc.setTextColor(44, 62, 80); // Dark
-        doc.text('Mo ta chi tiet:', margin, currentY);
-        currentY += 6;
-        currentY = this.addMultilineText(doc, this.sanitizeVietnameseText(result.description), margin + 5, currentY, contentWidth - 5);
-        currentY += 10;
+        y = this.addSection(
+          doc,
+          '📝 MÔ TẢ CHI TIẾT',
+          result.description,
+          margin,
+          y,
+          contentWidth,
+          14,
+          12,
+          [52, 152, 219],
+          [44, 62, 80]
+        );
       }
 
-      // Career Recommendations
+      // Career recommendations section
       if (result.careerRecommendations) {
-        // Check if we need a new page
-        if (currentY > pageHeight - 60) {
-          doc.addPage();
-          currentY = margin;
-        }
-
-        doc.setFontSize(12);
-        doc.setTextColor(46, 204, 113); // Green
-        doc.text(this.sanitizeVietnameseText('KHUYẾN NGHỊ NGHỀ NGHIỆP'), margin, currentY);
-        currentY += 8;
-
-        doc.setFontSize(11);
-        doc.setTextColor(44, 62, 80); // Dark
-        currentY = this.addMultilineText(doc, this.sanitizeVietnameseText(result.careerRecommendations), margin + 5, currentY, contentWidth - 5);
-        currentY += 10;
+        y = this.addSection(
+          doc,
+          '💼 KHUYẾN NGHỊ NGHỀ NGHIỆP',
+          result.careerRecommendations,
+          margin,
+          y,
+          contentWidth,
+          14,
+          12,
+          [46, 204, 113],
+          [44, 62, 80]
+        );
       }
 
-      // University Recommendations
+      // University recommendations section
       if (result.universityRecommendations) {
-        // Check if we need a new page
-        if (currentY > pageHeight - 60) {
-          doc.addPage();
-          currentY = margin;
-        }
-
-        doc.setFontSize(12);
-        doc.setTextColor(155, 89, 182); // Purple
-        doc.text(this.sanitizeVietnameseText('KHUYẾN NGHỊ TRƯỜNG ĐẠI HỌC'), margin, currentY);
-        currentY += 8;
-
-        doc.setFontSize(11);
-        doc.setTextColor(44, 62, 80); // Dark
-        currentY = this.addMultilineText(doc, this.sanitizeVietnameseText(result.universityRecommendations), margin + 5, currentY, contentWidth - 5);
-        currentY += 10;
+        y = this.addSection(
+          doc,
+          '🎓 KHUYẾN NGHỊ TRƯỜNG ĐẠI HỌC',
+          result.universityRecommendations,
+          margin,
+          y,
+          contentWidth,
+          14,
+          12,
+          [155, 89, 182],
+          [44, 62, 80]
+        );
       }
 
-      // Scores
+      // Scores section with better formatting
       if (result.scores && Object.keys(result.scores).length > 0) {
-        // Check if we need a new page
-        if (currentY > pageHeight - 80) {
+        // Check if we need a new page for scores
+        if (y > pageHeight - 100) {
           doc.addPage();
-          currentY = margin;
+          y = 30;
         }
 
-        doc.setFontSize(12);
-        doc.setTextColor(231, 76, 60); // Red
-        doc.text(this.sanitizeVietnameseText('ĐIỂM SỐ CHI TIẾT'), margin, currentY);
-        currentY += 8;
+        y = this.addHeaderWithLine(doc, '📊 ĐIỂM SỐ CHI TIẾT', margin, y, contentWidth, 14, [231, 76, 60]);
 
+        // Create scores table
+        doc.setFillColor(252, 252, 252);
+        const scoresHeight = Object.keys(result.scores).length * 10 + 10;
+        doc.rect(margin, y, contentWidth, scoresHeight, 'F');
+        
+        y += 8;
+        doc.setFont('helvetica', 'normal');
         doc.setFontSize(11);
-        doc.setTextColor(44, 62, 80); // Dark
-
-        Object.entries(result.scores).forEach(([category, score]) => {
-          doc.text(`${this.sanitizeVietnameseText(category)}: ${score}`, margin + 5, currentY);
-          currentY += 6;
-        });
-        currentY += 10;
+        doc.setTextColor(44, 62, 80);
+        
+        for (const [category, score] of Object.entries(result.scores)) {
+          doc.setFont('helvetica', 'bold');
+          doc.text(category, margin + 10, y);
+          doc.setFont('helvetica', 'normal');
+          doc.text(`: ${score}`, margin + 100, y);
+          y += 8;
+        }
+        y += 10;
       }
 
-      // Footer
-      const footerY = pageHeight - 20;
-      doc.setFontSize(9);
-      doc.setTextColor(127, 140, 141); // Gray
-      doc.text(this.sanitizeVietnameseText('Báo cáo được tạo tự động bởi hệ thống trắc nghiệm tính cách'), pageWidth / 2, footerY, { align: 'center' });
-      doc.text(`Ngay tao: ${this.sanitizeVietnameseText(new Date().toLocaleDateString('vi-VN'))}`, pageWidth / 2, footerY + 5, { align: 'center' });
+      // Add professional footer
+      const totalPages = doc.getNumberOfPages();
+      
+      for (let i = 1; i <= totalPages; i++) {
+        doc.setPage(i);
+        
+        // Footer background
+        doc.setFillColor(245, 246, 250);
+        doc.rect(0, pageHeight - 25, pageWidth, 25, 'F');
+        
+        doc.setFontSize(9);
+        doc.setTextColor(127, 140, 141);
+        doc.text(
+          'Báo cáo được tạo tự động bởi hệ thống trắc nghiệm tính cách',
+          pageWidth / 2,
+          pageHeight - 15,
+          { align: 'center' }
+        );
+        doc.text(
+          `Ngày tạo: ${this.formatDate(new Date().toISOString())}`,
+          pageWidth / 2,
+          pageHeight - 8,
+          { align: 'center' }
+        );
+        doc.text(
+          `Trang ${i}/${totalPages}`,
+          pageWidth - margin,
+          pageHeight - 8,
+          { align: 'right' }
+        );
+      }
 
       // Generate filename
-      const filename = `ket-qua-trac-nghiem-${userResults.fullName.replace(/\s+/g, '-').toLowerCase()}-${result.id}.pdf`;
+      const sanitizedName = userResults.fullName
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-zA-Z0-9\s]/g, '')
+        .replace(/\s+/g, '-')
+        .toLowerCase();
       
-      // Save the PDF
+      const filename = `ket-qua-trac-nghiem-${sanitizedName}-${result.id}.pdf`;
+      
       doc.save(filename);
-
-    } catch (error) {
-      console.error('Error generating PDF:', error);
+      
+    } catch (err) {
+      console.error('PDF Generation Error:', err);
       throw new Error('Không thể tạo file PDF. Vui lòng thử lại.');
     }
   }
 
-  public async downloadAllQuizResultsPDF(userResults: UserQuizResults): Promise<void> {
+  // Method to download all quiz results for a user with improved formatting
+  public async downloadAllQuizResultsPDF(userResults: UserQuizResults) {
     try {
-      // Create new PDF document
-      const doc = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4'
-      });
-
-      // Set font
-      doc.setFont('helvetica', 'normal');
+      const doc = new jsPDF();
+      doc.setFont('helvetica');
       
-      // Page margins
-      const margin = 20;
+      const margin = 25;
       const pageWidth = doc.internal.pageSize.width;
       const pageHeight = doc.internal.pageSize.height;
-      const contentWidth = pageWidth - 2 * margin;
+      const contentWidth = pageWidth - margin * 2;
+      let y = 30;
+
+      // Main header with professional styling
+      doc.setFontSize(24);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(31, 81, 255);
+      doc.text('BÁO CÁO TỔNG HỢP KẾT QUẢ', pageWidth / 2, y, { align: 'center' });
+      y += 8;
       
-      let currentY = margin;
+      doc.setFontSize(16);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(127, 140, 141);
+      doc.text('Trắc nghiệm tính cách và phát triển nghề nghiệp', pageWidth / 2, y, { align: 'center' });
+      y += 20;
 
-      // Header
-      doc.setFontSize(20);
-      doc.setTextColor(44, 62, 80); // Dark blue
-      doc.text(this.sanitizeVietnameseText('BÁO CÁO TỔNG HỢP KẾT QUẢ TRẮC NGHIỆM'), pageWidth / 2, currentY, { align: 'center' });
-      currentY += 15;
+      // User info section
+      y = this.addHeaderWithLine(doc, 'THÔNG TIN NGƯỜI DÙNG', margin, y, contentWidth, 16, [46, 125, 50]);
+      
+      // User info box
+      doc.setFillColor(248, 249, 250);
+      doc.rect(margin, y, contentWidth, 45, 'F');
+      
+      y += 10;
+      y = this.addInfoRow(doc, 'Họ và tên:', userResults.fullName, margin + 10, y, contentWidth - 20);
+      y = this.addInfoRow(doc, 'Email:', userResults.email, margin + 10, y, contentWidth - 20);
+      y = this.addInfoRow(doc, 'Tổng số bài:', `${userResults.results.length} bài trắc nghiệm`, margin + 10, y, contentWidth - 20);
+      y += 20;
 
-      // Divider line
-      doc.setLineWidth(0.5);
-      doc.setDrawColor(52, 152, 219); // Blue
-      doc.line(margin, currentY, pageWidth - margin, currentY);
-      currentY += 10;
+      // Summary statistics
+      y = this.addHeaderWithLine(doc, 'TỔNG QUAN KẾT QUẢ', margin, y, contentWidth, 16, [220, 53, 69]);
+      
+      // Create summary table
+      doc.setFillColor(252, 252, 252);
+      doc.rect(margin, y, contentWidth, 80, 'F');
+      y += 10;
 
-      // Student Information
-      doc.setFontSize(14);
-      doc.setTextColor(52, 152, 219); // Blue
-      doc.text(this.sanitizeVietnameseText('THÔNG TIN HỌC SINH'), margin, currentY);
-      currentY += 8;
+      const quizTypes = [...new Set(userResults.results.map(r => r.quizType))];
+      const personalityCodes = [...new Set(userResults.results.map(r => r.personalityCode))];
+      
+      y = this.addInfoRow(doc, 'Các loại trắc nghiệm:', quizTypes.join(', '), margin + 10, y, contentWidth - 20);
+      y = this.addInfoRow(doc, 'Mã tính cách:', personalityCodes.join(', '), margin + 10, y, contentWidth - 20);
+      y = this.addInfoRow(doc, 'Thời gian thực hiện:', 
+        `${this.formatDate(userResults.results[userResults.results.length - 1].submittedAt)} - ${this.formatDate(userResults.results[0].submittedAt)}`, 
+        margin + 10, y, contentWidth - 20);
+      y += 25;
 
-      doc.setFontSize(11);
-      doc.setTextColor(44, 62, 80); // Dark
-      doc.text(`Ho va ten: ${this.sanitizeVietnameseText(userResults.fullName)}`, margin, currentY);
-      currentY += 6;
-      doc.text(`Email: ${userResults.email}`, margin, currentY);
-      currentY += 6;
-      doc.text(`Tong so bai lam: ${userResults.results.length}`, margin, currentY);
-      currentY += 15;
-
-      // Process each result
-      userResults.results.forEach((result, index) => {
+      // Process each quiz result
+      for (let i = 0; i < userResults.results.length; i++) {
+        const result = userResults.results[i];
+        
         // Check if we need a new page
-        if (currentY > pageHeight - 100) {
+        if (y > pageHeight - 120) {
           doc.addPage();
-          currentY = margin;
+          y = 30;
         }
 
-        // Result header
+        // Quiz result card
+        doc.setFillColor(255, 255, 255);
+        doc.setDrawColor(220, 220, 220);
+        doc.rect(margin, y, contentWidth, 60, 'FD');
+        
+        y += 10;
+
+        // Quiz number and type
         doc.setFontSize(14);
-        doc.setTextColor(52, 152, 219); // Blue
-        doc.text(`KET QUA ${index + 1}: ${this.sanitizeVietnameseText(result.quizType)}`, margin, currentY);
-        currentY += 8;
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(31, 81, 255);
+        doc.text(`${i + 1}. ${result.quizType}`, margin + 10, y);
+        y += 10;
 
-        doc.setFontSize(11);
-        doc.setTextColor(44, 62, 80); // Dark
-        doc.text(`Ngay lam bai: ${this.sanitizeVietnameseText(this.formatDate(result.submittedAt))}`, margin, currentY);
-        currentY += 6;
-
-        if (result.personalityCode) {
-          doc.setTextColor(230, 126, 34); // Orange
-          doc.text(`Ma tinh cach: ${result.personalityCode}`, margin, currentY);
-          currentY += 6;
-        }
-
+        // Quiz details in two columns
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(10);
+        doc.setTextColor(85, 85, 85);
+        
+        // Left column
+        doc.text(`Ngày: ${this.formatDate(result.submittedAt)}`, margin + 10, y);
+        doc.text(`Mã: ${result.personalityCode}`, margin + 10, y + 8);
+        
+        // Right column
         if (result.nickname) {
-          doc.setTextColor(44, 62, 80); // Dark
-          doc.text(`Biet danh: ${this.sanitizeVietnameseText(result.nickname)}`, margin, currentY);
-          currentY += 6;
+          doc.text(`Biệt danh: ${result.nickname}`, margin + contentWidth/2, y);
         }
+        
+        y += 25;
 
-        if (result.description) {
-          doc.setTextColor(44, 62, 80); // Dark
-          doc.text('Mo ta:', margin, currentY);
-          currentY += 6;
-          currentY = this.addMultilineText(doc, this.sanitizeVietnameseText(result.description), margin + 5, currentY, contentWidth - 5, 5);
-          currentY += 5;
-        }
+        // Add separator line
+        doc.setLineWidth(0.5);
+        doc.setDrawColor(230, 230, 230);
+        doc.line(margin, y, pageWidth - margin, y);
+        y += 15;
+      }
 
-        currentY += 10; // Space between results
-      });
-
-      // Footer
-      const footerY = pageHeight - 20;
-      doc.setFontSize(9);
-      doc.setTextColor(127, 140, 141); // Gray
-      doc.text(this.sanitizeVietnameseText('Báo cáo được tạo tự động bởi hệ thống trắc nghiệm tính cách'), pageWidth / 2, footerY, { align: 'center' });
-      doc.text(`Ngay tao: ${this.sanitizeVietnameseText(new Date().toLocaleDateString('vi-VN'))}`, pageWidth / 2, footerY + 5, { align: 'center' });
+      // Professional footer for all pages
+      const totalPages = doc.getNumberOfPages();
+      for (let i = 1; i <= totalPages; i++) {
+        doc.setPage(i);
+        
+        // Footer background
+        doc.setFillColor(245, 246, 250);
+        doc.rect(0, pageHeight - 25, pageWidth, 25, 'F');
+        
+        doc.setFontSize(9);
+        doc.setTextColor(127, 140, 141);
+        doc.text(
+          'Báo cáo tổng hợp được tạo tự động bởi hệ thống trắc nghiệm tính cách',
+          pageWidth / 2,
+          pageHeight - 15,
+          { align: 'center' }
+        );
+        doc.text(
+          `Ngày tạo: ${this.formatDate(new Date().toISOString())}`,
+          pageWidth / 2,
+          pageHeight - 8,
+          { align: 'center' }
+        );
+        doc.text(
+          `Trang ${i}/${totalPages}`,
+          pageWidth - margin,
+          pageHeight - 8,
+          { align: 'right' }
+        );
+      }
 
       // Generate filename
-      const filename = `tong-hop-ket-qua-${userResults.fullName.replace(/\s+/g, '-').toLowerCase()}.pdf`;
+      const sanitizedName = userResults.fullName
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-zA-Z0-9\s]/g, '')
+        .replace(/\s+/g, '-')
+        .toLowerCase();
       
-      // Save the PDF
+      const filename = `bao-cao-tong-hop-${sanitizedName}.pdf`;
+      
       doc.save(filename);
-
-    } catch (error) {
-      console.error('Error generating PDF:', error);
-      throw new Error('Không thể tạo file PDF. Vui lòng thử lại.');
+      
+    } catch (err) {
+      console.error('PDF Generation Error:', err);
+      throw new Error('Không thể tạo file PDF tổng hợp. Vui lòng thử lại.');
     }
   }
 }

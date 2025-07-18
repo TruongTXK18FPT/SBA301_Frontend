@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { FaUser, FaCalendarAlt, FaPhone, FaMapMarkerAlt, FaEdit, FaEnvelope, FaSave, FaTimes, FaShoppingCart } from "react-icons/fa";
+import { FaUser,FaCrown,FaCalendarAlt, FaPhone, FaMapMarkerAlt, FaEdit, FaEnvelope, FaSave, FaTimes, FaShoppingCart } from "react-icons/fa";
 import { getProfile } from "../services/authService";
 import { getProvinceName, getDistrictName } from "../services/locationService";
 import { getCurrentUser, updateProfile } from "../services/userService";
+import { useAtomValue } from 'jotai'
+import { subscriptionAtom } from '@/atom/atom'
 import Alert from "../components/Alert";
 import LoadingSpinner from "../components/LoadingSpinner";
 import "../styles/Profile.css";
-
+import { SubscriptionResponse } from "../components/premium/dto/subscription.dto";
 const Profile: React.FC = () => {
   const [profile, setProfile] = useState<any>(null);
   const [currentUser, setCurrentUser] = useState<any>(null);
@@ -15,8 +17,17 @@ const Profile: React.FC = () => {
   const [provinceName, setProvinceName] = useState<string>("");
   const [districtName, setDistrictName] = useState<string>("");
   const [locationLoading, setLocationLoading] = useState(false);
-  
-  // Edit mode states
+const subscriptions = useAtomValue(subscriptionAtom) as SubscriptionResponse[]
+const activeSubscription = subscriptions.find(
+  (s) =>
+    s.status === "ACTIVE" &&
+    new Date(s.startDate) <= new Date() &&
+    new Date(s.endDate) >= new Date()
+);
+const isPremium = !!activeSubscription;
+
+
+
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState({
     fullName: "",
@@ -56,6 +67,7 @@ const Profile: React.FC = () => {
         return 'Người dùng';
     }
   };
+console.log("PROFILE:", profile)
 
   // Functions for editing profile
   const handleEditClick = () => {
@@ -286,20 +298,33 @@ const Profile: React.FC = () => {
           </div>
           
           <div className="profile-main-info">
-            <div className="profile-avatar-section">
-              {profile?.avatarUrl ? (
-                <img src={profile.avatarUrl} alt="Avatar" className="profile-avatar-large" />
-              ) : (
-                <div className="profile-avatar-placeholder">
-                  <FaUser className="avatar-icon" />
-                </div>
-              )}
-              <div className="avatar-badge">
-                <span className={`role-badge role-${currentUser?.role?.toLowerCase()}`}>
-                  {getRoleDisplayName(currentUser?.role)}
-                </span>
-              </div>
-            </div>
+<div className="profile-avatar-section">
+  <div className="avatar-crown-wrapper">
+    {/* Premium Crown */}
+    {isPremium && (
+      <FaCrown className="premium-crown" title="Tài khoản Premium" />
+    )}
+    {profile?.avatarUrl ? (
+      <img
+        src={profile.avatarUrl}
+        alt="Avatar"
+        className={`profile-avatar-large${isPremium ? " premium" : ""}`}
+      />
+    ) : (
+      <div className={`profile-avatar-placeholder${isPremium ? " premium" : ""}`}>
+        <FaUser className="avatar-icon" />
+      </div>
+    )}
+  </div>
+  <div className="avatar-badge">
+    {isPremium && (
+      <span className="premium-badge">PREMIUM</span>
+    )}
+    <span className={`role-badge role-${currentUser?.role?.toLowerCase()}`}>
+      {getRoleDisplayName(currentUser?.role)}
+    </span>
+  </div>
+</div>
             
             <div className="profile-basic-info">
               <h1 className="profile-name">
