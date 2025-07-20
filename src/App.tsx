@@ -77,8 +77,6 @@ function App() {
           // Try to fetch user data directly instead of validating token first
           const userData = await getCurrentUser();
           
-          console.log("User data retrieved:", userData);
-          console.log("User role:", userData?.role);
           setUser(userData);
           setUserAtom(userData);
           setIsAuthenticated(true);
@@ -94,12 +92,10 @@ function App() {
               );
               setSubscriptionAtom(subscriptionData);
             } catch (subscriptionError) {
-              console.warn("Could not fetch subscription data:", subscriptionError);
               // Don't break authentication flow if subscription fails
             }
           }
         } catch (error) {
-          console.error("Failed to initialize authentication:", error);
           // Only remove token if the error indicates invalid authentication
           if (error instanceof Error && (error.message.includes('401') || error.message.includes('403'))) {
             removeToken();
@@ -108,7 +104,6 @@ function App() {
           setUser(null);
         }
       } else {
-        console.log("No token found, user not authenticated");
         setIsAuthenticated(false);
         setUser(null);
       }
@@ -124,7 +119,8 @@ function App() {
     try {
       await logOut();
     } catch (error) {
-      console.error("Logout failed on backend", error);
+      // Logout failed silently
+      // Error is not critical as we're still proceeding with client-side logout
     } finally {
       removeToken();
       setIsAuthenticated(false);
@@ -150,7 +146,6 @@ function App() {
       setUser(userData);
       setIsAuthenticated(true);
     } catch (error) {
-      console.error("Failed to fetch user data after login:", error);
       throw new Error("Failed to fetch user data after login");
     }
   };

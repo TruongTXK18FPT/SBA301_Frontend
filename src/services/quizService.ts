@@ -84,13 +84,6 @@ export interface QuizData {
   categoryName?: string;
 }
 
-export interface QuizCreateRequest {
-  title: string;
-  categoryId: number;
-  description: string;
-  questionQuantity: number;
-}
-
 export interface QuizRequestDTO {
   title: string;
   categoryId: number;
@@ -578,10 +571,49 @@ class QuizService {
     throw error;
   }
 }
-async getQuizResultById(resultId: number): Promise<QuizResult> {
-  const response = await this.fetchAPI<QuizResult>(`/quiz-results/${resultId}`);
-  return response;
-}
+  /**
+   * Get detailed quiz result by ID
+   * @param resultId The ID of the quiz result to fetch
+   * @returns A promise that resolves to the quiz result details
+   */
+  async getQuizResultById(resultId: number): Promise<QuizResult> {
+    try {
+      // Fetch the detailed result from the backend
+      const response = await this.fetchAPI<{
+        resultId: number;
+        personalityCode?: string;
+        resultType: string;
+        personalityName?: string;
+        personalityDescription?: string;
+        timeSubmit: string;
+        resultJson?: string;
+      }>(`/quiz-results/${resultId}`);
+
+      if (!response) {
+        throw new Error('No response received from server');
+      }
+
+      // Parse the resultJson if it exists
+      const jsonData = response.resultJson ? JSON.parse(response.resultJson) : {};
+      
+      // Map the response to the QuizResult interface
+      return {
+        id: response.resultId,
+        personalityCode: response.personalityCode || response.resultType || 'N/A',
+        nickname: response.personalityName || jsonData.nickname || 'N/A',
+        keyTraits: jsonData.keyTraits || jsonData.traits || 'N/A',
+        description: response.personalityDescription || jsonData.description || 'No description available',
+        careerRecommendations: jsonData.careerRecommendations || jsonData.careers || 'N/A',
+        universityRecommendations: jsonData.universityRecommendations || jsonData.universities || 'N/A',
+        scores: jsonData.scores || {},
+        submittedAt: response.timeSubmit,
+        quizType: response.resultType
+      };
+    } catch (error) {
+      console.error('Failed to fetch quiz result details:', error);
+      throw error;
+    }
+  }
   // Get all quizzes for management
   async getAllQuizzes(): Promise<QuizData[]> {
     return this.fetchAPI<QuizData[]>('/quiz', {}, this.DEFAULT_CACHE_TTL);

@@ -24,17 +24,16 @@ api.interceptors.request.use(
 
 // Response interceptor to handle token refresh and logout
 api.interceptors.response.use(
-  (response) => {
-    return response;
-  },
+  (response) => response,
   async (error) => {
-    const originalRequest = error.config;
+    const originalRequest = error?.config;
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    if (error.response?.status === 401 && !originalRequest?._retry) {
       originalRequest._retry = true;
 
       try {
         const currentToken = getToken();
+        
         if (!currentToken) {
           removeToken();
           window.location.href = '/login';
@@ -44,9 +43,7 @@ api.interceptors.response.use(
         // Try to refresh the token
         const refreshResponse = await axios.post(
           "http://localhost:8080/api/v1/authenticate/auth/refresh",
-          {
-            token: currentToken,
-          }
+          { token: currentToken }
         );
 
         const newToken = refreshResponse.data.result?.token || refreshResponse.data.token;
@@ -61,7 +58,6 @@ api.interceptors.response.use(
         return api(originalRequest);
       } catch (refreshError) {
         // If refresh fails, logout user
-        console.error('Token refresh failed:', refreshError);
         removeToken();
         window.location.href = '/login';
         return Promise.reject(new Error('Token refresh failed'));

@@ -67,7 +67,6 @@ const isPremium = !!activeSubscription;
         return 'Người dùng';
     }
   };
-console.log("PROFILE:", profile)
 
   // Functions for editing profile
   const handleEditClick = () => {
@@ -106,7 +105,7 @@ console.log("PROFILE:", profile)
       const data = await response.json();
       setProvinces(data);
     } catch (error) {
-      console.error("Error fetching provinces:", error);
+      // Error handled by UI state
     }
   };
 
@@ -116,7 +115,7 @@ console.log("PROFILE:", profile)
       const data = await response.json();
       setDistricts(data.districts ?? []);
     } catch (error) {
-      console.error("Error fetching districts:", error);
+      // Error handled by UI state
     }
   };
 
@@ -201,7 +200,6 @@ console.log("PROFILE:", profile)
       });
       setIsEditing(false);
     } catch (error) {
-      console.error("Profile update error:", error);
       setAlert({
         show: true,
         type: "error",
@@ -238,7 +236,6 @@ console.log("PROFILE:", profile)
               setDistrictName(dName);
             }
           } catch (locationError) {
-            console.error("Error fetching location names:", locationError);
             if (profileData.provinceCode) {
               setProvinceName(`Mã tỉnh: ${profileData.provinceCode}`);
             }
@@ -251,7 +248,6 @@ console.log("PROFILE:", profile)
         }
       } catch (err) {
         setError("Không thể tải thông tin profile");
-        console.error("Profile fetch error:", err);
       } finally {
         setLoading(false);
       }

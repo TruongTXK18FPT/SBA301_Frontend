@@ -42,8 +42,22 @@ export const getSubscriptions = async (params: {
   from?: string; // ISO date string
   to?: string;   // ISO date string
 }): Promise<SubscriptionResponse[]> => {
-  const response = await instance.get<SubscriptionResponse[]>("/premium/subscriptions", { params });
-  return response.data;
+  try {
+    const response = await instance.get<SubscriptionResponse[]>("/premium/subscriptions", { 
+      params,
+      validateStatus: (status) => status < 500 // Don't throw for 4xx errors
+    });
+    
+    if (response.status === 200) {
+      return response.data;
+    } else {
+      console.error('Unexpected response status when fetching subscriptions:', response.status);
+      return [];
+    }
+  } catch (error) {
+    console.error('Error fetching subscriptions:', error);
+    throw error; // Re-throw to be handled by the caller
+  }
 };
 
 // POST: Create a subscription

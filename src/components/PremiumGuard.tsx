@@ -106,9 +106,15 @@ const PremiumGuard: React.FC<PremiumGuardProps> = ({ children }) => {
   const [modalOpen, setModalOpen] = React.useState(false);
 
   React.useEffect(() => {
+    console.log('PremiumGuard - Current subscriptions:', subscriptions);
     const isActive = subscriptions && subscriptions.length > 0;
+    console.log('PremiumGuard - isActive:', isActive);
+    
     if (!isActive) {
+      console.log('PremiumGuard - No active subscription, showing premium modal');
       setModalOpen(true);
+    } else {
+      console.log('PremiumGuard - User has active subscription, allowing access');
     }
   }, [subscriptions]);
 
