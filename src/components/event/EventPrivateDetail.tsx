@@ -9,11 +9,14 @@ import { getEventById, updateEvent, approveEvent, rejectEvent } from '../../serv
 import './EventCreationForm.css'
 import '../../styles/EventPrivateDetail.css'
 import { useAtomValue } from 'jotai'
-import { userAtom } from '@/atom/atom'
-import { FaClock } from 'react-icons/fa'
+import { EventValidationService } from '../../utils/eventValidation'
+import { userAtom } from '../../atom/atom'
+import axios from 'axios'
+import { format } from 'date-fns'
+import { FaCalendarAlt, FaClock, FaMinus, FaPlus } from 'react-icons/fa'
 
 interface ShowtimeData {
-    id: number
+    id?: number
     tempId: string
     startTime: string
     endTime: string
@@ -23,7 +26,7 @@ interface ShowtimeData {
 }
 
 interface TicketData {
-    id: number
+    id?: number
     tempId: string
     name: string
     description?: string
@@ -42,6 +45,7 @@ const EventPrivateDetail = () => {
     // State for the original event data
     const [event, setEvent] = useState<EventPrivateDetailResponse | null>(null)
     const [loading, setLoading] = useState<boolean>(true)
+    const [uploading, setUploading] = useState<boolean>(false)
     const [submitting, setSubmitting] = useState<boolean>(false)
     const user = useAtomValue(userAtom)
     // State for editable fields
@@ -59,9 +63,8 @@ const EventPrivateDetail = () => {
     })
     const [invoiceInfo, setInvoiceInfo] = useState({
         needInvoice: false,
-        businessType: 'individual',
-        fullName: '',
-        companyName: '',
+        businessType: '',
+        holderName: '',
         address: '',
         taxCode: ''
     })
@@ -98,11 +101,12 @@ const EventPrivateDetail = () => {
             .trim()
     }
     const toDatetimeLocal = (dateString?: string) => {
-  if (!dateString) return ''
-  const date = new Date(dateString)
-  date.setMinutes(date.getMinutes() - date.getTimezoneOffset())
-  return date.toISOString().slice(0, 16)
-}
+        if (!dateString) return ''
+        const date = new Date(dateString)
+        date.setMinutes(date.getMinutes() - date.getTimezoneOffset())
+        return date.toISOString().slice(0, 16)
+    }
+
 
     // Handle event name change and auto-generate slug
     const handleEventNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -123,10 +127,10 @@ const EventPrivateDetail = () => {
         // Transform showtimes with tempId for React keys
         const transformedShowtimes = eventData.showtimes?.map(showtime => ({
             ...showtime,
-            tempId: showtime.id?.toString() || Date.now().toString(),
+            tempId: showtime.id?.toString() || `temp-${Date.now()}`,
             tickets: showtime.tickets?.map(ticket => ({
                 ...ticket,
-                tempId: ticket.id?.toString() || Date.now().toString()
+                tempId: ticket.id?.toString() || `temp-${Date.now()}`
             })) || []
         })) || []
         setShowtimes(transformedShowtimes)
@@ -140,9 +144,8 @@ const EventPrivateDetail = () => {
 
         setInvoiceInfo({
             needInvoice: !!(eventData.vatBusinessType || eventData.vatHolderName || eventData.vatHolderAddress || eventData.taxCode),
-            businessType: eventData.vatBusinessType || 'individual',
-            fullName: eventData.vatBusinessType === 'individual' ? eventData.vatHolderName || '' : '',
-            companyName: eventData.vatBusinessType === 'company' ? eventData.vatHolderName || '' : '',
+            businessType: eventData.vatBusinessType || '',
+            holderName: eventData.vatHolderName || '',
             address: eventData.vatHolderAddress || '',
             taxCode: eventData.taxCode || ''
         })
@@ -173,45 +176,110 @@ const EventPrivateDetail = () => {
 
     // Handle image upload
     const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0]
+        const file = e.target.files?.[0];
         if (file) {
-            const reader = new FileReader()
+            setUploading(true);
+
+            // Show preview immediately
+            const reader = new FileReader();
             reader.onload = (event) => {
-                setPreviewImage(event.target?.result as string)
+                setPreviewImage(event.target?.result as string);
+            };
+            reader.readAsDataURL(file);
+
+            try {
+                // Convert file to base64 for upload
+                const base64 = await new Promise<string>((resolve) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                        const base64String = reader.result as string;
+                        // Remove data:image/jpeg;base64, prefix
+                        const base64Data = base64String.split(',')[1];
+                        resolve(base64Data);
+                    };
+                    reader.readAsDataURL(file);
+                });
+
+                // Upload to freeimage.host using a proxy or direct approach
+                const formData = new FormData();
+                formData.append('key', '6d207e02198a847aa98d0a2a901485a5');
+                formData.append('action', 'upload');
+                formData.append('source', base64);
+                formData.append('format', 'json');
+
+                // Try with fetch and proper headers
+                const response = await axios.post('https://cors-anywhere.herokuapp.com/https://freeimage.host/api/1/upload', formData, {
+                    headers: {
+                        'Content-Type': 'multipart/form-data'
+                    }
+                });
+
+                if (!response.status || response.status !== 200) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.data;
+
+                if (result.status_code === 200 && result.success) {
+                    setPreviewImage(result.image.url);
+                    setUploadedImageUrl(result.image.url);
+                    console.log('Image uploaded successfully:', result.image.url);
+                } else {
+                    console.error('Upload failed:', result);
+                    // For now, use a placeholder URL when upload fails
+                    setPreviewImage('https://via.placeholder.com/800x400?text=Event+Banner');
+                    alert('Tải ảnh lên thất bại. Sử dụng ảnh mẫu tạm thời.');
+                }
+            } catch (error) {
+                console.error('Upload error:', error);
+                // For development, use a placeholder URL
+                setPreviewImage('https://via.placeholder.com/800x400?text=Event+Banner');
+                alert('Có lỗi CORS khi tải ảnh lên. Sử dụng ảnh mẫu tạm thời cho demo.');
+            } finally {
+                setUploading(false);
             }
-            reader.readAsDataURL(file)
-            setUploadedImageUrl(URL.createObjectURL(file))
         }
-    }
+    };
 
     // Handle save/update event
     const handleSaveEvent = async () => {
         if (!event) return
 
+        // Validate the event data
+        const validationErrors = EventValidationService.validateEvent(eventName, showtimes)
+        if (validationErrors.length > 0) {
+            alert(EventValidationService.getFirstError(validationErrors))
+            return
+        }
+
         setSubmitting(true)
         try {
-            const showtimesDto: ShowTimeUpdateDto[] = showtimes.map(showtime => ({
-                id: showtime.id,
-                startTime: showtime.startTime,
-                endTime: showtime.endTime,
-                tickets: showtime.tickets?.map(ticket => ({
-                    id: ticket.id,
-                    name: ticket.name,
-                    description: ticket.description,
-                    price: ticket.price,
-                    quantity: ticket.quantity,
-                    startTime: ticket.startTime,
-                    endTime: ticket.endTime,
-                    status: (ticket.status || 'ACTIVE') as TicketStatus
-                })) || []
-            }))
+            // Only send existing showtimes and tickets for update
+            // New items without IDs will be handled separately or in a future enhancement
+            const showtimesDto: ShowTimeUpdateDto[] = showtimes
+                .filter(showtime => showtime.id) // Only existing showtimes for update
+                .map(showtime => ({
+                    id: showtime.id!,
+                    startTime: showtime.startTime,
+                    endTime: showtime.endTime,
+                    tickets: showtime.tickets?.filter(ticket => ticket.id).map(ticket => ({
+                        id: ticket.id!,
+                        name: ticket.name,
+                        description: ticket.description,
+                        price: ticket.price,
+                        quantity: ticket.quantity,
+                        startTime: ticket.startTime,
+                        endTime: ticket.endTime,
+                        status: (ticket.status || 'ACTIVE') as TicketStatus
+                    })) || []
+                }))
 
             const updateData: EventUpdateDto = {
                 id: event.id,
                 name: eventName,
                 slug: slug,
                 description: description,
-                bannerUrl: uploadedImageUrl,
+                bannerUrl: previewImage || uploadedImageUrl || event.bannerUrl,
                 personalityTypes: personalityTypesArray.join(', '),
                 showtimes: showtimesDto,
                 bankAccountName: bankInfo.accountHolder,
@@ -219,12 +287,12 @@ const EventPrivateDetail = () => {
                 bankName: bankInfo.bankName,
                 bankBranch: bankInfo.branch,
                 vatBusinessType: invoiceInfo.needInvoice ? invoiceInfo.businessType : undefined,
-                vatHolderName: invoiceInfo.needInvoice ?
-                    (invoiceInfo.businessType === 'individual' ? invoiceInfo.fullName : invoiceInfo.companyName) : undefined,
+                vatHolderName: invoiceInfo.needInvoice ? invoiceInfo.holderName : undefined,
                 vatHolderAddress: invoiceInfo.needInvoice ? invoiceInfo.address : undefined,
                 taxCode: invoiceInfo.needInvoice && invoiceInfo.businessType === 'company' ? invoiceInfo.taxCode : undefined
             }
 
+            console.log('Updating event with data:', updateData)
             await updateEvent(event.id, updateData)
             alert('Cập nhật sự kiện thành công!')
             setIsEditing(false)
@@ -309,7 +377,7 @@ const EventPrivateDetail = () => {
     // Showtime and ticket management functions
     const addShowtime = () => {
         const newShowtime = {
-            id: Date.now(),
+            // No id for new items - backend will assign
             tempId: Date.now().toString(),
             startTime: '',
             endTime: '',
@@ -332,7 +400,7 @@ const EventPrivateDetail = () => {
 
     const addTicketToShowtime = (showtimeId: string) => {
         const newTicket = {
-            id: Date.now(),
+            // No id for new items - backend will assign
             tempId: Date.now().toString(),
             name: '',
             price: 0,
@@ -408,7 +476,7 @@ const EventPrivateDetail = () => {
                                                 event.status === 'REJECTED' ? 'Từ chối' : event.status}
                                     </span>
                                 </p>
-                                <div className="event-creation-form__actions">
+                                {/* <div className="event-creation-form__actions">
                                     {isEditing ? (
                                         <>
                                             <button
@@ -423,6 +491,7 @@ const EventPrivateDetail = () => {
                                                 onClick={handleSaveEvent}
                                                 disabled={submitting || !eventName.trim()}
                                                 className="event-creation-form__btn event-creation-form__btn--primary"
+                                                
                                             >
                                                 {submitting ? 'Đang lưu...' : 'Lưu thay đổi'}
                                             </button>
@@ -436,7 +505,7 @@ const EventPrivateDetail = () => {
                                             Chỉnh sửa
                                         </button>
                                     )}
-                                </div>
+                                </div> */}
                             </div>
                         ) : (
                             <div className="event-creation-form__actions">
@@ -516,7 +585,7 @@ const EventPrivateDetail = () => {
                         onClick={() => setActiveTab('preview')}
                     >
                         <span className="event-creation-form__tab-icon">👁</span>
-                        Xem trước
+                        Thông tin phòng
                     </button>
                 </div>
 
@@ -614,7 +683,7 @@ const EventPrivateDetail = () => {
                                             </div>
                                         ) : (
                                             <div className="event-creation-form__display">
-                                                {event.personalityTypes || 'Chưa có loại tính cách'}
+                                                
                                             </div>
                                         )}
                                         <div className="event-creation-form__personality-tags">
@@ -661,8 +730,9 @@ const EventPrivateDetail = () => {
                                                             type="button"
                                                             onClick={() => bannerUrlRef.current?.click()}
                                                             className="event-creation-form__image-overlay"
+                                                            disabled={uploading}
                                                         >
-                                                            📷 Thay đổi ảnh
+                                                            {uploading ? '📤 Đang tải...' : '📷 Thay đổi ảnh'}
                                                         </button>
                                                     )}
                                                 </div>
@@ -671,9 +741,10 @@ const EventPrivateDetail = () => {
                                                     type="button"
                                                     onClick={() => bannerUrlRef.current?.click()}
                                                     className="event-creation-form__upload-placeholder"
+                                                    disabled={uploading}
                                                 >
-                                                    📷
-                                                    <span>Tải lên ảnh banner</span>
+                                                    {uploading ? '📤' : '📷'}
+                                                    <span>{uploading ? 'Đang tải ảnh...' : 'Tải lên ảnh banner'}</span>
                                                     <small>PNG, JPG tối đa 5MB</small>
                                                 </button>
                                             ) : (
@@ -690,11 +761,11 @@ const EventPrivateDetail = () => {
                                     <span className="event-creation-form__label-icon">📄</span>
                                     Mô tả sự kiện
                                 </label>
-                                {isEditing ? (
                                     <div className="event-creation-form__editor">
                                         <ReactQuill
                                             value={description}
                                             onChange={setDescription}
+                                            readOnly
                                             placeholder="Viết mô tả chi tiết về sự kiện..."
                                             theme="snow"
                                             modules={{
@@ -708,205 +779,173 @@ const EventPrivateDetail = () => {
                                             }}
                                         />
                                     </div>
-                                ) : (
-                                    <div className="event-creation-form__display"
-                                        dangerouslySetInnerHTML={{ __html: event.description || 'Chưa có mô tả' }} />
-                                )}
                             </div>
                         </div>
                     )}
 
                     {/* Schedule & Tickets Tab */}
                     {activeTab === 'schedule' && (
-                        <div className="event-creation-form__section">
-                            <div className="event-creation-form__schedule-header">
-                                <h3>Lịch trình và Vé sự kiện</h3>
-                                {isEditing && (
-                                    <button
-                                        type="button"
-                                        onClick={addShowtime}
-                                        className="event-creation-form__add-showtime-btn"
+                                <div className="event-creation-form__section">
+                                  <div className="event-creation-form__schedule-header">
+                                    <h3>Lịch trình và Vé sự kiện</h3>
+                                    {/* <button
+                                      type="button"
+                                      onClick={addShowtime}
+                                      className="event-creation-form__add-showtime-btn"
                                     >
-                                        <span>+</span>
-                                        Thêm suất chiếu
-                                    </button>
-                                )}
-                            </div>
-
-                            {showtimes.length === 0 ? (
-                                <div className="event-creation-form__empty-schedule">
-                                    <span className="event-creation-form__empty-icon">📅</span>
-                                    <h4>Chưa có suất chiếu nào</h4>
-                                    <p>{isEditing ? 'Thêm ít nhất một suất chiếu cho sự kiện' : 'Sự kiện chưa có lịch trình'}</p>
-                                </div>
-                            ) : (
-                                <div className="event-creation-form__showtimes">
-                                    {showtimes.map((showtime, index) => (
-                                        <div key={showtime.tempId} className="event-creation-form__showtime">
-                                            <div className="event-creation-form__showtime-header">
-                                                <h4>Suất chiếu {index + 1}</h4>
-                                                {isEditing && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => removeShowtime(showtime.tempId)}
-                                                        className="event-creation-form__remove-btn"
-                                                    >
-                                                        <span>-</span>
-                                                    </button>
-                                                )}
+                                      <FaPlus />
+                                      Thêm suất chiếu
+                                    </button> */}
+                                  </div>
+                    
+                                  {showtimes.length === 0 ? (
+                                    <div className="event-creation-form__empty-schedule">
+                                      <FaCalendarAlt className="event-creation-form__empty-icon" />
+                                      <h4>Chưa có suất chiếu nào</h4>
+                                      <p>Thêm ít nhất một suất chiếu cho sự kiện của bạn</p>
+                                    </div>
+                                  ) : (
+                                    <div className="event-creation-form__showtimes">
+                                      {showtimes.map((showtime, index) => (
+                                        <div key={showtime.id} className="event-creation-form__showtime">
+                                          <div className="event-creation-form__showtime-header">
+                                            <h4>Suất chiếu {index + 1}</h4>
+                                            {/* <button
+                                              type="button"
+                                              className="event-creation-form__remove-btn"
+                                            >
+                                              <FaMinus />
+                                            </button> */}
+                                          </div>
+                    
+                                          <div className="event-creation-form__showtime-fields">
+                                            <div className="event-creation-form__field">
+                                              <label className="event-creation-form__label">
+                                                <FaClock className="event-creation-form__label-icon" />
+                                                Thời gian bắt đầu
+                                              </label>
+                                              <input
+                                                type="datetime-local"
+                                                value={showtime.startTime}
+                                                className="event-creation-form__input"
+                                                readOnly={!isEditing}
+                                              />
                                             </div>
-
-                                            <div className="event-creation-form__showtime-fields">
+                    
+                                            <div className="event-creation-form__field">
+                                              <label className="event-creation-form__label">
+                                                <FaClock className="event-creation-form__label-icon" />
+                                                Thời gian kết thúc
+                                              </label>
+                                              <input
+                                                type="datetime-local"
+                                                value={showtime.endTime}
+                                                className="event-creation-form__input"
+                                                readOnly={!isEditing}
+                                              />
+                                            </div>
+                    
+                                          </div>
+                    
+                                          {/* Tickets for this showtime */}
+                                          <div className="event-creation-form__tickets-section">
+                                            <div className="event-creation-form__tickets-header">
+                                              <h5>Loại vé</h5>
+                                              {/* <button
+                                                type="button"
+                                                className="event-creation-form__add-ticket-btn"
+                                              >
+                                                <FaPlus />
+                                                Thêm loại vé
+                                              </button> */}
+                                            </div>
+                    
+                                            {showtime.tickets.map((ticket) => (
+                                              <div key={ticket.id} className="event-creation-form__ticket">
+                                                <div className="event-creation-form__ticket-fields">
+                                                  <div className="event-creation-form__field">
+                                                    <label className="event-creation-form__label">Tên vé</label>
+                                                    <input
+                                                      type="text"
+                                                      value={ticket.name}
+                                                      placeholder="VIP, Thường..."
+                                                      className="event-creation-form__input"
+                                                        readOnly={!isEditing}
+                                                    />
+                                                  </div>
+                                                  <div className="event-creation-form__field">
+                                                    <label className="event-creation-form__label">Giá (VND)</label>
+                                                    <input
+                                                      type="number"
+                                                      value={ticket.price === 0 ? '' : ticket.price}
+                                                      placeholder="0"
+                                                      className="event-creation-form__input"
+                                                      readOnly={!isEditing}
+                                                    />
+                                                  </div>
+                                                  <div className="event-creation-form__field">
+                                                    <label className="event-creation-form__label">Số lượng</label>
+                                                    <input
+                                                      type="number"
+                                                      value={ticket.quantity === 0 ? '' : ticket.quantity}
+                                                      placeholder="0"
+                                                      className="event-creation-form__input"
+                                                      readOnly={!isEditing}
+                                                    />
+                                                  </div>
+                                                  {/* <button
+                                                    type="button"
+                                                    className="event-creation-form__remove-ticket-btn"
+                                                  >
+                                                    <FaMinus />
+                                                  </button> */}
+                                                </div>
                                                 <div className="event-creation-form__field">
+                                                  <label className="event-creation-form__label">Mô tả vé</label>
+                                                  <input
+                                                    type="text"
+                                                    value={ticket.description}
+                                                    placeholder="Mô tả chi tiết về loại vé này..."
+                                                    className="event-creation-form__input"
+                                                  />
+                                                </div>
+                                                
+                                                {/* Optional ticket time fields */}
+                                                <div className="event-creation-form__field-group">
+                                                  <div className="event-creation-form__field">
                                                     <label className="event-creation-form__label">
-                                                        <span className="event-creation-form__label-icon">🕐</span>
-                                                        Thời gian bắt đầu
+                                                      <FaClock className="event-creation-form__label-icon" />
+                                                      Thời gian bắt đầu bán vé (tuỳ chọn)
                                                     </label>
-                                                    {isEditing ? (
-                                                        <input
-                                                            type="datetime-local"
-                                                            value={isEditing ? toDatetimeLocal(showtime.startTime) : ''}
-                                                            onChange={(e) => updateShowtime(showtime.tempId, 'startTime', e.target.value)}
-                                                            className="event-creation-form__input"
-                                                        />
-                                                    ) : (
-                                                        <div className="event-creation-form__display">
-                                                            {showtime.startTime ? new Date(showtime.startTime).toLocaleString() : 'Chưa đặt'}
-                                                        </div>
-                                                    )}
-                                                </div>
-
-                                                <div className="event-creation-form__field">
+                                                    <input
+                                                      type="datetime-local"
+                                                      value={ticket.startTime || ''}
+                                                      className="event-creation-form__input"
+                                                        readOnly={!isEditing}
+                                                    />
+                                                  </div>
+                                                  <div className="event-creation-form__field">
                                                     <label className="event-creation-form__label">
-                                                        <span className="event-creation-form__label-icon">🕐</span>
-                                                        Thời gian kết thúc
+                                                      <FaClock className="event-creation-form__label-icon" />
+                                                      Thời gian kết thúc bán vé (tuỳ chọn)
                                                     </label>
-                                                    {isEditing ? (
-                                                        <input
-                                                            type="datetime-local"
-                                                            value={isEditing ? toDatetimeLocal(showtime.endTime) : ''}
-                                                            onChange={(e) => updateShowtime(showtime.tempId, 'endTime', e.target.value)}
-                                                            className="event-creation-form__input"
-                                                        />
-                                                    ) : (
-                                                        <div className="event-creation-form__display">
-                                                            {showtime.endTime ? new Date(showtime.endTime).toLocaleString() : 'Chưa đặt'}
-                                                        </div>
-                                                    )}
+                                                    <input
+                                                      type="datetime-local"
+                                                      value={ticket.endTime || ''}
+                                                      className="event-creation-form__input"
+                                                        readOnly={!isEditing}
+                                                    />
+                                                  </div>
                                                 </div>
-                                            </div>
-
-                                            {/* Tickets for this showtime */}
-                                            <div className="event-creation-form__tickets-section">
-                                                <div className="event-creation-form__tickets-header">
-                                                    <h5>Loại vé</h5>
-                                                    {isEditing && (
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => addTicketToShowtime(showtime.tempId)}
-                                                            className="event-creation-form__add-ticket-btn"
-                                                        >
-                                                            <span>+</span>
-                                                            Thêm loại vé
-                                                        </button>
-                                                    )}
-                                                </div>
-
-                                                {!showtime.tickets || showtime.tickets.length === 0 ? (
-                                                    <div className="event-creation-form__empty-tickets">
-                                                        <p>{isEditing ? 'Thêm loại vé cho suất chiếu này' : 'Chưa có loại vé nào'}</p>
-                                                    </div>
-                                                ) : (
-                                                    showtime.tickets.map((ticket) => (
-                                                        <div key={ticket.tempId || ticket.id} className="event-creation-form__ticket">
-                                                            {isEditing ? (
-                                                                <div className="event-creation-form__ticket-fields">
-                                                                    <div className="event-creation-form__field">
-                                                                        <label className="event-creation-form__label">Tên vé</label>
-                                                                        <input
-                                                                            type="text"
-                                                                            value={ticket.name || ''}
-                                                                            onChange={(e) => updateTicket(showtime.tempId, ticket.tempId, 'name', e.target.value)}
-                                                                            placeholder="VIP, Thường..."
-                                                                            className="event-creation-form__input"
-                                                                        />
-                                                                    </div>
-                                                                     <div className="event-creation-form__field">
-                                                                        <label className="event-creation-form__label">Mô tả</label>
-                                                                        <input
-                                                                            type="text"
-                                                                            value={ticket.description || ''}
-                                                                            onChange={(e) => updateTicket(showtime.tempId, ticket.tempId, 'description', e.target.value)}
-                                                                            placeholder="Mô tả chi tiết về loại vé này..."
-                                                                            className="event-creation-form__input"
-                                                                        />
-                                                                    </div>
-                                                                    <div className="event-creation-form__field">
-                                                                        <label className="event-creation-form__label">Giá (VND)</label>
-                                                                        <input
-                                                                            type="number"
-                                                                            value={ticket.price || 0}
-                                                                            onChange={(e) => updateTicket(showtime.tempId, ticket.tempId, 'price', Number(e.target.value))}
-                                                                            className="event-creation-form__input" />
-                                                                    </div>
-                                                                    <div className="event-creation-form__field">
-                                                                        <label className="event-creation-form__label">Số lượng</label>
-                                                                        <input
-                                                                            type="number"
-                                                                            value={ticket.quantity || 0}
-                                                                            onChange={(e) => updateTicket(showtime.tempId, ticket.tempId, 'quantity', Number(e.target.value))}
-                                                                            className="event-creation-form__input" />
-                                                                    </div>
-                                                                   
-                                                                    <div className="event-creation-form__field-group">
-                                                                        <div className="event-creation-form__field">
-                                                                            <label className="event-creation-form__label">
-                                                                                Thời gian bắt đầu bán vé
-                                                                            </label>
-                                                                            <input
-                                                                                type="datetime-local"
-                                                                                value={isEditing ? toDatetimeLocal(ticket.startTime) : ''}
-                                                                                onChange={(e) => updateTicket(showtime.tempId, ticket.tempId, 'startTime', e.target.value)}
-                                                                                className="event-creation-form__input"
-                                                                            />
-                                                                        </div>
-                                                                        <div className="event-creation-form__field">
-                                                                            <label className="event-creation-form__label">
-                                                                                Thời gian kết thúc bán vé
-                                                                            </label>
-                                                                            <input
-                                                                                type="datetime-local"
-                                                                                value={isEditing ? toDatetimeLocal(ticket.endTime) : ''}
-                                                                                onChange={(e) => updateTicket(showtime.tempId, ticket.tempId, 'endTime', e.target.value)}
-                                                                                className="event-creation-form__input"
-                                                                            />
-                                                                        </div>
-                                                                    </div>
-
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() => removeTicket(showtime.tempId, ticket.tempId)}
-                                                                        className="event-creation-form__remove-ticket-btn"
-                                                                    >
-                                                                        <span>-</span>
-                                                                    </button>
-                                                                </div>
-                                                            ) : (
-                                                                <div className="event-creation-form__ticket-info">
-                                                                    
-                                                                </div>
-                                                            )}
-                                                            
-                                                        </div>
-                                                    ))
-                                                )}
-                                            </div>
+                                              </div>
+                                            ))}
+                                          </div>
                                         </div>
-                                    ))}
+                                      ))}
+                                    </div>
+                                  )}
                                 </div>
-                            )}
-                        </div>
-                    )}
+                              )}
 
                     {/* Payment Information Tab */}
                     {activeTab === 'payment' && (
@@ -998,86 +1037,95 @@ const EventPrivateDetail = () => {
                                 <div className="event-creation-form__payment-group">
                                     <h4>📋 Thông tin xuất hóa đơn VAT (Không bắt buộc)</h4>
 
-                                    <div className="event-creation-form__field">
-                                        <label className="event-creation-form__label">
-                                            <span className="event-creation-form__label-icon">🏢</span>
-                                            Loại hình kinh doanh
-                                        </label>
-                                        {isEditing ? (
-                                            <select
-                                                value={invoiceInfo.businessType || 'individual'}
-                                                onChange={(e) => setInvoiceInfo(prev => ({ ...prev, businessType: e.target.value }))}
-                                                className="event-creation-form__select"
-                                            >
-                                                <option value="individual">Cá nhân</option>
-                                                <option value="company">Doanh nghiệp</option>
-                                            </select>
-                                        ) : (
-                                            <div className="event-creation-form__display">
-                                                {invoiceInfo.businessType === 'individual' ? 'Cá nhân' :
-                                                    invoiceInfo.businessType === 'company' ? 'Doanh nghiệp' : 'Chưa có thông tin'}
+                                    {invoiceInfo.needInvoice && (
+                                        <>
+                                            <div className="event-creation-form__field">
+                                                <label className="event-creation-form__label">
+                                                    <span className="event-creation-form__label-icon">🏢</span>
+                                                    Loại hình kinh doanh
+                                                </label>
+                                                {isEditing ? (
+                                                    <select
+                                                        value={invoiceInfo.businessType}
+                                                        onChange={(e) => setInvoiceInfo(prev => ({ ...prev, businessType: e.target.value }))}
+                                                        className="event-creation-form__select"
+                                                    >
+                                                        <option value="Cá Nhân">Cá nhân</option>
+                                                        <option value="Doanh nghiệp">Doanh nghiệp</option>
+                                                    </select>
+                                                ) : (
+                                                    <div className="event-creation-form__display">
+                                                        {invoiceInfo.businessType}
+                                                    </div>
+                                                )}
                                             </div>
-                                        )}
-                                    </div>
 
-                                    <div className="event-creation-form__field">
-                                        <label className="event-creation-form__label">
-                                            <span className="event-creation-form__label-icon">👤</span>
-                                            {invoiceInfo.businessType === 'individual' ? 'Tên cá nhân' : 'Tên doanh nghiệp'}
-                                        </label>
-                                        {isEditing ? (
-                                            <input
-                                                type="text"
-                                                value={invoiceInfo.businessType === 'individual' ? invoiceInfo.fullName : invoiceInfo.companyName || ''}
-                                                onChange={(e) => setInvoiceInfo(prev => ({
-                                                    ...prev,
-                                                    [invoiceInfo.businessType === 'individual' ? 'fullName' : 'companyName']: e.target.value
-                                                }))}
-                                                placeholder={invoiceInfo.businessType === 'individual' ? 'Nhập tên cá nhân...' : 'Nhập tên doanh nghiệp...'}
-                                                className="event-creation-form__input"
-                                            />
-                                        ) : (
-                                            <div className="event-creation-form__display">
-                                                {invoiceInfo.businessType === 'individual' ? invoiceInfo.fullName : invoiceInfo.companyName || 'Chưa có thông tin'}
+                                            <div className="event-creation-form__field">
+                                                <label className="event-creation-form__label">
+                                                    <span className="event-creation-form__label-icon">👤</span>
+                                                    {invoiceInfo.businessType === 'Cá Nhân' ? 'Tên cá nhân' : 'Tên doanh nghiệp'}
+                                                </label>
+                                                {isEditing ? (
+                                                    <input
+                                                        type="text"
+                                                        value={invoiceInfo.holderName}
+                                                        onChange={(e) => setInvoiceInfo(prev => ({
+                                                            ...prev,
+                                                            holderName: e.target.value
+                                                        }))}
+                                                        placeholder={invoiceInfo.businessType === 'Cá Nhân' ? 'Nhập tên cá nhân...' : 'Nhập tên doanh nghiệp...'}
+                                                        className="event-creation-form__input"
+                                                    />
+                                                ) : (
+                                                    <div className="event-creation-form__display">
+                                                        {invoiceInfo.holderName || 'Chưa có thông tin'}
+                                                    </div>
+                                                )}
                                             </div>
-                                        )}
-                                    </div>
+                                        </>
+                                    )}
 
-                                    <div className="event-creation-form__field">
-                                        <label className="event-creation-form__label">
-                                            <span className="event-creation-form__label-icon">🏠</span>
-                                            Địa chỉ thuế
-                                        </label>
-                                        {isEditing ? (
-                                            <input
-                                                type="text"
-                                                value={invoiceInfo.address || ''}
-                                                onChange={(e) => setInvoiceInfo(prev => ({ ...prev, address: e.target.value }))}
-                                                placeholder="Nhập địa chỉ thuế..."
-                                                className="event-creation-form__input"
-                                            />
-                                        ) : (
-                                            <div className="event-creation-form__display">{invoiceInfo.address || 'Chưa có thông tin'}</div>
-                                        )}
-                                    </div>
+                                    {invoiceInfo.needInvoice && (
+                                        <>
+                                            <div className="event-creation-form__field">
+                                                <label className="event-creation-form__label">
+                                                    <span className="event-creation-form__label-icon">🏠</span>
+                                                    Địa chỉ thuế
+                                                </label>
+                                                {isEditing ? (
+                                                    <input
+                                                        type="text"
+                                                        value={invoiceInfo.address || ''}
+                                                        onChange={(e) => setInvoiceInfo(prev => ({ ...prev, address: e.target.value }))}
+                                                        placeholder="Nhập địa chỉ thuế..."
+                                                        className="event-creation-form__input"
+                                                    />
+                                                ) : (
+                                                    <div className="event-creation-form__display">{invoiceInfo.address || 'Chưa có thông tin'}</div>
+                                                )}
+                                            </div>
 
-                                    <div className="event-creation-form__field">
-                                        <label className="event-creation-form__label">
-                                            <span className="event-creation-form__label-icon">🔢</span>
-                                            Mã số thuế
-                                        </label>
-                                        {isEditing ? (
-                                            <input
-                                                type="text"
-                                                value={invoiceInfo.taxCode || ''}
-                                                onChange={(e) => setInvoiceInfo(prev => ({ ...prev, taxCode: e.target.value }))}
-                                                placeholder="Nhập mã số thuế..."
-                                                className="event-creation-form__input"
-                                            />
-                                        ) : (
-                                            <div className="event-creation-form__display">{invoiceInfo.taxCode || 'Chưa có thông tin'}</div>
-                                        )}
-                                    </div>
+                                            
+                                                <div className="event-creation-form__field">
+                                                    <label className="event-creation-form__label">
+                                                        <span className="event-creation-form__label-icon">🏷️</span>
+                                                        Mã số thuế
+                                                    </label>
+                                                    {isEditing ? (
+                                                        <input
+                                                            type="text"
+                                                            value={invoiceInfo.taxCode || ''}
+                                                            onChange={(e) => setInvoiceInfo(prev => ({ ...prev, taxCode: e.target.value }))}
+                                                            placeholder="Nhập mã số thuế..."
+                                                            className="event-creation-form__input"
+                                                        />
+                                                    ) : (
+                                                        <div className="event-creation-form__display">{invoiceInfo.taxCode || 'Chưa có thông tin'}</div>
+                                                    )}
+                                                </div>
+                                        
+                                        </>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -1087,65 +1135,19 @@ const EventPrivateDetail = () => {
                     {activeTab === 'preview' && (
                         <div className="event-creation-form__section">
                             <div className="event-creation-form__preview">
-                                <h3>Xem trước sự kiện</h3>
+                                <h3>Thông tin phòng</h3>
 
-                                <div className="event-creation-form__preview-card">
-                                    {(previewImage || uploadedImageUrl || event.bannerUrl) && (
-                                        <div className="event-creation-form__preview-image">
-                                            <img src={previewImage || uploadedImageUrl || event.bannerUrl} alt="Event preview" />
-                                        </div>
-                                    )}
-
-                                    <div className="event-creation-form__preview-content">
-                                        <h2>{eventName || event.name}</h2>
-
-                                        {personalityTypesArray.length > 0 && (
-                                            <div className="event-creation-form__preview-personalities">
-                                                <span>Phù hợp với:</span>
-                                                {personalityTypesArray.map(type => (
-                                                    <span key={type} className="event-creation-form__preview-personality">
-                                                        {type}
-                                                    </span>
-                                                ))}
+                                { user.role == 'ADMIN' || (event.status == 'UPCOMING' || event.status == 'ONGOING') && (
+                                    <div className="event-creation-form__showtimes">
+                                        {event.showtimes.map((showtime) => (
+                                            <div key={showtime.id} className="flex flex-col !gap-4 bg-slate-400 rounded-lg !p-4">
+                                                <h2 className="text-lg font-semibold text-black">{format(showtime.startTime, 'dd-MM-yyyy HH:mm')}</h2>
+                                                <div><a href={`https://meet.jit.si/${showtime.meetingId}`} target="_blank" rel="noopener noreferrer">Phòng sự kiện</a></div>
+                                                <div className='text-sm text-black'>Mật khẩu: {showtime.meetingPassword}</div>
                                             </div>
-                                        )}
-
-                                        {(description || event.description) && (
-                                            <div
-                                                className="event-creation-form__preview-description"
-                                                dangerouslySetInnerHTML={{ __html: description || event.description || '' }}
-                                            />
-                                        )}
-
-                                        {showtimes.length > 0 && (
-                                            <div className="event-creation-form__preview-schedule">
-                                                <h4>🎫 Lịch trình và vé:</h4>
-                                                {showtimes.map((showtime, index) => (
-                                                    <div key={showtime.id} className="event-creation-form__preview-showtime">
-                                                        <strong>Suất {index + 1}:</strong>
-                                                        {showtime.startTime && (
-                                                            <span>
-                                                                {new Date(showtime.startTime).toLocaleString('vi-VN')}
-                                                            </span>
-                                                        )}
-                                                        {showtime.tickets && showtime.tickets.length > 0 && (
-                                                            <div className="event-creation-form__preview-tickets">
-                                                                {showtime.tickets.map(ticket => (
-                                                                    <span key={ticket.id} className="event-creation-form__preview-ticket">
-                                                                        🎫 {ticket.name}: {new Intl.NumberFormat('vi-VN', {
-                                                                            style: 'currency',
-                                                                            currency: 'VND'
-                                                                        }).format(ticket.price)}
-                                                                    </span>
-                                                                ))}
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        )}
+                                        ))}
                                     </div>
-                                </div>
+                                )}
                             </div>
                         </div>
                     )}

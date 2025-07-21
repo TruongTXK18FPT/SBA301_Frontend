@@ -82,7 +82,7 @@ function App() {
           setIsAuthenticated(true);
           
           // Try to fetch subscription data only for non-admin users
-          if (userData?.role?.toLowerCase() !== 'admin') {
+          if (userData?.role?.toLowerCase() == 'student') {
             try {
               const subscriptionData = await getSubscriptions(
                 { 

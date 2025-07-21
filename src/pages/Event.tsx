@@ -22,13 +22,8 @@ const Event: React.FC = () => {
       setLoading(true);
       const response: PageEventOverviewResponse = await getEvents({
         name: searchTerm || undefined,
-        status: statusFilter || undefined,
-        page,
-        size: 12,
-        sortBy: 'startTime',
-        sortDirection: 'asc'
+        status: statusFilter || 'UPCOMING',
       });
-      
       setEvents(response.content);
       setTotalPages(response.totalPages);
       setTotalElements(response.totalElements);

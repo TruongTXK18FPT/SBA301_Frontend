@@ -26,7 +26,7 @@ const EventManagerDashboard: React.FC = () => {
     return () => clearTimeout(handler);
   }, [searchTerm]);
 
-  const [statusFilter, setStatusFilter] = useState<string>(''); // Default: all
+  const [statusFilter, setStatusFilter] = useState<string>('PENDING'); // Default: all
   const [sortBy, setSortBy] = useState<'name' | 'startTime' | 'status'>('startTime');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const user = useAtomValue(userAtom);
@@ -180,7 +180,6 @@ const EventManagerDashboard: React.FC = () => {
                 }}
                 className="event-manager-dashboard__filter-select"
               >
-                <option value="">Tất cả trạng thái</option>
                 <option value="PENDING">Chờ duyệt</option>
                 <option value="UPCOMING">Sắp diễn ra</option>
                 <option value="ONGOING">Đang diễn ra</option>
@@ -237,8 +236,6 @@ const EventManagerDashboard: React.FC = () => {
                           <span>{formatDate(event.startTime)}</span>
                         </div>
                       )}
-                      {/* Show status badge */}
-                      {getStatusBadge(event.status)}
                     </div>
                   </div>
                   {/* Add a delete button per event if needed */}

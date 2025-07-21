@@ -8,6 +8,7 @@ import { ShowTimeCreateDto } from './dto/showtime.dto';
 import { createAndSubmitEvent } from '../../services/eventService';
 import Alert from '../Alert';
 import LoadingSpinner from '../LoadingSpinner';
+import { EventValidationService } from '../../utils/eventValidation';
 import './EventCreationForm.css';
 import axios from 'axios';
 
@@ -31,7 +32,6 @@ interface TicketFormData {
 const EventCreationForm: React.FC = () => {
   const navigate = useNavigate();
   const bannerRef = useRef<HTMLInputElement>(null);
-  const [uploading, setUploading] = useState(false);
   
   // Form state
   const [formData, setFormData] = useState({
@@ -459,10 +459,13 @@ const EventCreationForm: React.FC = () => {
     
     // Auto-generate slug from name
     if (field === 'name') {
-      const slugValue = value.toString().toLowerCase()
-        .replace(/[^\w\s-]/g, '')
-        .replace(/\s+/g, '-')
-        .trim();
+      const slugValue = value.toString().toLowerCase().trim()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/[^a-z0-9\s-]/g, '')
+            .replace(/\s+/g, '-')
+            .replace(/-+/g, '-')
+            .trim()
       setFormData(prev => ({ ...prev, slug: slugValue }));
     }
   };
@@ -488,9 +491,7 @@ const EventCreationForm: React.FC = () => {
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (file) {
-            setUploading(true);
-            
+        if (file) {            
             // Show preview immediately
             const reader = new FileReader();
             reader.onload = (event) => {
@@ -538,15 +539,13 @@ const EventCreationForm: React.FC = () => {
                     console.error('Upload failed:', result);
                     // For now, use a placeholder URL when upload fails
                     setPreviewImage('https://via.placeholder.com/800x400?text=Event+Banner');
-                    alert('Tải ảnh lên thất bại. Sử dụng ảnh mẫu tạm thời.');
+                    setAlert({ type: 'error', message: 'Tải ảnh lên thất bại. Sử dụng ảnh mẫu tạm thời.' });
                 }
             } catch (error) {
                 console.error('Upload error:', error);
                 // For development, use a placeholder URL
                 setPreviewImage('https://via.placeholder.com/800x400?text=Event+Banner');
-                alert('Có lỗi CORS khi tải ảnh lên. Sử dụng ảnh mẫu tạm thời cho demo.');
-            } finally {
-                setUploading(false);
+                setAlert({ type: 'error', message: 'Có lỗi CORS khi tải ảnh lên. Sử dụng ảnh mẫu tạm thời cho demo.' });
             }
         }
     };
@@ -632,14 +631,10 @@ const EventCreationForm: React.FC = () => {
     try {
       setLoading(true);
 
-      // Validation
-      if (!formData.name.trim()) {
-        setAlert({ type: 'error', message: 'Vui lòng nhập tên sự kiện' });
-        return;
-      }
-
-      if (showtimes.length === 0) {
-        setAlert({ type: 'error', message: 'Vui lòng thêm ít nhất một suất chiếu' });
+      // Use validation service
+      const validationErrors = EventValidationService.validateEvent(formData.name, showtimes);
+      if (validationErrors.length > 0) {
+        setAlert({ type: 'error', message: EventValidationService.getFirstError(validationErrors) });
         return;
       }
 
@@ -1021,8 +1016,9 @@ const EventCreationForm: React.FC = () => {
                                 <label className="event-creation-form__label">Giá (VND)</label>
                                 <input
                                   type="number"
-                                  value={ticket.price}
-                                  onChange={(e) => updateTicket(showtime.id, ticket.id, 'price', Number(e.target.value))}
+                                  value={ticket.price === 0 ? '' : ticket.price}
+                                  onChange={(e) => updateTicket(showtime.id, ticket.id, 'price', e.target.value === '' ? 0 : Number(e.target.value))}
+                                  placeholder="0"
                                   className="event-creation-form__input"
                                 />
                               </div>
@@ -1030,8 +1026,9 @@ const EventCreationForm: React.FC = () => {
                                 <label className="event-creation-form__label">Số lượng</label>
                                 <input
                                   type="number"
-                                  value={ticket.quantity}
-                                  onChange={(e) => updateTicket(showtime.id, ticket.id, 'quantity', Number(e.target.value))}
+                                  value={ticket.quantity === 0 ? '' : ticket.quantity}
+                                  onChange={(e) => updateTicket(showtime.id, ticket.id, 'quantity', e.target.value === '' ? 0 : Number(e.target.value))}
+                                  placeholder="0"
                                   className="event-creation-form__input"
                                 />
                               </div>

@@ -54,8 +54,9 @@ export const createAndSubmitEvent = async (data: EventCreateDto): Promise<void> 
 
 // PUT: Update draft event
 export const updateDraftEvent = async (id: number, data: EventUpdateDto): Promise<EventPrivateDetailResponse> => {
-  const response = await api.put<EventPrivateDetailResponse>(`/event/events/${id}`, snakecaseKeys(data, { deep: true }));
-  return camelcaseKeys(response.data as any, { deep: true }) as unknown as EventPrivateDetailResponse;
+  console.log("Updating draft event with data:", snakecaseKeys(data, { deep: true }));
+  //const response = await api.put<EventPrivateDetailResponse>(`/event/events/${id}`, snakecaseKeys(data, { deep: true }));
+  //return camelcaseKeys(response.data as any, { deep: true }) as unknown as EventPrivateDetailResponse;
 };
 
 // PUT: Submit draft event by ID

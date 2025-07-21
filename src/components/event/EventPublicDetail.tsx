@@ -1,360 +1,256 @@
-import { useEffect, useState, useCallback } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
-import { EventPublicDetailResponse } from './dto/event.dto'
-import { ShowTimeResponse } from './dto/showtime.dto'
-import axios from 'axios'
-import camelcaseKeys from 'camelcase-keys'
-import './EventPublicDetail.css'
-import { getEventBySlug } from '@/services/eventService'
+import { useEffect, useState, useCallback } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { EventPublicDetailResponse } from './dto/event.dto';
+import { ShowTimeResponse } from './dto/showtime.dto';
+import './EventPublicDetail.css';
+import '@/styles/MeetingSection.css';
+import { getEventBySlug } from '@/services/eventService';
+import { getMyOrders, OrderResponse } from '@/services/orderService';
+import { JitsiMeeting } from '@jitsi/react-sdk';
 
-// Declare Jitsi API
-declare global {
-  interface Window {
-    JitsiMeetExternalAPI: {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      new(domain: string, options: any): any;
-    };
-  }
-}
 
 const EventPublicDetail = () => {
-  const { slug } = useParams<{ slug: string }>()
+  const { slug } = useParams<{ slug: string }>();
   const [event, setEvent] = useState<EventPublicDetailResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [expandedShowtime, setExpandedShowtime] = useState<number | null>(null);
   const [currentShowtime, setCurrentShowtime] = useState<ShowTimeResponse | null>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [jitsiApi, setJitsiApi] = useState<any>(null);
-  const [lastConnectionAttempt, setLastConnectionAttempt] = useState<number>(0);
   const [connectionCooldown, setConnectionCooldown] = useState<boolean>(false);
+  const [userLeftMeeting, setUserLeftMeeting] = useState<boolean>(false);
+  const [showJoinButton, setShowJoinButton] = useState<boolean>(false);
+  const [hasValidTicket, setHasValidTicket] = useState<boolean>(false);
+  const [ticketCheckLoading, setTicketCheckLoading] = useState<boolean>(false);
+  const [shouldShowJitsi, setShouldShowJitsi] = useState<boolean>(false);
+  const [lastConnectionAttempt, setLastConnectionAttempt] = useState<number>(0);
+  const [meetingEnded, setMeetingEnded] = useState<boolean>(false);
+  const [ticketCache, setTicketCache] = useState<Map<number, boolean>>(new Map());
+  const [ordersCache, setOrdersCache] = useState<OrderResponse[]>([]);
+  const [ordersCacheExpiry, setOrdersCacheExpiry] = useState<number>(0);
+
   const navigate = useNavigate();
+
   const toggleShowtime = (showtimeId: number) => {
     setExpandedShowtime(expandedShowtime === showtimeId ? null : showtimeId);
   };
 
-  // Clean meeting ID to ensure it's valid for Jitsi
-  const cleanMeetingId = (meetingId: string): string => {
-    // Remove special characters and ensure it's alphanumeric with hyphens
+  const cleanMeetingId = useCallback((meetingId: string): string => {
     const cleaned = meetingId.replace(/[^a-zA-Z0-9-]/g, '');
-    console.log('Original meeting ID:', meetingId);
-    console.log('Cleaned meeting ID:', cleaned);
     return cleaned || 'default-room';
-  };
+  }, []);
 
-  // Check rate limiting
+  const checkUserTicket = useCallback(async (showtimeId: number): Promise<boolean> => {
+    // Check cache first
+    const cacheKey = showtimeId;
+    const now = Date.now();
+    const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes cache
+    
+    // If we have cached result and it's still valid, use it
+    if (ticketCache.has(cacheKey) && ordersCacheExpiry > now) {
+      console.log('🎫 Using cached ticket result for showtime:', showtimeId);
+      const cachedResult = ticketCache.get(cacheKey) || false;
+      setHasValidTicket(cachedResult);
+      return cachedResult;
+    }
+
+    // If we're already checking, don't check again
+    if (ticketCheckLoading) {
+      console.log('🎫 Ticket check already in progress, skipping...');
+      return hasValidTicket;
+    }
+
+    try {
+      setTicketCheckLoading(true);
+      const currentShowtime = event?.showtimes.find(st => st.id === showtimeId);
+      if (!currentShowtime) {
+        setHasValidTicket(false);
+        setTicketCache(prev => new Map(prev.set(cacheKey, false)));
+        return false;
+      }
+
+      const showtimeTicketIds = currentShowtime.tickets.map(ticket => ticket.id);
+      
+      // Use cached orders if still valid, otherwise fetch fresh
+      let orders = ordersCache;
+      if (ordersCacheExpiry <= now || ordersCache.length === 0) {
+        console.log('🔄 Fetching fresh orders...');
+        const ordersResponse = await getMyOrders({ 
+          status: 'COMPLETED',
+          size: 50 // Reduced size for faster response
+        });
+        orders = ordersResponse.content;
+        setOrdersCache(orders);
+        setOrdersCacheExpiry(now + CACHE_DURATION);
+      } else {
+        console.log('📦 Using cached orders');
+      }
+
+      const hasTicket = orders.some(order => 
+        order.items.some(item => {
+          const ticketId = typeof item.itemId === 'number' ? item.itemId : parseInt(String(item.itemId));
+          return showtimeTicketIds.includes(ticketId);
+        })
+      );
+
+      console.log('🎫 Ticket check completed:', { 
+        showtimeId, 
+        hasTicket, 
+        ticketIds: showtimeTicketIds,
+        cached: ordersCacheExpiry > now 
+      });
+      
+      // Update cache
+      setTicketCache(prev => new Map(prev.set(cacheKey, hasTicket)));
+      setHasValidTicket(hasTicket);
+      return hasTicket;
+    } catch (error) {
+      console.error('Error checking user ticket:', error);
+      setHasValidTicket(false);
+      setTicketCache(prev => new Map(prev.set(cacheKey, false)));
+      return false;
+    } finally {
+      setTicketCheckLoading(false);
+    }
+  }, [event, ticketCheckLoading, hasValidTicket, ticketCache, ordersCache, ordersCacheExpiry]);
+
+  const clearTicketCache = useCallback(() => {
+    setTicketCache(new Map());
+    setOrdersCache([]);
+    setOrdersCacheExpiry(0);
+    console.log('🗑️ Ticket cache cleared');
+  }, []);
+
   const checkRateLimit = useCallback((): boolean => {
     const now = Date.now();
     const timeSinceLastAttempt = now - lastConnectionAttempt;
     const minInterval = 30000; // 30 seconds minimum between attempts
 
     if (timeSinceLastAttempt < minInterval) {
-      console.log(`Rate limit: ${Math.ceil((minInterval - timeSinceLastAttempt) / 1000)}s remaining`);
       return false;
     }
-
     return true;
   }, [lastConnectionAttempt]);
 
-  // Check if any showtime is currently happening
   const checkCurrentShowtime = (showtimes: ShowTimeResponse[]) => {
     const now = new Date();
-    console.log('Checking current showtime at:', now);
-
-    for (const showtime of showtimes) {
+    return showtimes.find(showtime => {
       const startTime = new Date(showtime.startTime);
       const endTime = new Date(showtime.endTime);
-
-      console.log(`Showtime ${showtime.id}: ${startTime} - ${endTime}, meetingId: ${showtime.meetingId}`);
-      console.log(`Is active: ${now >= startTime && now <= endTime && showtime.meetingId}`);
-
-      if (now >= startTime && now <= endTime && showtime.meetingId) {
-        console.log('Found active showtime:', showtime);
-        return showtime;
-      }
-    }
-    console.log('No active showtime found');
-    return null;
+      return now >= startTime && now <= endTime && showtime.meetingId;
+    }) || null;
   };
 
-  // Wait for Jitsi API to be available
-  const waitForJitsiAPI = useCallback((callback: () => void, maxRetries = 20, retryCount = 0) => {
-    console.log('Checking for JitsiMeetExternalAPI...', {
-      windowJitsi: window.JitsiMeetExternalAPI,
-      retryCount,
-      maxRetries
-    });
-
-    if (window.JitsiMeetExternalAPI && typeof window.JitsiMeetExternalAPI === 'function') {
-      console.log('JitsiMeetExternalAPI is available and ready');
-      callback();
-    } else if (retryCount < maxRetries) {
-      console.log(`JitsiMeetExternalAPI not ready, retrying... (${retryCount + 1}/${maxRetries})`);
-      setTimeout(() => waitForJitsiAPI(callback, maxRetries, retryCount + 1), 1000);
-    } else {
-      console.error('JitsiMeetExternalAPI failed to load after maximum retries');
-      console.log('Available on window:', Object.keys(window).filter(key => key.toLowerCase().includes('jitsi')));
-    }
+  // Handle Jitsi meeting events
+  const handleMeetingJoined = useCallback(() => {
+    console.log('🎉 User joined the meeting');
+    setShowJoinButton(false);
+    setUserLeftMeeting(false);
+    setShouldShowJitsi(true);
   }, []);
 
-  // Create Jitsi Meeting
-  const createJitsiMeeting = useCallback((meetingId: string, meetingPassword?: string) => {
-    console.log('=== Creating Jitsi Meeting ===');
+  const handleMeetingLeft = useCallback(() => {
+    console.log('👋 User left the meeting');
+    setUserLeftMeeting(true);
+    setShowJoinButton(true);
+    setLastConnectionAttempt(0); // Reset rate limit when user leaves
+  }, []);
 
-    // Check rate limiting
+  const handleMeetingEnded = useCallback(() => {
+    console.log('� Meeting ended');
+    setMeetingEnded(true);
+    setUserLeftMeeting(true);
+    setShowJoinButton(false);
+    setShouldShowJitsi(false);
+  }, []);
+
+  const handleJoinMeeting = useCallback(async () => {
+    if (!currentShowtime?.meetingId) return;
+    
+    if (connectionCooldown || ticketCheckLoading) return;
+    
     if (!checkRateLimit()) {
-      console.log('❌ Rate limited - too many connection attempts');
-      setConnectionCooldown(true);
-      setTimeout(() => setConnectionCooldown(false), 30000);
+      alert('Vui lòng chờ trước khi thử lại.');
       return;
     }
-
-    // Update last attempt time
-    setLastConnectionAttempt(Date.now());
-
-    // Clean the meeting ID
-    const cleanedMeetingId = cleanMeetingId(meetingId);
-    console.log('Meeting ID:', meetingId);
-    console.log('Cleaned Meeting ID:', cleanedMeetingId);
-    console.log('Password:', meetingPassword);
-    console.log('JitsiMeetExternalAPI available:', !!window.JitsiMeetExternalAPI);
-    console.log('JitsiMeetExternalAPI type:', typeof window.JitsiMeetExternalAPI);
-
-    // Dispose existing API first
-    if (jitsiApi) {
-      console.log('Disposing existing Jitsi API');
-      try {
-        jitsiApi.dispose();
-      } catch (error) {
-        console.error('Error disposing existing API:', error);
-      }
-      setJitsiApi(null);
-    }
-
-    // Check if JitsiMeetExternalAPI is available
-    if (!window.JitsiMeetExternalAPI) {
-      console.error('JitsiMeetExternalAPI is not available on window object');
-      console.log('Available window properties with "jitsi":', Object.keys(window).filter(key => key.toLowerCase().includes('jitsi')));
-      return;
-    }
-
-    if (typeof window.JitsiMeetExternalAPI !== 'function') {
-      console.error('JitsiMeetExternalAPI is not a function, type:', typeof window.JitsiMeetExternalAPI);
-      return;
-    }
-
-    // Get container element
-    const container = document.querySelector('#jitsi-container');
-    if (!container) {
-      console.error('Jitsi container (#jitsi-container) not found in DOM');
-      return;
-    }
-
-    // Clear container
-    container.innerHTML = '';
-    console.log('Container cleared, creating Jitsi meeting...');
 
     try {
-      // Follow exact documentation format
-      const domain = 'meet.jit.si';
-
-      const options = {
-        roomName: cleanedMeetingId, // Use cleaned meeting ID
-        width: '100%',
-        height: 500,
-        parentNode: container,
-        configOverwrite: {
-          prejoinPageEnabled: false,
-          startWithAudioMuted: true,
-          startWithVideoMuted: true,
-          disableDeepLinking: true,
-          enableWelcomePage: false,
-          enableClosePage: false,
-          resolution: 480, // Lower resolution to reduce load
-          constraints: {
-            video: {
-              aspectRatio: 16 / 9,
-              height: {
-                ideal: 480,
-                max: 720,
-                min: 240
-              }
-            }
-          }
-        },
-        interfaceConfigOverwrite: {
-          TOOLBAR_BUTTONS: [
-            'microphone', 'camera', 'chat', 'desktop', 'fullscreen',
-            'fodeviceselection', 'hangup', 'settings', 'videoquality'
-          ],
-          DISABLE_JOIN_LEAVE_NOTIFICATIONS: true,
-          DISABLE_PRESENCE_STATUS: true,
-          DISABLE_FOCUS_INDICATOR: true
-        },
-        userInfo: {
-          email: '',
-          displayName: 'Event Participant'
-        }
-      };
-
-      console.log('Creating JitsiMeetExternalAPI with options:', options);
-      console.log('Original meeting ID:', meetingId);
-
-      // Create the API exactly as in documentation
-      const api = new window.JitsiMeetExternalAPI(domain, options);
-
-      console.log('✅ Jitsi API created successfully:', api);
-
-      // Add comprehensive event listeners for debugging
-      api.addEventListener('readyToClose', () => {
-        console.log('Jitsi: Ready to close event');
-      });
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      api.addEventListener('videoConferenceJoined', (data: any) => {
-        console.log('✅ User joined the video conference:', data);
-      });
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      api.addEventListener('videoConferenceLeft', (data: any) => {
-        console.log('User left the video conference:', data);
-      });
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      api.addEventListener('participantJoined', (data: any) => {
-        console.log('Participant joined:', data);
-      });
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      api.addEventListener('participantLeft', (data: any) => {
-        console.log('Participant left:', data);
-      });
-
-      // Add error event listeners
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      api.addEventListener('connectionFailed', (data: any) => {
-        console.error('❌ Jitsi connection failed:', data);
-      });
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      api.addEventListener('conferenceError', (data: any) => {
-        console.error('❌ Jitsi conference error:', data);
-      });
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      api.addEventListener('setupFailed', (data: any) => {
-        console.error('❌ Jitsi setup failed:', data);
-      });
-
-      // Add loading and ready events
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      api.addEventListener('frameReady', (data: any) => {
-        console.log('✅ Jitsi frame ready:', data);
-      });
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      api.addEventListener('conferenceJoined', (data: any) => {
-        console.log('✅ Conference joined:', data);
-      });
-
-      // Handle password if provided
-      if (meetingPassword) {
-        console.log('Setting up password for meeting');
-        api.addEventListener('passwordRequired', () => {
-          console.log('Password required, setting password:', meetingPassword);
-          api.executeCommand('password', meetingPassword);
-        });
+      const hasTicket = await checkUserTicket(currentShowtime.id);
+      if (hasTicket) {
+        setLastConnectionAttempt(Date.now());
+        setShouldShowJitsi(true);
+        setShowJoinButton(false);
+        
+        // Set cooldown to prevent multiple rapid attempts
+        setConnectionCooldown(true);
+        setTimeout(() => setConnectionCooldown(false), 5000); // 5 second cooldown
+      } else {
+        alert('Bạn cần mua vé cho suất chiếu này để tham gia meeting.');
       }
-
-      // Store API reference
-      setJitsiApi(api);
-
     } catch (error) {
-      console.error('❌ Error creating Jitsi meeting:', error);
-      if (error instanceof Error) {
-        console.error('Error details:', {
-          name: error.name,
-          message: error.message,
-          stack: error.stack
-        });
-      }
+      console.error('Error in manual join:', error);
+      alert('Có lỗi xảy ra. Vui lòng thử lại.');
     }
-  }, [jitsiApi, checkRateLimit]);
+  }, [currentShowtime, connectionCooldown, ticketCheckLoading, checkRateLimit, checkUserTicket]);
 
-  // Initialize Jitsi Meet
-  const initializeJitsi = useCallback(async (meetingId: string, meetingPassword?: string) => {
-    console.log('=== Initializing Jitsi ===');
-    console.log('Meeting ID:', meetingId);
-    console.log('Password:', meetingPassword);
-
-    // Since script is already in HTML, check if API is available
-    if (window.JitsiMeetExternalAPI) {
-      console.log('✅ JitsiMeetExternalAPI is available, creating meeting immediately');
-      createJitsiMeeting(meetingId, meetingPassword);
-    } else {
-      console.log('❌ JitsiMeetExternalAPI not available, waiting...');
-
-      // Wait for API to be available (script might still be loading)
-      let retries = 0;
-      const maxRetries = 10;
-
-      const checkApi = () => {
-        retries++;
-        console.log(`Checking API availability... attempt ${retries}/${maxRetries}`);
-
-        if (window.JitsiMeetExternalAPI) {
-          console.log('✅ JitsiMeetExternalAPI is now available!');
-          createJitsiMeeting(meetingId, meetingPassword);
-        } else if (retries < maxRetries) {
-          console.log('Still waiting for JitsiMeetExternalAPI...');
-          setTimeout(checkApi, 1000);
-        } else {
-          console.error('❌ JitsiMeetExternalAPI failed to load after maximum retries');
-          console.log('Available window properties:', Object.keys(window).filter(key => key.toLowerCase().includes('jitsi')));
-        }
-      };
-
-      checkApi();
-    }
-  }, [createJitsiMeeting]);
-
-  // Cleanup Jitsi on unmount
-  useEffect(() => {
-    return () => {
-      if (jitsiApi) {
-        jitsiApi.dispose();
-      }
-    };
-  }, [jitsiApi]);
-
-  // Check for active showtimes periodically
   useEffect(() => {
     if (!event) return;
 
-    const interval = setInterval(() => {
+    const interval = setInterval(async () => {
       const activeShowtime = checkCurrentShowtime(event.showtimes);
-
-      // If showtime status changed
-      if ((!currentShowtime && activeShowtime) || (currentShowtime && !activeShowtime) ||
-        (currentShowtime && activeShowtime && currentShowtime.id !== activeShowtime.id)) {
-
+      if (activeShowtime !== currentShowtime) {
+        console.log('🔄 Showtime changed:', { 
+          from: currentShowtime?.id, 
+          to: activeShowtime?.id,
+          hasMeetingId: !!activeShowtime?.meetingId 
+        });
+        
         setCurrentShowtime(activeShowtime);
-
-        // Dispose current meeting and start new one if needed
-        if (jitsiApi) {
-          jitsiApi.dispose();
-          setJitsiApi(null);
-        }
-
-        if (activeShowtime && activeShowtime.meetingId) {
-          setTimeout(() => {
-            initializeJitsi(activeShowtime.meetingId!, activeShowtime.meetingPassword);
-          }, 500);
+        setShouldShowJitsi(false); // Reset Jitsi display
+        
+        if (activeShowtime && activeShowtime.meetingId && !userLeftMeeting) {
+          console.log('🎯 New active showtime detected:', {
+            showtimeId: activeShowtime.id,
+            meetingId: activeShowtime.meetingId,
+            userLeftMeeting
+          });
+          
+          try {
+            // Check ticket first, then initialize if valid
+            const hasTicket = await checkUserTicket(activeShowtime.id);
+            console.log('🎫 Ticket check result for showtime change:', hasTicket);
+            
+            if (hasTicket) {
+              // Auto-show Jitsi for new showtime
+              setTimeout(() => {
+                console.log('⏰ Auto-showing Jitsi for new showtime...');
+                setShouldShowJitsi(true);
+              }, 1000);
+            } else {
+              setShowJoinButton(false);
+            }
+          } catch (error) {
+            console.error('Error checking ticket for showtime change:', error);
+            setShowJoinButton(false);
+          }
+        } else if (activeShowtime && activeShowtime.meetingId && userLeftMeeting) {
+          // Only check if we don't have cached result
+          if (!ticketCache.has(activeShowtime.id)) {
+            try {
+              const hasTicket = await checkUserTicket(activeShowtime.id);
+              if (hasTicket) {
+                setShowJoinButton(true);
+              }
+            } catch (error) {
+              console.error('Error checking ticket for left meeting:', error);
+            }
+          } else if (ticketCache.get(activeShowtime.id)) {
+            setShowJoinButton(true);
+          }
         }
       }
-    }, 30000); // Check every 30 seconds
+    }, 30000);
 
     return () => clearInterval(interval);
-  }, [event, currentShowtime, jitsiApi, initializeJitsi]);
+  }, [event, currentShowtime, userLeftMeeting, checkUserTicket, ticketCache]);
 
   useEffect(() => {
     const fetchEvent = async () => {
@@ -368,17 +264,58 @@ const EventPublicDetail = () => {
         setEvent(fetchedEvent);
         setLoading(false);
 
-        // Check if any showtime is currently happening
         const activeShowtime = checkCurrentShowtime(fetchedEvent.showtimes);
-        console.log('Active showtime found on load:', activeShowtime);
         setCurrentShowtime(activeShowtime);
 
-        // Initialize Jitsi if there's an active showtime
-        if (activeShowtime && activeShowtime.meetingId) {
-          console.log('Initializing Jitsi on load with meeting ID:', activeShowtime.meetingId);
-          setTimeout(() => {
-            initializeJitsi(activeShowtime.meetingId!, activeShowtime.meetingPassword);
-          }, 1000); // Give a bit more time for the DOM to be ready
+        // Only check ticket and potentially show Jitsi if we have an active showtime with meeting
+        if (activeShowtime && activeShowtime.meetingId && !userLeftMeeting) {
+          console.log('🎯 Checking ticket for active showtime:', {
+            showtimeId: activeShowtime.id,
+            meetingId: activeShowtime.meetingId
+          });
+          
+          // Check if we already have cached result
+          if (ticketCache.has(activeShowtime.id) && ordersCacheExpiry > Date.now()) {
+            console.log('📦 Using cached ticket result for initial load');
+            const cachedResult = ticketCache.get(activeShowtime.id) || false;
+            setHasValidTicket(cachedResult);
+            
+            if (cachedResult) {
+              setTimeout(() => {
+                console.log('⏰ Auto-showing Jitsi from cache...');
+                setShouldShowJitsi(true);
+              }, 500);
+            }
+          } else {
+            // Only fetch if no cache
+            const hasTicket = await checkUserTicket(activeShowtime.id);
+            console.log('🎫 Initial ticket check result:', hasTicket);
+            
+            if (hasTicket) {
+              // Auto-show Jitsi for valid ticket holders
+              setTimeout(() => {
+                console.log('⏰ Auto-showing Jitsi after ticket validation...');
+                setShouldShowJitsi(true);
+              }, 1000);
+            } else {
+              // No ticket, just show the no-ticket message
+              setShowJoinButton(false);
+            }
+          }
+        } else if (activeShowtime && activeShowtime.meetingId && userLeftMeeting) {
+          console.log('🔄 User previously left meeting, checking cached ticket for join button');
+          if (ticketCache.has(activeShowtime.id)) {
+            const cachedResult = ticketCache.get(activeShowtime.id) || false;
+            if (cachedResult) {
+              setShowJoinButton(true);
+              setHasValidTicket(true);
+            }
+          } else {
+            const hasTicket = await checkUserTicket(activeShowtime.id);
+            if (hasTicket) {
+              setShowJoinButton(true);
+            }
+          }
         }
       } catch (error) {
         console.error('Error initializing event details:', error);
@@ -386,14 +323,21 @@ const EventPublicDetail = () => {
       }
     };
     fetchEvent();
-  }, [slug, initializeJitsi]);
+  }, [slug, userLeftMeeting, checkUserTicket, ticketCache, ordersCacheExpiry]);
+
+  // Clear cache on unmount
+  useEffect(() => {
+    return () => {
+      clearTicketCache();
+    };
+  }, [clearTicketCache]);
 
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen bg-gray-900">
         <div className="text-lg text-white">Đang tải...</div>
       </div>
-    )
+    );
   }
 
   if (!event) {
@@ -401,20 +345,18 @@ const EventPublicDetail = () => {
       <div className="flex justify-center items-center min-h-screen bg-gray-900">
         <div className="text-red-500 text-lg">Không tìm thấy sự kiện</div>
       </div>
-    )
+    );
   }
 
-  // Get the earliest showtime for display
-  const earliestShowtime = event.showtimes && event.showtimes.length > 0
+  const earliestShowtime = event.showtimes?.length
     ? event.showtimes.reduce((earliest, current) =>
-      new Date(current.startTime) < new Date(earliest.startTime) ? current : earliest
-    )
+        new Date(current.startTime) < new Date(earliest.startTime) ? current : earliest
+      )
     : null;
 
-  // Get the cheapest ticket price from the earliest showtime
   const getLowestPrice = () => {
     if (!earliestShowtime?.tickets || earliestShowtime.tickets.length === 0) {
-      return 800000; // Default price
+      return 800000;
     }
     return Math.min(...earliestShowtime.tickets.map(ticket => ticket.price));
   };
@@ -439,16 +381,12 @@ const EventPublicDetail = () => {
 
   return (
     <div className="">
-      {/* Hero Section */}
       <div className="bg-[#27272A]">
         <div className="relative flex !py-8 !px-4">
-          {/* Left Side - Event Info */}
           <div className="flex-2/5 bg-[#38383D] rounded-l-3xl">
             <div className="flex flex-col justify-between !px-8 !py-10 h-full min-h-[100%]">
-              {/* Top - Event Info */}
               <div className='!space-y-4'>
                 <h1 className="!text-2xl font-bold text-white">{event.name}</h1>
-
                 {earliestShowtime && (
                   <div className="flex items-center !space-x-2 mt-4">
                     <div className="bg-opacity-20 rounded-full p-3">
@@ -468,9 +406,7 @@ const EventPublicDetail = () => {
                   </div>
                 )}
               </div>
-
-              {/* Bottom - Price and Button */}
-              <div >
+              <div>
                 <div className="border-t border-white px-4 !pb-4">
                   <div className="flex items-baseline space-x-2 !mt-4">
                     <span className="text-white text-2xl font-bold">Giá từ</span>
@@ -480,26 +416,19 @@ const EventPublicDetail = () => {
                     <span className="text-green-400 font-bold text-2xl">đ</span>
                   </div>
                 </div>
-
                 <div className="px-4">
-                  <button className="w-full !bg-[#2dc275] hover:bg-green-600 font-bold py-4 px-12 rounded-xl text-lg text-white transition-colors duration-200 shadow-lg border-none">
-                    Mua vé ngay
+                  <button className="w-full !bg-[#2dc275] hover:bg-green-600 font-bold py-4 px-12 rounded-xl text-lg !text-white transition-colors duration-200 shadow-lg border-none">
+                    <a href="#tickets" className='!text-white'>Mua vé ngay</a>
                   </button>
                 </div>
               </div>
             </div>
           </div>
-
-          <svg className='absolute top-0 left-[40.08%] h-full' width="4" viewBox="0 0 4 415" fill="none" xmlns="http://www.w3.org/2000/svg" id="vertical-dashed"><path stroke="#27272A" stroke-width="4" stroke-linecap="round" stroke-dasharray="4 10" d="M2 2v411"></path></svg>
-
-          {/* Top Moon Cutout */}
+          <svg className='absolute top-0 left-[40.08%] h-full' width="4" viewBox="0 0 4 415" fill="none" xmlns="http://www.w3.org/2000/svg" id="vertical-dashed">
+            <path stroke="#27272A" strokeWidth="4" strokeLinecap="round" strokeDasharray="4 10" d="M2 2v411"></path>
+          </svg>
           <div className="absolute top-8 left-2/5 -translate-x-1/2 w-16 h-8 bg-[#27272A] rounded-b-full z-20"></div>
-
-          {/* Bottom Moon Cutout */}
           <div className="absolute bottom-8 left-2/5 -translate-x-1/2 w-16 h-8 bg-[#27272A] rounded-t-full z-20"></div>
-
-
-          {/* Right Side - Event Banner */}
           <div className="flex-3/5">
             <div className="rounded-3xl overflow-hidden shadow-2xl">
               {event.bannerUrl ? (
@@ -522,59 +451,146 @@ const EventPublicDetail = () => {
           </div>
         </div>
       </div>
-
-      {/* Live Meeting Section */}
       {currentShowtime && currentShowtime.meetingId && (
-        <div className="bg-gray-100 py-8 px-4">
+        <div className="bg-gray-100 !py-8 !px-4">
           <div className="max-w-6xl mx-auto">
             <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-              <div className="bg-green-600 text-white p-4">
+              <div className="bg-green-600 text-white !p-4">
                 <div className="flex items-center gap-2 justify-between">
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
                     <h2 className="text-xl font-bold">Sự kiện đang diễn ra TRỰC TIẾP</h2>
                   </div>
-                  <button
-                    onClick={async () => {
-                      console.log('Manual Jitsi init button clicked');
-                      console.log('Current showtime:', currentShowtime);
-
-                      if (connectionCooldown) {
-                        alert('Đang trong thời gian chờ. Vui lòng thử lại sau 30 giây.');
-                        return;
-                      }
-
-                      if (!checkRateLimit()) {
-                        alert('Vui lòng chờ trước khi thử lại.');
-                        return;
-                      }
-
-                      if (currentShowtime?.meetingId) {
-                        await initializeJitsi(currentShowtime.meetingId, currentShowtime.meetingPassword);
-                      }
-                    }}
-                    className="bg-white text-green-600 px-4 py-2 rounded font-medium hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                    disabled={connectionCooldown}
-                  >
-                    {connectionCooldown ? 'Đang chờ...' : 'Tham gia meeting'}
-                  </button>
+                  {showJoinButton && hasValidTicket && (
+                    <button
+                      onClick={handleJoinMeeting}
+                      className="bg-white text-green-600 px-4 py-2 rounded font-medium hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={connectionCooldown || ticketCheckLoading}
+                    >
+                      {ticketCheckLoading ? 'Đang kiểm tra...' : 'Tham gia lại meeting'}
+                    </button>
+                  )}
                 </div>
                 <p className="text-green-100 text-sm mt-1">
                   {formatTime(currentShowtime.startTime)} - {formatTime(currentShowtime.endTime)}, {formatDate(currentShowtime.startTime)}
                 </p>
-                <p className="text-green-100 text-xs mt-1">
-                  Meeting ID: {currentShowtime.meetingId}
-                  {currentShowtime.meetingPassword && ` | Password: ${currentShowtime.meetingPassword}`}
-                </p>
               </div>
-              <div id="jitsi-container" className="w-full" style={{ minHeight: '500px' }}></div>
+              <div id="jitsi-container" className="w-full" style={{ minHeight: '500px' }}>
+                {/* Always render container but show different content based on state */}
+                {ticketCheckLoading ? (
+                  <div className="flex flex-col items-center justify-center h-full bg-gray-50 p-8">
+                    <div className="text-center">
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mb-4"></div>
+                      <h3 className="text-xl font-semibold text-gray-700 mb-2">Đang kiểm tra vé...</h3>
+                      <p className="text-gray-500">Vui lòng chờ trong giây lát</p>
+                    </div>
+                  </div>
+                ) : !hasValidTicket ? (
+                  <div className="flex flex-col items-center justify-center h-full bg-gray-50 p-8">
+                    <div className="text-center">
+                      <div className="text-6xl mb-4">🎫</div>
+                      <h3 className="text-xl font-semibold text-red-600 mb-2">Cần mua vé để tham gia</h3>
+                      <p className="text-gray-500 mb-4">
+                        Bạn cần mua vé cho suất chiếu này để có thể tham gia meeting trực tuyến.
+                      </p>
+                      <button 
+                        onClick={() => navigate(`/events/${slug}/showtimes/${currentShowtime.id}/tickets`)}
+                        className="bg-green-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-700 transition-colors"
+                      >
+                        Mua vé ngay
+                      </button>
+                    </div>
+                  </div>
+                ) : shouldShowJitsi && currentShowtime?.meetingId ? (
+                  <JitsiMeeting
+                    domain="meet.jit.si"
+                    roomName={cleanMeetingId(currentShowtime.meetingId)}
+                    configOverwrite={{
+                      prejoinPageEnabled: false,
+                      startWithAudioMuted: true,
+                      startWithVideoMuted: true,
+                      disableDeepLinking: true,
+                      enableWelcomePage: false,
+                      enableClosePage: false,
+                      resolution: 480,
+                      constraints: {
+                        video: {
+                          aspectRatio: 16 / 9,
+                          height: { ideal: 480, max: 720, min: 240 }
+                        }
+                      }
+                    }}
+                    interfaceConfigOverwrite={{
+                      TOOLBAR_BUTTONS: [
+                        'microphone', 'camera', 'chat', 'desktop', 'fullscreen',
+                        'hangup', 'settings', 'videoquality', 'filmstrip'
+                      ],
+                      DISABLE_JOIN_LEAVE_NOTIFICATIONS: true,
+                      DISABLE_PRESENCE_STATUS: true,
+                      DISABLE_FOCUS_INDICATOR: true
+                    }}
+                    userInfo={{
+                      email: '',
+                      displayName: 'Event Participant'
+                    }}
+                    onApiReady={(externalApi) => {
+                      console.log('🎉 Jitsi API ready');
+                      
+                      // Add event listeners
+                      externalApi.addEventListeners({
+                        videoConferenceJoined: handleMeetingJoined,
+                        videoConferenceLeft: handleMeetingLeft,
+                        readyToClose: handleMeetingEnded,
+                        passwordRequired: () => {
+                          if (currentShowtime?.meetingPassword) {
+                            externalApi.executeCommand('password', currentShowtime.meetingPassword);
+                          }
+                        }
+                      });
+                    }}
+                    getIFrameRef={(iframeRef) => {
+                      if (iframeRef) {
+                        iframeRef.style.height = '500px';
+                        iframeRef.style.width = '100%';
+                      }
+                    }}
+                  />
+                ) : showJoinButton ? (
+                  <div className="flex flex-col items-center justify-center h-full bg-gray-50 p-8">
+                    <div className="text-center">
+                      <div className="text-6xl mb-4">📹</div>
+                      <h3 className="text-xl font-semibold text-gray-700 mb-2">Meeting đã sẵn sàng</h3>
+                      <p className="text-gray-500 mb-4">
+                        Bạn đã rời khỏi meeting. Nhấn nút "Tham gia lại meeting" để tham gia lại.
+                      </p>
+                      <p className="text-sm text-gray-400">
+                        Meeting ID: {currentShowtime.meetingId}
+                        {currentShowtime.meetingPassword && (
+                          <span className="block">Password: {currentShowtime.meetingPassword}</span>
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                ) : hasValidTicket ? (
+                  <div className="flex flex-col items-center justify-center h-full bg-gray-50 p-8">
+                    <div className="text-center">
+                      <div className="text-6xl mb-4">⏳</div>
+                      <h3 className="text-xl font-semibold text-gray-700 mb-2">Đang chuẩn bị meeting...</h3>
+                      <p className="text-gray-500 mb-4">Hệ thống đang thiết lập meeting cho bạn.</p>
+                      <p className="text-sm text-gray-400">
+                        Meeting ID: {currentShowtime.meetingId}
+                        {currentShowtime.meetingPassword && (
+                          <span className="block">Password: {currentShowtime.meetingPassword}</span>
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
             </div>
           </div>
         </div>
       )}
-
-
-      {/* Event Description */}
       <div className='flex bg-[#f5f7fc] !py-8 !px-4 !text-black'>
         <div className='flex-7/10'>
           <div className="bg-white rounded-lg !p-4">
@@ -586,69 +602,62 @@ const EventPublicDetail = () => {
               </div>
             </div>
           </div>
-
-          {/* Ticket Information */}
-          <div className='bg-[#27272A] rounded-lg !p-4 !mt-6 !space-y-1' id='ticket-info'>
+          <div id="tickets" className='bg-[#27272A] rounded-lg !p-4 !mt-6 !space-y-1'>
             <h2 className="text-xl text-white font-bold !bg-[#27272A]">Thông tin vé</h2>
-            {
-              event.showtimes && event.showtimes.length > 0 ? (
-                <div className="w-full">
-                  {event.showtimes.map((showtime) => (
-                    <div key={showtime.id} className="border-0">
-                      <button
-                        onClick={() => toggleShowtime(showtime.id)}
-                        className="w-full !bg-[#38383D] hover:bg-[#404048] p-4 rounded-lg transition-colors"
-                      >
-                        <div className="flex items-center gap-2 w-full">
-
-                          <div className={`transform transition-transform duration-200 ${expandedShowtime === showtime.id ? 'rotate-90' : ''
-                            }`}>
-                            <svg className="h-4 w-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                            </svg>
-
-                          </div>
-                          <div className='flex grow-1 justify-between items-center'>
-                            <span className="text-white font-medium">
-                              {formatTime(showtime.startTime)} - {formatTime(showtime.endTime)}, {formatDate(showtime.startTime)}
-                            </span>
-                            <div>
-                              <button className="w-full !bg-[#2dc275] hover:bg-green-600 font-bold py-4 px-12 rounded-xl text-lg text-white transition-colors duration-200 shadow-lg border-none" onClick={() => navigate(`/events/${slug}/showtimes/${showtime.id}/tickets`)}>
-                                Mua vé
-                              </button>
+            {event.showtimes && event.showtimes.length > 0 ? (
+              <div className="w-full">
+                {event.showtimes.map((showtime) => (
+                  <div key={showtime.id} className="border-0">
+                    <button
+                      onClick={() => toggleShowtime(showtime.id)}
+                      className="w-full !bg-[#38383D] hover:bg-[#404048] p-4 rounded-lg transition-colors"
+                    >
+                      <div className="flex items-center gap-2 w-full">
+                        <div className={`transform transition-transform duration-200 ${expandedShowtime === showtime.id ? 'rotate-90' : ''}`}>
+                          <svg className="h-4 w-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
+                        </div>
+                        <div className='flex grow-1 justify-between items-center'>
+                          <span className="text-white font-medium">
+                            {formatTime(showtime.startTime)} - {formatTime(showtime.endTime)}, {formatDate(showtime.startTime)}
+                          </span>
+                          <div onClick={(e) => {
+                            e.stopPropagation(); // Prevent parent button click
+                            navigate(`/events/${slug}/showtimes/${showtime.id}/tickets`);
+                          }}>
+                            <div className="w-full !bg-[#2dc275] hover:bg-green-600 font-bold !py-2 !px-8 rounded-xl text-lg text-white transition-colors duration-200 shadow-lg border-none cursor-pointer">
+                              Mua vé
                             </div>
                           </div>
                         </div>
-                      </button>
-
-                      {expandedShowtime === showtime.id && (
-                        <div className="mt-2 bg-[#2D2D30] p-4 rounded-lg">
-                          {showtime.tickets.map((ticket, index) => (
-                            <div key={index} className="flex justify-between items-center py-2 border-b border-gray-600 last:border-b-0">
-                              <span className="text-white">{ticket.name}</span>
-                              <span className="text-green-400 font-medium">{ticket.price.toLocaleString('vi-VN')} đ</span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="max-w-6xl mx-auto px-8 py-8 text-center text-gray-500">
-                  Không có thông tin vé cho sự kiện này.
-                </div>
-              )}
+                      </div>
+                    </button>
+                    {expandedShowtime === showtime.id && (
+                      <div className="bg-[#2D2D30] !p-4 divide-y odd:bg-[#2e2f32] even:bg-[#37373c]">
+                        {showtime.tickets.map((ticket, index) => (
+                          <div key={index} className="flex justify-between items-center py-2">
+                            <span className="text-white">{ticket.name}</span>
+                            <span className="text-green-400 font-medium">{ticket.price.toLocaleString('vi-VN')} đ</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="max-w-6xl mx-auto px-8 py-8 text-center text-gray-500">
+                Không có thông tin vé cho sự kiện này.
+              </div>
+            )}
           </div>
         </div>
-
-        {/* Ad */}
         <div className='flex-3/10'>
-
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default EventPublicDetail
+export default EventPublicDetail;
