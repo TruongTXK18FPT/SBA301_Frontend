@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { createOrder, createPaymentLink, ItemType } from '../services/orderService';
+import Alert from '../components/Alert';
 import { 
   FaCheck, 
   FaGraduationCap, 
@@ -23,31 +25,41 @@ interface PremiumPageProps {
 
 const PremiumPage: React.FC<PremiumPageProps> = ({ isAuthenticated = false }) => {
   const navigate = useNavigate();
-  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+  const [selectedPlan, setSelectedPlan] = useState<number | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [alert, setAlert] = useState<{
+    show: boolean;
+    type: "success" | "error" | "warning";
+    message: string;
+    description?: string;
+  }>({
+    show: false,
+    type: "success",
+    message: "",
+  });
 
   const packages = [
     {
-      id: 'student',
+      id: 1, //student
       name: 'Sinh Viên',
       icon: <FaGraduationCap />,
-      price: 99000,
+      price: 1000,
       period: 'tháng',
-      originalPrice: 199000,
+      originalPrice: 100000,
       discount: '50%',
       popular: false,
       features: [
         'Không giới hạn bài test',
         'AI Chatbot cá nhân',
         'Báo cáo chi tiết',
-        'Tư vấn nghề nghiệp',
-        'Hỗ trợ email'
+        'Tư vấn nghề nghiệp'
       ]
     },
     {
-      id: 'monthly',
+      id: 2, //monthly
       name: 'Hàng Tháng',
       icon: <FaCalendarAlt />,
-      price: 199000,
+      price: 2000,
       period: 'tháng',
       originalPrice: null,
       discount: null,
@@ -62,12 +74,12 @@ const PremiumPage: React.FC<PremiumPageProps> = ({ isAuthenticated = false }) =>
       ]
     },
     {
-      id: 'yearly',
+      id: 3, //yearly
       name: 'Hàng Năm',
       icon: <FaInfinity />,
-      price: 1990000,
+      price: 3000,
       period: 'năm',
-      originalPrice: 2388000,
+      originalPrice: 3000000,
       discount: '17%',
       popular: false,
       features: [
@@ -83,18 +95,57 @@ const PremiumPage: React.FC<PremiumPageProps> = ({ isAuthenticated = false }) =>
     }
   ];
 
-  const handleSelectPlan = (planId: string) => {
+  const handleSelectPlan = async (planId: number) => {
     setSelectedPlan(planId);
-    // Handle plan selection logic here
     console.log('Selected plan:', planId);
     
     if (!isAuthenticated) {
       // Redirect to login with plan info
       navigate('/login', { state: { selectedPlan: planId } });
-    } else {
-      // Process payment or redirect to payment page
-      // This is where you'd integrate with your payment system
-      console.log('Processing payment for plan:', planId);
+      return;
+    }
+
+    // Process payment for authenticated users
+    setLoading(true);
+    try {
+      // Create order first
+      const orderData = {
+        items: [
+          {
+            itemId: planId,
+            itemType: ItemType.PREMIUM,
+            quantity: 1
+          }
+        ]
+      };
+
+      const orderResponse = await createOrder(orderData);
+      console.log('Order created:', orderResponse);
+
+      // Create payment link
+      const paymentResponse = await createPaymentLink({
+        orderId: orderResponse.id
+      });
+
+      console.log('Payment link created:', paymentResponse);
+
+      // Redirect to payment URL
+      if (paymentResponse.data.checkoutUrl) {
+        window.location.href = paymentResponse.data.checkoutUrl;
+      } else {
+        throw new Error('No checkout URL received');
+      }
+
+    } catch (error) {
+      console.error('Payment processing error:', error);
+      setAlert({
+        show: true,
+        type: "error",
+        message: "Không thể tạo thanh toán",
+        description: "Vui lòng thử lại sau hoặc liên hệ hỗ trợ.",
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -104,6 +155,16 @@ const PremiumPage: React.FC<PremiumPageProps> = ({ isAuthenticated = false }) =>
 
   return (
     <div className="premium-page">
+      {/* Alert */}
+      {alert.show && (
+        <Alert
+          type={alert.type}
+          message={alert.message}
+          description={alert.description}
+          onClose={() => setAlert((prev) => ({ ...prev, show: false }))}
+        />
+      )}
+
       {/* Background Video */}
       <div className="premium-video-container">
         <video
@@ -239,10 +300,17 @@ const PremiumPage: React.FC<PremiumPageProps> = ({ isAuthenticated = false }) =>
                 <motion.button
                   className={`package-button ${pkg.popular ? 'popular' : ''}`}
                   onClick={() => handleSelectPlan(pkg.id)}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  disabled={loading}
+                  whileHover={{ scale: loading ? 1 : 1.05 }}
+                  whileTap={{ scale: loading ? 1 : 0.95 }}
                 >
-                  {!isAuthenticated ? 'Đăng nhập để đăng ký' : 'Chọn gói này'}
+                  {loading && selectedPlan === pkg.id ? (
+                    'Đang xử lý...'
+                  ) : !isAuthenticated ? (
+                    'Đăng nhập để đăng ký'
+                  ) : (
+                    'Chọn gói này'
+                  )}
                 </motion.button>
               </motion.div>
             ))}

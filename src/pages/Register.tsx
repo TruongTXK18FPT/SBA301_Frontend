@@ -248,6 +248,8 @@ const Register: React.FC = () => {
 
           if (actualAge < 15) {
             error = "Bạn phải từ 15 tuổi trở lên";
+          }else if(actualAge > 80) {
+            error = "Tuổi không hợp lệ";
           }
         }
         break;
@@ -357,7 +359,7 @@ const Register: React.FC = () => {
         transition={{ duration: 0.5 }}
       >
         <div className="register-form-card">
-          <h1 className="register-title">Đăng Ký Tài Khoản</h1>
+          <h1 className="register-title">Đăng ký tài khoản</h1>
         {!isVerifying ? (
           <form onSubmit={handleSubmit} className="register-form">
             <motion.div

@@ -165,7 +165,7 @@
 }
 
 .register-title {
-  font-family: 'Orbitron', monospace;
+ font-family: 'Poppins', sans-serif;
   font-size: 2.5rem;
   font-weight: 700;
   color: var(--text-primary);
@@ -262,7 +262,7 @@
 .register-form-select:invalid,
 .register-form-input:invalid,
 select:invalid {
-  color: white !important; /* Dark color for placeholder */
+  color: white ; /* Dark color for placeholder */
 }
 
 /* When an option is selected */
@@ -690,7 +690,7 @@ select:valid {
 }
 
 .otp-title {
-  font-family: 'Orbitron', monospace;
+  font-family: 'Poppins', sans-serif;
   font-size: 2rem;
   font-weight: 600;
   color: var(--text-primary);

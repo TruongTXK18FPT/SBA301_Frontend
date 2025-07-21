@@ -66,11 +66,11 @@ const Footer = () => {
       ],
     },
     {
-      title: 'Pháp Lý',
+      title: 'Thao tác nhanh',
       links: [
-        { name: 'Chính Sách Bảo Mật', path: '/privacy' },
-        { name: 'Điều Khoản Dịch Vụ', path: '/terms' },
-        { name: 'Chính Sách Cookie', path: '/cookies' },
+        { name: 'Bắt đầu bài test', path: '/quiz' },
+        { name: 'Sự kiện', path: '/events' },
+        { name: 'Các loại tính cách', path: '/personality' },
       ],
     },
   ];
@@ -86,19 +86,21 @@ const Footer = () => {
           </p>
         </div>
 
-        <div className="footer-links animate-fade-in">
-          {footerLinks.map((section, index) => (
-            <div key={section.title} className="link-section animate-slide-up" style={{ animationDelay: `${index * 0.1}s` }}>
-              <h3>{section.title}</h3>
-              <ul>
-                {section.links.map((link, linkIndex) => (
-                  <li key={link.name} className="animate-slide-right" style={{ animationDelay: `${(index + linkIndex) * 0.1}s` }}>
-                    <Link to={link.path}>{link.name}</Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+        <div className="footer-links-row">
+          <div className="footer-links animate-fade-in">
+            {footerLinks.map((section, index) => (
+              <div key={section.title} className="link-section animate-slide-up" style={{ animationDelay: `${index * 0.1}s` }}>
+                <h3>{section.title}</h3>
+                <ul>
+                  {section.links.map((link, linkIndex) => (
+                    <li key={link.name} className="animate-slide-right" style={{ animationDelay: `${(index + linkIndex) * 0.1}s` }}>
+                      <Link to={link.path}>{link.name}</Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
         </div>
 
         <div className={`map-section ${isMapExpanded ? 'expanded' : ''} animate-fade-in`}>

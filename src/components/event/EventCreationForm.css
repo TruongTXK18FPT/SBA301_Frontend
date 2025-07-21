@@ -190,6 +190,115 @@
   color: #a0aec0;
 }
 
+/* Select Dropdown */
+.event-creation-form__select {
+  padding: 0.875rem 1rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  background: #ffffff;
+  color: #2d3748;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  background-size: 1rem;
+  padding-right: 3rem;
+}
+
+.event-creation-form__select:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  transform: translateY(-1px);
+}
+
+.event-creation-form__select:disabled {
+  background: #f7fafc;
+  color: #a0aec0;
+  cursor: not-allowed;
+}
+
+/* Radio Button Group */
+.event-creation-form__radio-group {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.event-creation-form__radio-option {
+  flex: 1;
+  position: relative;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 1rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  background: #ffffff;
+  transition: all 0.3s ease;
+}
+
+.event-creation-form__radio-option:hover {
+  border-color: #667eea;
+  background: #f7fafc;
+  transform: translateY(-1px);
+}
+
+.event-creation-form__radio-input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.event-creation-form__radio-custom {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #e2e8f0;
+  border-radius: 50%;
+  margin-right: 0.75rem;
+  position: relative;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.event-creation-form__radio-input:checked + .event-creation-form__radio-custom {
+  border-color: #667eea;
+  background: #667eea;
+}
+
+.event-creation-form__radio-input:checked + .event-creation-form__radio-custom::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ffffff;
+}
+
+.event-creation-form__radio-input:checked ~ .event-creation-form__radio-label {
+  color: #667eea;
+  font-weight: 600;
+}
+
+.event-creation-form__radio-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+  color: #4a5568;
+  transition: all 0.3s ease;
+}
+
+.event-creation-form__radio-icon {
+  font-size: 1.1rem;
+}
+
 /* Image Upload */
 .event-creation-form__image-upload {
   position: relative;
@@ -359,6 +468,11 @@
   border: none;
   font-size: 1rem;
   min-height: 200px;
+  color: #2d3748;
+}
+
+.event-creation-form__editor .ql-editor {
+  color: #2d3748;
 }
 
 /* Schedule Section */
@@ -544,6 +658,54 @@
   transform: scale(1.05);
 }
 
+/* Payment Section */
+.event-creation-form__payment-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.event-creation-form__payment-header h3 {
+  color: #2d3748;
+  margin-bottom: 0.5rem;
+  font-size: 1.5rem;
+}
+
+.event-creation-form__payment-header p {
+  color: #718096;
+  margin: 0;
+  font-size: 1rem;
+}
+
+.event-creation-form__payment-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem;
+}
+
+.event-creation-form__payment-group {
+  background: #f7fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 2rem;
+}
+
+.event-creation-form__payment-group h4 {
+  color: #2d3748;
+  margin: 0 0 1.5rem 0;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.event-creation-form__payment-group .event-creation-form__field {
+  margin-bottom: 1.5rem;
+}
+
+.event-creation-form__payment-group .event-creation-form__field:last-child {
+  margin-bottom: 0;
+}
+
 /* Preview Section */
 .event-creation-form__preview {
   animation: fadeIn 0.4s ease-out;
@@ -576,6 +738,7 @@
 }
 
 .event-creation-form__preview-content {
+  color:#2d3748;
   padding: 2rem;
 }
 
@@ -779,6 +942,16 @@
   
   .event-creation-form__ticket-fields {
     grid-template-columns: 1fr;
+  }
+  
+  .event-creation-form__payment-grid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+
+  .event-creation-form__radio-group {
+    flex-direction: column;
+    gap: 0.75rem;
   }
   
   .event-creation-form__actions {

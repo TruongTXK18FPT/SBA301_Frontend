@@ -1,5 +1,6 @@
 import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
+// Dữ liệu font Arimo (Regular) hỗ trợ tiếng Việt, được mã hóa Base64
+import { arimoRegular } from './font'; // Giả sử bạn tạo file font.ts
 
 export interface QuizResult {
   id: number;
@@ -22,332 +23,357 @@ export interface UserQuizResults {
 }
 
 class PDFService {
+  
+  // Đăng ký font tùy chỉnh với jsPDF
+  private registerVietnameseFont(doc: jsPDF): void {
+    // Thêm file font vào hệ thống file ảo (VFS) của jsPDF
+    doc.addFileToVFS('Arimo-Regular.ttf', arimoRegular);
+    // Thêm font vào tài liệu
+    doc.addFont('Arimo-Regular.ttf', 'Arimo', 'normal');
+  }
+
   private formatDate(dateString: string): string {
     const date = new Date(dateString);
     return date.toLocaleDateString('vi-VN', {
-      year: 'numeric',
-      month: 'long',
+      year: 'numeric', 
+      month: 'long', 
       day: 'numeric',
-      hour: '2-digit',
+      hour: '2-digit', 
       minute: '2-digit'
     });
   }
 
-  private splitText(text: string, maxLength: number): string[] {
-    if (!text) return [];
+  private addMultilineText(
+    doc: jsPDF, 
+    text: string, 
+    x: number, 
+    y: number, 
+    maxWidth: number, 
+    lineHeight: number = 8
+  ): number {
+    const lines = doc.splitTextToSize(text, maxWidth);
     
-    const words = text.split(' ');
-    const lines: string[] = [];
-    let currentLine = '';
-
-    for (const word of words) {
-      if ((currentLine + word).length <= maxLength) {
-        currentLine += (currentLine ? ' ' : '') + word;
-      } else {
-        if (currentLine) {
-          lines.push(currentLine);
-          currentLine = word;
-        } else {
-          lines.push(word);
-        }
+    for (let line of lines) {
+      if (y > doc.internal.pageSize.height - 40) {
+        doc.addPage();
+        y = 30;
       }
+      doc.text(line, x, y);
+      y += lineHeight;
     }
-
-    if (currentLine) {
-      lines.push(currentLine);
-    }
-
-    return lines;
+    return y;
   }
 
-  private addMultilineText(doc: jsPDF, text: string, x: number, y: number, maxWidth: number, lineHeight: number = 6): number {
-    const lines = this.splitText(text, Math.floor(maxWidth / 2.5)); // Rough character estimation
-    let currentY = y;
-
-    for (const line of lines) {
-      doc.text(line, x, currentY);
-      currentY += lineHeight;
+  private addSection(
+    doc: jsPDF,
+    title: string,
+    content: string,
+    x: number,
+    y: number,
+    maxWidth: number,
+    titleFontSize: number = 14,
+    contentFontSize: number = 11,
+    titleColor: [number, number, number] = [41, 128, 185],
+    contentColor: [number, number, number] = [52, 73, 94]
+  ): number {
+    if (y > doc.internal.pageSize.height - 70) {
+      doc.addPage();
+      y = 30;
     }
 
-    return currentY;
+    y += 5;
+
+    doc.setFillColor(245, 246, 250);
+    doc.rect(x - 5, y - 5, maxWidth + 10, 12, 'F');
+    
+    doc.setFontSize(titleFontSize);
+    doc.setFont('Arimo', 'normal', 'bold'); // Sử dụng font Arimo
+    doc.setTextColor(titleColor[0], titleColor[1], titleColor[2]);
+    y = this.addMultilineText(doc, title, x, y + 3, maxWidth, 9);
+    y += 8;
+
+    doc.setFont('Arimo', 'normal'); // Sử dụng font Arimo
+    doc.setFontSize(contentFontSize);
+    doc.setTextColor(contentColor[0], contentColor[1], contentColor[2]);
+    y = this.addMultilineText(doc, content, x + 3, y, maxWidth - 6, 7);
+    y += 12;
+
+    return y;
   }
 
-  public async downloadQuizResultPDF(userResults: UserQuizResults, result: QuizResult): Promise<void> {
+  private addInfoRow(
+    doc: jsPDF,
+    label: string,
+    value: string,
+    x: number,
+    y: number,
+    maxWidth: number
+  ): number {
+    doc.setFont('Arimo', 'normal', 'bold'); // Sử dụng font Arimo
+    doc.setFontSize(11);
+    doc.setTextColor(44, 62, 80);
+    doc.text(label, x, y);
+    
+    doc.setFont('Arimo', 'normal'); // Sử dụng font Arimo
+    doc.setTextColor(85, 85, 85);
+    y = this.addMultilineText(doc, value, x + 50, y, maxWidth - 50, 6);
+    
+    return y + 3;
+  }
+
+  private addHeaderWithLine(
+    doc: jsPDF,
+    title: string,
+    x: number,
+    y: number,
+    maxWidth: number,
+    fontSize: number = 16,
+    color: [number, number, number] = [31, 81, 255]
+  ): number {
+    doc.setFontSize(fontSize);
+    doc.setFont('Arimo', 'normal', 'bold'); // Sử dụng font Arimo
+    doc.setTextColor(color[0], color[1], color[2]);
+    y = this.addMultilineText(doc, title, x, y, maxWidth, 10);
+    
+    doc.setLineWidth(1);
+    doc.setDrawColor(color[0], color[1], color[2]);
+    doc.line(x, y + 2, x + maxWidth, y + 2);
+    
+    return y + 12;
+  }
+
+  public async downloadQuizResultPDF(userResults: UserQuizResults, result: QuizResult) {
     try {
-      // Create new PDF document
-      const doc = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4'
-      });
-
-      // Set up Vietnamese font (basic Latin characters)
-      doc.setFont('helvetica');
+      const doc = new jsPDF();
+      this.registerVietnameseFont(doc); // Đăng ký font
+      doc.setFont('Arimo'); // Đặt font mặc định
       
-      // Page margins
-      const margin = 20;
+      const margin = 25;
       const pageWidth = doc.internal.pageSize.width;
       const pageHeight = doc.internal.pageSize.height;
-      const contentWidth = pageWidth - 2 * margin;
+      const contentWidth = pageWidth - margin * 2;
+      let y = 30;
+
+      doc.setFontSize(24);
+      doc.setFont('Arimo', 'normal', 'bold'); // Sử dụng font Arimo
+      doc.setTextColor(31, 81, 255);
+      doc.text('Report Personality Quiz Result', pageWidth / 2, y, { align: 'center' });
+      y += 8;
       
-      let currentY = margin;
+      doc.setFontSize(12);
+      doc.setFont('Arimo', 'normal'); // Sử dụng font Arimo
+      doc.setTextColor(127, 140, 141);
+      doc.text('Phân tích tính cách và khuyến nghị nghề nghiệp', pageWidth / 2, y, { align: 'center' });
+      y += 15;
+      
+      doc.setLineWidth(2);
+      doc.setDrawColor(31, 81, 255);
+      doc.line(margin, y, pageWidth - margin, y);
+      y += 20;
 
-      // Header
-      doc.setFontSize(20);
-      doc.setTextColor(44, 62, 80); // Dark blue
-      doc.text('BÁO CÁO KẾT QUẢ TRẮC NGHIỆM', pageWidth / 2, currentY, { align: 'center' });
-      currentY += 15;
+      y = this.addHeaderWithLine(doc, 'Thông tin', margin, y, contentWidth, 16, [46, 125, 50]);
+      
+      doc.setFillColor(248, 249, 250);
+      doc.rect(margin, y, contentWidth, 50, 'F');
+      
+      y += 10;
+      y = this.addInfoRow(doc, 'Ngày làm bài:', this.formatDate(result.submittedAt), margin + 10, y, contentWidth - 20);
+      y = this.addInfoRow(doc, 'QuizType:', result.quizType, margin + 10, y, contentWidth - 20);
+      y += 15;
 
-      // Divider line
-      doc.setLineWidth(0.5);
-      doc.setDrawColor(52, 152, 219); // Blue
-      doc.line(margin, currentY, pageWidth - margin, currentY);
-      currentY += 10;
+      y = this.addHeaderWithLine(doc, 'Result', margin, y, contentWidth, 16, [220, 53, 69]);
 
-      // Student Information
-      doc.setFontSize(14);
-      doc.setTextColor(52, 152, 219); // Blue
-      doc.text('THÔNG TIN HỌC SINH', margin, currentY);
-      currentY += 8;
+      doc.setFillColor(255, 235, 59);
+      doc.rect(margin, y, contentWidth, 20, 'F');
+      doc.setFontSize(18);
+      doc.setFont('Arimo', 'normal', 'bold'); // Sử dụng font Arimo
+      doc.setTextColor(183, 28, 28);
+      doc.text(`Mã tính cách: ${result.personalityCode || "Không xác định"}`, margin + 10, y + 13);
+      y += 30;
 
-      doc.setFontSize(11);
-      doc.setTextColor(44, 62, 80); // Dark
-      doc.text(`Họ và tên: ${userResults.fullName}`, margin, currentY);
-      currentY += 6;
-      doc.text(`Email: ${userResults.email}`, margin, currentY);
-      currentY += 6;
-      doc.text(`Ngày làm bài: ${this.formatDate(result.submittedAt)}`, margin, currentY);
-      currentY += 6;
-      doc.text(`Loại trắc nghiệm: ${result.quizType}`, margin, currentY);
-      currentY += 15;
 
-      // Quiz Results
-      doc.setFontSize(14);
-      doc.setTextColor(52, 152, 219); // Blue
-      doc.text('KẾT QUẢ TRẮC NGHIỆM', margin, currentY);
-      currentY += 8;
-
-      // Personality Code
-      if (result.personalityCode) {
-        doc.setFontSize(12);
-        doc.setTextColor(230, 126, 34); // Orange
-        doc.text(`Mã tính cách: ${result.personalityCode}`, margin, currentY);
-        currentY += 8;
-      }
-
-      // Nickname
       if (result.nickname) {
-        doc.setFontSize(11);
-        doc.setTextColor(44, 62, 80); // Dark
-        doc.text(`Biệt danh: ${result.nickname}`, margin, currentY);
-        currentY += 6;
+        y = this.addSection(doc, 'Nick name', result.nickname, margin, y, contentWidth, 14, 12, [46, 204, 113], [44, 62, 80]);
       }
-
-      // Key Traits
       if (result.keyTraits) {
-        doc.setFontSize(11);
-        doc.setTextColor(44, 62, 80); // Dark
-        doc.text('Đặc điểm nổi bật:', margin, currentY);
-        currentY += 6;
-        currentY = this.addMultilineText(doc, result.keyTraits, margin + 5, currentY, contentWidth - 5);
-        currentY += 5;
+        y = this.addSection(doc, 'Key traits ', result.keyTraits, margin, y, contentWidth, 14, 12, [155, 89, 182], [44, 62, 80]);
       }
-
-      // Description
       if (result.description) {
-        doc.setFontSize(11);
-        doc.setTextColor(44, 62, 80); // Dark
-        doc.text('Mô tả chi tiết:', margin, currentY);
-        currentY += 6;
-        currentY = this.addMultilineText(doc, result.description, margin + 5, currentY, contentWidth - 5);
-        currentY += 10;
+        y = this.addSection(doc, 'Description', result.description, margin, y, contentWidth, 14, 12, [52, 152, 219], [44, 62, 80]);
       }
-
-      // Career Recommendations
       if (result.careerRecommendations) {
-        // Check if we need a new page
-        if (currentY > pageHeight - 60) {
-          doc.addPage();
-          currentY = margin;
-        }
-
-        doc.setFontSize(12);
-        doc.setTextColor(46, 204, 113); // Green
-        doc.text('KHUYẾN NGHỊ NGHỀ NGHIỆP', margin, currentY);
-        currentY += 8;
-
-        doc.setFontSize(11);
-        doc.setTextColor(44, 62, 80); // Dark
-        currentY = this.addMultilineText(doc, result.careerRecommendations, margin + 5, currentY, contentWidth - 5);
-        currentY += 10;
+        y = this.addSection(doc, 'Career Recommendations', result.careerRecommendations, margin, y, contentWidth, 14, 12, [46, 204, 113], [44, 62, 80]);
       }
-
-      // University Recommendations
       if (result.universityRecommendations) {
-        // Check if we need a new page
-        if (currentY > pageHeight - 60) {
-          doc.addPage();
-          currentY = margin;
-        }
-
-        doc.setFontSize(12);
-        doc.setTextColor(155, 89, 182); // Purple
-        doc.text('KHUYẾN NGHỊ TRƯỜNG ĐẠI HỌC', margin, currentY);
-        currentY += 8;
-
-        doc.setFontSize(11);
-        doc.setTextColor(44, 62, 80); // Dark
-        currentY = this.addMultilineText(doc, result.universityRecommendations, margin + 5, currentY, contentWidth - 5);
-        currentY += 10;
+        y = this.addSection(doc, 'University Recommendations', result.universityRecommendations, margin, y, contentWidth, 14, 12, [155, 89, 182], [44, 62, 80]);
       }
 
-      // Scores
       if (result.scores && Object.keys(result.scores).length > 0) {
-        // Check if we need a new page
-        if (currentY > pageHeight - 80) {
+        if (y > pageHeight - 100) {
           doc.addPage();
-          currentY = margin;
+          y = 30;
         }
 
-        doc.setFontSize(12);
-        doc.setTextColor(231, 76, 60); // Red
-        doc.text('ĐIỂM SỐ CHI TIẾT', margin, currentY);
-        currentY += 8;
+        y = this.addHeaderWithLine(doc, 'Score', margin, y, contentWidth, 14, [231, 76, 60]);
 
+        doc.setFillColor(252, 252, 252);
+        const scoresHeight = Object.keys(result.scores).length * 10 + 10;
+        doc.rect(margin, y, contentWidth, scoresHeight, 'F');
+        
+        y += 8;
+        doc.setFont('Arimo', 'normal','bold'); // <-- Thay đổi
         doc.setFontSize(11);
-        doc.setTextColor(44, 62, 80); // Dark
-
-        Object.entries(result.scores).forEach(([category, score]) => {
-          doc.text(`${category}: ${score}`, margin + 5, currentY);
-          currentY += 6;
-        });
-        currentY += 10;
+        doc.setTextColor(44, 62, 80);
+        
+        for (const [category, score] of Object.entries(result.scores)) {
+          doc.setFont('Arimo', 'bold'); // <-- Thay đổi
+          doc.text(category, margin + 10, y);
+          doc.setFont('Arimo', 'normal'); // <-- Thay đổi
+          doc.text(`: ${score}`, margin + 100, y);
+          y += 8;
+        }
+        y += 10;
       }
 
-      // Footer
-      const footerY = pageHeight - 20;
-      doc.setFontSize(9);
-      doc.setTextColor(127, 140, 141); // Gray
-      doc.text('Báo cáo được tạo tự động bởi hệ thống trắc nghiệm tính cách', pageWidth / 2, footerY, { align: 'center' });
-      doc.text(`Ngày tạo: ${new Date().toLocaleDateString('vi-VN')}`, pageWidth / 2, footerY + 5, { align: 'center' });
+      const totalPages = doc.getNumberOfPages();
+      for (let i = 1; i <= totalPages; i++) {
+        doc.setPage(i);
+        
+        doc.setFillColor(245, 246, 250);
+        doc.rect(0, pageHeight - 25, pageWidth, 25, 'F');
+        
+        doc.setFontSize(9);
+        doc.setTextColor(127, 140, 141);
+        doc.text('Báo cáo được tạo tự động bởi hệ thống trắc nghiệm tính cách', pageWidth / 2, pageHeight - 15, { align: 'center' });
+        doc.text(`Ngày tạo: ${this.formatDate(new Date().toISOString())}`, pageWidth / 2, pageHeight - 8, { align: 'center' });
+        doc.text(`Trang ${i}/${totalPages}`, pageWidth - margin, pageHeight - 8, { align: 'right' });
+      }
 
-      // Generate filename
-      const filename = `ket-qua-trac-nghiem-${userResults.fullName.replace(/\s+/g, '-').toLowerCase()}-${result.id}.pdf`;
+const fullNameSafe = (userResults.fullName || userResults.email || "nguoi-dung").toString();
+const sanitizedName = fullNameSafe.normalize('NFD')
+  .replace(/[\u0300-\u036f]/g, '')
+  .replace(/[^a-zA-Z0-9\s]/g, '')
+  .replace(/\s+/g, '-')
+  .toLowerCase();
+const filename = `ket-qua-trac-nghiem-${sanitizedName}-${result.id}.pdf`;
       
-      // Save the PDF
       doc.save(filename);
-
-    } catch (error) {
-      console.error('Error generating PDF:', error);
+      
+    } catch (err) {
+      console.error('PDF Generation Error:', err);
       throw new Error('Không thể tạo file PDF. Vui lòng thử lại.');
     }
   }
 
-  public async downloadAllQuizResultsPDF(userResults: UserQuizResults): Promise<void> {
+  public async downloadAllQuizResultsPDF(userResults: UserQuizResults) {
     try {
-      // Create new PDF document
-      const doc = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4'
-      });
-
-      // Set up Vietnamese font (basic Latin characters)
-      doc.setFont('helvetica');
+      const doc = new jsPDF();
+      // Không cần đăng ký font tùy chỉnh nữa
+      doc.setFont('Arimo','normal','bold'); // <-- Đặt font mặc định
       
-      // Page margins
-      const margin = 20;
+      const margin = 25;
       const pageWidth = doc.internal.pageSize.width;
       const pageHeight = doc.internal.pageSize.height;
-      const contentWidth = pageWidth - 2 * margin;
+      const contentWidth = pageWidth - margin * 2;
+      let y = 30;
+
+      doc.setFontSize(24);
+      doc.setFont('Arimo','normal','bold'); // <-- Thay đổi
+      doc.setTextColor(31, 81, 255);
+      doc.text('Summary Report', pageWidth / 2, y, { align: 'center' });
+      y += 8;
       
-      let currentY = margin;
+      doc.setFontSize(16);
+      doc.setFont('Arimo', 'normal','bold'); // <-- Thay đổi
+      doc.setTextColor(127, 140, 141);
+      doc.text('Trắc nghiệm tính cách và phát triển nghề nghiệp', pageWidth / 2, y, { align: 'center' });
+      y += 20;
 
-      // Header
-      doc.setFontSize(20);
-      doc.setTextColor(44, 62, 80); // Dark blue
-      doc.text('BÁO CÁO TỔNG HỢP KẾT QUẢ TRẮC NGHIỆM', pageWidth / 2, currentY, { align: 'center' });
-      currentY += 15;
+      y = this.addHeaderWithLine(doc, 'Thông tin', margin, y, contentWidth, 16, [46, 125, 50]);
+      
+      doc.setFillColor(248, 249, 250);
+      doc.rect(margin, y, contentWidth, 45, 'F');
+      
+      y += 10;
+      y = this.addInfoRow(doc, 'Email:', userResults.email, margin + 10, y, contentWidth - 20);
+      y = this.addInfoRow(doc, 'Number of quiz:', `${userResults.results.length} bài trắc nghiệm`, margin + 10, y, contentWidth - 20);
+      y += 20;
 
-      // Divider line
-      doc.setLineWidth(0.5);
-      doc.setDrawColor(52, 152, 219); // Blue
-      doc.line(margin, currentY, pageWidth - margin, currentY);
-      currentY += 10;
+      y = this.addHeaderWithLine(doc, 'Result', margin, y, contentWidth, 16, [220, 53, 69]);
+      
+      doc.setFillColor(252, 252, 252);
+      doc.rect(margin, y, contentWidth, 80, 'F');
+      y += 10;
 
-      // Student Information
-      doc.setFontSize(14);
-      doc.setTextColor(52, 152, 219); // Blue
-      doc.text('THÔNG TIN HỌC SINH', margin, currentY);
-      currentY += 8;
+      const quizTypes = [...new Set(userResults.results.map(r => r.quizType))];
+      const personalityCodes = [...new Set(userResults.results.map(r => r.personalityCode))];
+      
+      y = this.addInfoRow(doc, 'Quiz types:', quizTypes.join(', '), margin + 10, y, contentWidth - 20);
+      y = this.addInfoRow(doc, 'Mã tính cách:', personalityCodes.join(', '), margin + 10, y, contentWidth - 20);
+      y = this.addInfoRow(doc, 'Date-Time:', `${this.formatDate(userResults.results[userResults.results.length - 1].submittedAt)} - ${this.formatDate(userResults.results[0].submittedAt)}`, margin + 10, y, contentWidth - 20);
+      y += 25;
 
-      doc.setFontSize(11);
-      doc.setTextColor(44, 62, 80); // Dark
-      doc.text(`Họ và tên: ${userResults.fullName}`, margin, currentY);
-      currentY += 6;
-      doc.text(`Email: ${userResults.email}`, margin, currentY);
-      currentY += 6;
-      doc.text(`Tổng số bài làm: ${userResults.results.length}`, margin, currentY);
-      currentY += 15;
-
-      // Process each result
-      userResults.results.forEach((result, index) => {
-        // Check if we need a new page
-        if (currentY > pageHeight - 100) {
+      for (let i = 0; i < userResults.results.length; i++) {
+        const result = userResults.results[i];
+        
+        if (y > pageHeight - 120) {
           doc.addPage();
-          currentY = margin;
+          y = 30;
         }
 
-        // Result header
+        doc.setFillColor(255, 255, 255);
+        doc.setDrawColor(220, 220, 220);
+        doc.rect(margin, y, contentWidth, 60, 'FD');
+        
+        y += 10;
+
         doc.setFontSize(14);
-        doc.setTextColor(52, 152, 219); // Blue
-        doc.text(`KẾT QUẢ ${index + 1}: ${result.quizType}`, margin, currentY);
-        currentY += 8;
+        doc.setFont('Arimo','normal','bold'); // <-- Thay đổi
+        doc.setTextColor(31, 81, 255);
+        doc.text(`${i + 1}. ${result.quizType}`, margin + 10, y);
+        y += 10;
 
-        doc.setFontSize(11);
-        doc.setTextColor(44, 62, 80); // Dark
-        doc.text(`Ngày làm bài: ${this.formatDate(result.submittedAt)}`, margin, currentY);
-        currentY += 6;
-
-        if (result.personalityCode) {
-          doc.setTextColor(230, 126, 34); // Orange
-          doc.text(`Mã tính cách: ${result.personalityCode}`, margin, currentY);
-          currentY += 6;
-        }
-
+        doc.setFont('Arimo','normal','bold'); // <-- Thay đổi
+        doc.setFontSize(10);
+        doc.setTextColor(85, 85, 85);
+        
+        doc.text(`Ngày: ${this.formatDate(result.submittedAt)}`, margin + 10, y);
+        doc.text(`Mã: ${result.personalityCode}`, margin + 10, y + 8);
+        
         if (result.nickname) {
-          doc.setTextColor(44, 62, 80); // Dark
-          doc.text(`Biệt danh: ${result.nickname}`, margin, currentY);
-          currentY += 6;
+          doc.text(`Nickname: ${result.nickname}`, margin + contentWidth/2, y);
         }
+        
+        y += 25;
 
-        if (result.description) {
-          doc.setTextColor(44, 62, 80); // Dark
-          doc.text('Mô tả:', margin, currentY);
-          currentY += 6;
-          currentY = this.addMultilineText(doc, result.description, margin + 5, currentY, contentWidth - 5, 5);
-          currentY += 5;
-        }
+        doc.setLineWidth(0.5);
+        doc.setDrawColor(230, 230, 230);
+        doc.line(margin, y, pageWidth - margin, y);
+        y += 15;
+      }
 
-        currentY += 10; // Space between results
-      });
+      const totalPages = doc.getNumberOfPages();
+      for (let i = 1; i <= totalPages; i++) {
+        doc.setPage(i);
+        
+        doc.setFillColor(245, 246, 250);
+        doc.rect(0, pageHeight - 25, pageWidth, 25, 'F');
+        
+        doc.setFontSize(9);
+        doc.setTextColor(127, 140, 141);
+        doc.text('Báo cáo tổng hợp được tạo tự động bởi hệ thống trắc nghiệm tính cách', pageWidth / 2, pageHeight - 15, { align: 'center' });
+        doc.text(`Ngày tạo: ${this.formatDate(new Date().toISOString())}`, pageWidth / 2, pageHeight - 8, { align: 'center' });
+        doc.text(`Trang ${i}/${totalPages}`, pageWidth - margin, pageHeight - 8, { align: 'right' });
+      }
 
-      // Footer
-      const footerY = pageHeight - 20;
-      doc.setFontSize(9);
-      doc.setTextColor(127, 140, 141); // Gray
-      doc.text('Báo cáo được tạo tự động bởi hệ thống trắc nghiệm tính cách', pageWidth / 2, footerY, { align: 'center' });
-      doc.text(`Ngày tạo: ${new Date().toLocaleDateString('vi-VN')}`, pageWidth / 2, footerY + 5, { align: 'center' });
-
-      // Generate filename
-      const filename = `tong-hop-ket-qua-${userResults.fullName.replace(/\s+/g, '-').toLowerCase()}.pdf`;
+      const sanitizedName = userResults.fullName.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '-').toLowerCase();
+      const filename = `bao-cao-tong-hop-${sanitizedName}.pdf`;
       
-      // Save the PDF
       doc.save(filename);
-
-    } catch (error) {
-      console.error('Error generating PDF:', error);
-      throw new Error('Không thể tạo file PDF. Vui lòng thử lại.');
+      
+    } catch (err) {
+      console.error('PDF Generation Error:', err);
+      throw new Error('Không thể tạo file PDF tổng hợp. Vui lòng thử lại.');
     }
   }
 }

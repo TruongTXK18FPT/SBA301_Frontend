@@ -22,13 +22,8 @@ const Event: React.FC = () => {
       setLoading(true);
       const response: PageEventOverviewResponse = await getEvents({
         name: searchTerm || undefined,
-        status: statusFilter || undefined,
-        page,
-        size: 12,
-        sortBy: 'startTime',
-        sortDirection: 'asc'
+        status: statusFilter || 'UPCOMING',
       });
-      
       setEvents(response.content);
       setTotalPages(response.totalPages);
       setTotalElements(response.totalElements);
@@ -50,13 +45,14 @@ const Event: React.FC = () => {
     loadEvents(0);
   };
 
-  const handleBookNow = (eventSlug: string) => {
+  const handleBookNow = (event: EventOverviewResponse) => {
+    console.log("slug event", event);
     // Navigate to booking page (you can implement this later)
-    navigate(`/events/${eventSlug}/book`);
+    // navigate(`/events/${eventSlug}/book`);
   };
 
-  const handleViewDetails = (eventId: number) => {
-    navigate(`/event-details/${eventId}`);
+  const handleViewDetails = (eventSlug: string) => {
+    navigate(`/events/${eventSlug}`);
   };
 
   const formatDate = (dateString?: string) => {
@@ -145,12 +141,9 @@ const Event: React.FC = () => {
                   onChange={(e) => setStatusFilter(e.target.value as EventStatus | '')}
                   className="event-page__filter-select"
                 >
-                  <option value="">Tất cả trạng thái</option>
                   <option value="UPCOMING">Sắp diễn ra</option>
                   <option value="ONGOING">Đang diễn ra</option>
                   <option value="COMPLETED">Đã hoàn thành</option>
-                  <option value="PENDING">Chờ duyệt</option>
-                  <option value="DRAFT">Bản nháp</option>
                 </select>
               </div>
             </div>
@@ -219,14 +212,14 @@ const Event: React.FC = () => {
 
                     <div className="event-page__event-actions">
                       <button
-                        onClick={() => handleViewDetails(event.id)}
+                        onClick={() => handleViewDetails(event.slug)}
                         className="event-page__btn event-page__btn--outline"
                       >
                         <FaEye />
                         Xem Chi Tiết
                       </button>
                       <button
-                        onClick={() => handleBookNow(event.slug)}
+                        onClick={() => handleBookNow(event)}
                         className="event-page__btn event-page__btn--primary"
                         disabled={event.status !== 'UPCOMING' && event.status !== 'ONGOING'}
                       >

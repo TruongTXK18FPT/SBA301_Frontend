@@ -1,0 +1,89 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Poppins:wght@400;600&display=swap');
+:root {
+  --primary-indigo: #3730a3;
+  --electric-blue: #2563eb;
+  --glass-bg: rgba(255,255,255,0.08);
+  --glass-border: rgba(255,255,255,0.15);
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+}
+.solutions-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 3rem 1rem 4rem 1rem;
+  font-family: 'Poppins', sans-serif;
+}
+.solutions-hero {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+.solutions-hero h1 {
+  font-family: 'Orbitron', monospace;
+  font-size: 2.5rem;
+  color: var(--electric-blue);
+  margin-bottom: 1rem;
+}
+.solutions-hero p {
+  color: var(--text-secondary);
+  font-size: 1.2rem;
+  line-height: 1.7;
+}
+.solutions-list {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-bottom: 3rem;
+}
+.solution-card {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 18px;
+  padding: 2rem 1.5rem;
+  min-width: 220px;
+  flex: 1 1 240px;
+  box-shadow: 0 8px 32px rgba(37,99,235,0.08);
+  text-align: center;
+  animation: fadeInUp 0.7s ease both;
+}
+.solution-card h2 {
+  color: var(--electric-blue);
+  font-size: 1.2rem;
+  margin-bottom: 0.7rem;
+  font-family: 'Orbitron', monospace;
+}
+.solution-card p {
+  color: var(--text-secondary);
+  font-size: 1.05rem;
+}
+.solutions-cta {
+  text-align: center;
+  margin-top: 2rem;
+}
+.btn-primary {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 0.9rem 2.2rem;
+  font-size: 1.1rem;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(37,99,235,0.12);
+  transition: background 0.2s, transform 0.1s;
+}
+.btn-primary:hover {
+  background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
+  transform: translateY(-2px);
+}
+@media (max-width: 700px) {
+  .solutions-list {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+}
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+} 

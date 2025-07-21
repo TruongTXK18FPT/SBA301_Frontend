@@ -1,28 +1,27 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+
 import { useNavigate } from 'react-router-dom';
 import {
   FaSearch,
   FaChild,
-  FaUniversity,
   FaTicketAlt,
   FaCreditCard,
   FaHistory,
   FaComments,
   FaChartLine,
-  FaBrain,
   FaUserGraduate,
+  FaArrowRight,
+  FaTimesCircle,
+  FaSpinner,
+  FaCheckCircle,
+  FaUser,
+  FaUsers,
+  FaUniversity,
+  FaBrain,
   FaCalendarAlt,
   FaShoppingCart,
   FaEye,
   FaDownload,
-  FaUsers,
-  FaUser,
-  FaCheckCircle,
-  FaTimesCircle,
-  FaSpinner,
-  FaArrowRight,
-  FaEnvelope,
   FaSignInAlt,
   FaSync
 } from 'react-icons/fa';
@@ -97,70 +96,6 @@ const ParentDashBoard: React.FC = () => {
   const [downloadAllLoading, setDownloadAllLoading] = useState(false);
   
   // Seminar and transaction data (would come from API in real implementation)
-  const [seminars] = useState<SeminarTicket[]>([
-    {
-      id: 1,
-      title: 'Hướng dẫn chọn ngành nghề phù hợp',
-      description: 'Seminar giúp phụ huynh hiểu cách định hướng nghề nghiệp cho con',
-      date: '2024-12-20',
-      time: '14:00',
-      location: 'Hội trường A - Đại học Bách Khoa',
-      price: 150000,
-      speaker: 'TS. Nguyễn Văn A',
-      category: 'Định hướng nghề nghiệp'
-    },
-    {
-      id: 2,
-      title: 'Tâm lý học phát triển con em',
-      description: 'Hiểu về tâm lý và cách nuôi dạy con hiệu quả',
-      date: '2024-12-25',
-      time: '09:00',
-      location: 'Trung tâm Hội nghị Quốc gia',
-      price: 200000,
-      speaker: 'ThS. Trần Thị B',
-      category: 'Tâm lý học'
-    }
-  ]);
-
-  const [transactions] = useState<Transaction[]>([
-    {
-      id: 1,
-      type: 'seminar',
-      title: 'Seminar Định hướng nghề nghiệp',
-      amount: 150000,
-      date: '2024-12-15',
-      status: 'completed',
-      description: 'Vé tham gia seminar hướng dẫn chọn ngành nghề'
-    },
-    {
-      id: 2,
-      type: 'premium',
-      title: 'Gói Premium 1 tháng',
-      amount: 99000,
-      date: '2024-12-10',
-      status: 'completed',
-      description: 'Nâng cấp tài khoản Premium'
-    }
-  ]);
-
-  const [universityChats] = useState<UniversityChat[]>([
-    {
-      id: 1,
-      universityName: 'Đại học Bách Khoa Hà Nội',
-      lastMessage: 'Chúng tôi có thể tư vấn về ngành Công nghệ thông tin...',
-      timestamp: '2024-12-16 10:30',
-      unreadCount: 2,
-      avatar: '🏫'
-    },
-    {
-      id: 2,
-      universityName: 'Đại học Kinh tế Quốc dân',
-      lastMessage: 'Cảm ơn bạn đã quan tâm đến trường chúng tôi',
-      timestamp: '2024-12-15 16:45',
-      unreadCount: 0,
-      avatar: '🎓'
-    }
-  ]);
 
   // Helper functions
   const checkAuthentication = () => {
@@ -264,7 +199,18 @@ const ParentDashBoard: React.FC = () => {
     if (!searchResults) return;
 
     setDownloadLoading(result.id);
-    try {
+    const careerText = Array.isArray(result.careerRecommendations)
+    ? result.careerRecommendations.join('\n\n')
+    : result.careerRecommendations || '';
+
+  const universityText = Array.isArray(result.universityRecommendations)
+    ? result.universityRecommendations.join('\n\n')
+    : result.universityRecommendations || '';
+    try {await pdfService.downloadQuizResultPDF(searchResults, {
+      ...result,
+      careerRecommendations: careerText,
+      universityRecommendations: universityText,
+    });
       await pdfService.downloadQuizResultPDF(searchResults, result);
       // You could show a success message here if needed
     } catch (error) {
@@ -288,30 +234,6 @@ const ParentDashBoard: React.FC = () => {
     } finally {
       setDownloadAllLoading(false);
     }
-  };
-
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.2
-      }
-    }
-  };
-
-  const openChatModal = (chat: UniversityChat) => {
-    setSelectedChat(chat);
-    // Initialize with some sample messages for the selected university
-    setChatMessages([
-      {
-        id: 1,
-        sender: 'university',
-        message: `Xin chào! Cảm ơn bạn đã liên hệ với ${chat.universityName}. Chúng tôi có thể hỗ trợ gì cho bạn?`,
-        timestamp: new Date().toISOString()
-      }
-    ]);
   };
 
   const closeChatModal = () => {
@@ -349,95 +271,35 @@ const ParentDashBoard: React.FC = () => {
     <div className="parent-dashboard">
       <div className="parent-dashboard-container">
         {/* Header */}
-        <motion.div 
-          className="dashboard-header"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-        >
-        <div className="header-content">
-          <div className="header-text">
-            <h1>
-              <FaUsers className="header-icon" />
-              Bảng Điều Khiển Phụ Huynh
-            </h1>
-            <p>Theo dõi tiến trình học tập và phát triển của con em</p>
-          </div>
-          <div className="header-stats">
-            <div className="stat-card">
-              <FaChild className="stat-icon" />
-              <div>
-                <span className="stat-number">1</span>
-                <span className="stat-label">Con em</span>
-              </div>
-            </div>
-            <div className="stat-card">
-              <FaChartLine className="stat-icon" />
-              <div>
-                <span className="stat-number">3</span>
-                <span className="stat-label">Bài test</span>
-              </div>
+        <div className="dashboard-header">
+          <div className="header-content">
+            <div className="header-text">
+              <h1>
+                <FaUsers className="header-icon" />
+                Bảng Điều Khiển Phụ Huynh
+              </h1>
+              <p>Theo dõi tiến trình học tập và phát triển của con em</p>
             </div>
           </div>
         </div>
-      </motion.div>
 
-      {/* Navigation Tabs */}
-      <motion.div 
-        className="dashboard-nav"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-      >
-        <div className="nav-tabs">
-          <button 
-            className={`nav-tab ${activeTab === 'search' ? 'active' : ''}`}
-            onClick={() => setActiveTab('search')}
-          >
-            <FaSearch />
-            <span>Tìm Kiếm Kết Quả</span>
-          </button>
-          <button 
-            className={`nav-tab ${activeTab === 'chat' ? 'active' : ''}`}
-            onClick={() => setActiveTab('chat')}
-          >
-            <FaComments />
-            <span>Chat Với Trường</span>
-          </button>
-          <button 
-            className={`nav-tab ${activeTab === 'seminars' ? 'active' : ''}`}
-            onClick={() => setActiveTab('seminars')}
-          >
-            <FaTicketAlt />
-            <span>Seminar</span>
-          </button>
-          <button 
-            className={`nav-tab ${activeTab === 'transactions' ? 'active' : ''}`}
-            onClick={() => setActiveTab('transactions')}
-          >
-            <FaHistory />
-            <span>Lịch Sử Giao Dịch</span>
-          </button>
-        </div>
-      </motion.div>
-
-      {/* Tab Content */}
-      <motion.div 
-        className="dashboard-content"
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-      >
-        <AnimatePresence mode="wait">
-          {activeTab === 'search' && (
-            <motion.div
-              key="search"
-              className="tab-content"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.3 }}
+        {/* Navigation Tabs */}
+        <div className="dashboard-nav">
+          <div className="nav-tabs">
+            <button 
+              className={`nav-tab ${activeTab === 'search' ? 'active' : ''}`}
+              onClick={() => setActiveTab('search')}
             >
+              <FaSearch />
+              <span>Tìm Kiếm Kết Quả</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Tab Content */}
+        <div className="dashboard-content">
+          {activeTab === 'search' && (
+            <div className="tab-content">
               <div className="search-section">
                 <div className="search-header">
                   <h2>
@@ -468,11 +330,7 @@ const ParentDashBoard: React.FC = () => {
                 </div>
 
                 {error && (
-                  <motion.div 
-                    className="error-message"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                  >
+                  <div className="error-message">
                     <div className="error-content">
                       <FaTimesCircle />
                       <span>{error}</span>
@@ -496,16 +354,11 @@ const ParentDashBoard: React.FC = () => {
                         Thử lại
                       </button>
                     </div>
-                  </motion.div>
+                  </div>
                 )}
 
                 {searchResults && searchResults.results && (
-                  <motion.div
-                    className="search-results"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2 }}
-                  >
+                  <div className="search-results">
                     <div className="results-header">
                       <div className="student-info">
                         <FaUserGraduate className="student-icon" />
@@ -539,14 +392,10 @@ const ParentDashBoard: React.FC = () => {
                     </div>
 
                     <div className="results-grid">
-                      {searchResults.results.map((result, index) => (
-                        <motion.div
+                      {searchResults.results.map((result) => (
+                        <div
                           key={result.id}
                           className="result-card"
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: index * 0.1 }}
-                          whileHover={{ y: -5, scale: 1.02 }}
                           onClick={() => setSelectedResult(result)}
                         >
                           <div className="result-header">
@@ -597,225 +446,24 @@ const ParentDashBoard: React.FC = () => {
                               )}
                             </button>
                           </div>
-                        </motion.div>
+                        </div>
                       ))}
                     </div>
-                  </motion.div>
+                  </div>
                 )}
               </div>
-            </motion.div>
+            </div>
           )}
 
-          {activeTab === 'chat' && (
-            <motion.div
-              key="chat"
-              className="tab-content"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.3 }}
-            >
-              <div className="chat-section">
-                <div className="section-header">
-                  <h2>
-                    <FaComments className="section-icon chat-section-icon" />
-                    Chat Với Trường Đại Học
-                  </h2>
-                  <p>Trao đổi trực tiếp với các trường đại học về cơ hội học tập</p>
-                </div>
-
-                <div className="chat-list">
-                  {universityChats.map((chat, index) => (
-                    <motion.div
-                      key={chat.id}
-                      className="chat-item"
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.1 }}
-                      whileHover={{ scale: 1.02 }}
-                      onClick={() => openChatModal(chat)}
-                    >
-                      <div className="chat-avatar">
-                        {chat.avatar}
-                      </div>
-                      <div className="chat-content">
-                        <div className="chat-header">
-                          <h3>{chat.universityName}</h3>
-                          <span className="chat-time">{chat.timestamp}</span>
-                        </div>
-                        <p className="chat-message">{chat.lastMessage}</p>
-                      </div>
-                      <div className="chat-actions">
-                        {chat.unreadCount > 0 && (
-                          <span className="unread-badge">{chat.unreadCount}</span>
-                        )}
-                        <button 
-                          className="chat-button parent-dashboard-chat-btn"
-                          onClick={() => openChatModal(chat)}
-                        >
-                          <FaArrowRight />
-                        </button>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              </div>
-            </motion.div>
-          )}
-
-          {activeTab === 'seminars' && (
-            <motion.div
-              key="seminars"
-              className="tab-content"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.3 }}
-            >
-              <div className="seminars-section">
-                <div className="section-header">
-                  <h2>
-                    <FaTicketAlt className="section-icon seminar-section-icon" />
-                    Seminar Dành Cho Phụ Huynh
-                  </h2>
-                  <p>Các buổi seminar giúp bạn hiểu rõ hơn về con em</p>
-                </div>
-
-                <div className="seminars-grid">
-                  {seminars.map((seminar, index) => (
-                    <motion.div
-                      key={seminar.id}
-                      className="seminar-card"
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.1 }}
-                      whileHover={{ y: -5, scale: 1.02 }}
-                    >
-                      <div className="seminar-header">
-                        <div className="seminar-category">
-                          {seminar.category}
-                        </div>
-                        <div className="seminar-price">
-                          {formatCurrency(seminar.price)}
-                        </div>
-                      </div>
-                      <div className="seminar-content">
-                        <h3>{seminar.title}</h3>
-                        <p>{seminar.description}</p>
-                        <div className="seminar-details">
-                          <div className="detail-item">
-                            <FaCalendarAlt />
-                            <span>{new Date(seminar.date).toLocaleDateString('vi-VN')} - {seminar.time}</span>
-                          </div>
-                          <div className="detail-item">
-                            <FaUniversity />
-                            <span>{seminar.location}</span>
-                          </div>
-                          <div className="detail-item">
-                            <FaUserGraduate />
-                            <span>{seminar.speaker}</span>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="seminar-actions">
-                        <button className="buy-button">
-                          <FaShoppingCart />
-                          Mua Vé
-                        </button>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              </div>
-            </motion.div>
-          )}
-
-          {activeTab === 'transactions' && (
-            <motion.div
-              key="transactions"
-              className="tab-content"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.3 }}
-            >
-              <div className="transactions-section">
-                <div className="section-header">
-                  <h2>
-                    <FaHistory className="section-icon transaction-section-icon" />
-                    Lịch Sử Giao Dịch
-                  </h2>
-                  <p>Theo dõi tất cả các giao dịch và thanh toán</p>
-                </div>
-
-                <div className="transactions-list">
-                  {transactions.map((transaction, index) => (
-                    <motion.div
-                      key={transaction.id}
-                      className="transaction-item"
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.1 }}
-                      whileHover={{ scale: 1.02 }}
-                    >
-                      <div className="transaction-icon">
-                        {transaction.type === 'seminar' ? <FaTicketAlt /> : <FaCreditCard />}
-                      </div>
-                      <div className="transaction-content">
-                        <div className="transaction-header">
-                          <h3>{transaction.title}</h3>
-                          <span className="transaction-amount">
-                            {formatCurrency(transaction.amount)}
-                          </span>
-                        </div>
-                        <p className="transaction-description">{transaction.description}</p>
-                        <div className="transaction-footer">
-                          <span className="transaction-date">
-                            {formatDate(transaction.date)}
-                          </span>
-                          <span className={`transaction-status ${transaction.status}`}>
-                            {transaction.status === 'completed' && <FaCheckCircle />}
-                            {transaction.status === 'pending' && <FaSpinner />}
-                            {transaction.status === 'failed' && <FaTimesCircle />}
-                            {(() => {
-                              switch (transaction.status) {
-                                case 'completed':
-                                  return 'Thành công';
-                                case 'pending':
-                                  return 'Đang xử lý';
-                                default:
-                                  return 'Thất bại';
-                              }
-                            })()}
-                          </span>
-                        </div>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </motion.div>
+          
+        
+      </div>
 
       {/* Enhanced Result Detail Modal */}
-      <AnimatePresence>
+      
         {selectedResult && (
-          <motion.div
-            className="modal-overlay"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setSelectedResult(null)}
-          >
-            <motion.div
-              className="modal-content"
-              initial={{ scale: 0.8, opacity: 0, y: 50 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.8, opacity: 0, y: 50 }}
-              onClick={(e) => e.stopPropagation()}
-            >
+          <div className="modal-overlay" onClick={() => setSelectedResult(null)}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
               <div className="modal-header">
                 <div className="modal-title">
                   <div className="modal-title-icon">
@@ -937,28 +585,15 @@ const ParentDashBoard: React.FC = () => {
                   </div>
                 </div>
               </div>
-            </motion.div>
-          </motion.div>
+            </div>
+          </div>
         )}
-      </AnimatePresence>
-
+      
       {/* Chat Modal */}
-      <AnimatePresence>
+      
         {selectedChat && (
-          <motion.div
-            className="modal-overlay chat-modal-overlay"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={closeChatModal}
-          >
-            <motion.div
-              className="modal-content chat-modal-content"
-              initial={{ scale: 0.8, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.8, opacity: 0, y: 20 }}
-              onClick={(e) => e.stopPropagation()}
-            >
+          <div className="modal-overlay chat-modal-overlay" onClick={closeChatModal}>
+            <div className="modal-content chat-modal-content" onClick={(e) => e.stopPropagation()}>
               <div className="modal-header chat-modal-header">
                 <div className="chat-modal-title">
                   <div className="chat-modal-avatar">
@@ -1014,10 +649,10 @@ const ParentDashBoard: React.FC = () => {
                   </button>
                 </div>
               </div>
-            </motion.div>
-          </motion.div>
+            </div>
+          </div>
         )}
-      </AnimatePresence>
+      
       </div>
     </div>
   );

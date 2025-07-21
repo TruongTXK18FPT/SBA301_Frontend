@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { FaGoogle } from "react-icons/fa";
+import { FaGoogle, FaEye, FaEyeSlash,FaLock,FaMailBulk } from "react-icons/fa";
 import { useNavigate, Link } from "react-router-dom";
 import Button from "../components/Button";
 import Alert from "../components/Alert";
@@ -9,6 +9,7 @@ import Login from "../assets/Login.mp4";
 import OAuthConfig from "../configurations/configuration";
 import { login, resendOtp, verifyOtp } from "../services/authService";
 import { getCurrentUser } from "../services/userService";
+import { getToken } from "../services/localStorageService";
 
 interface LoginPageProps {
   onLoginSuccess?: () => Promise<void>;
@@ -18,6 +19,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [alert, setAlert] = useState<{
     show: boolean;
     type: "success" | "error" | "warning";
@@ -36,6 +38,13 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
   const [otpSent, setOtpSent] = useState(false);
 
   const navigate = useNavigate();
+
+  React.useEffect(() => {
+    const token = getToken();
+    if (token) {
+      navigate("/", { replace: true }); // prevent going back to /login
+    }
+  }, []);
 
   // Auto-send OTP when verification screen is shown
   React.useEffect(() => {
@@ -252,10 +261,12 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
       {isLoading && (
         <LoadingSpinner
           size="medium"
-          message={showOtpVerification ? "Đang xử lý OTP..." : "Đang đăng nhập..."}
+          message={
+            showOtpVerification ? "Đang xử lý OTP..." : "Đang đăng nhập..."
+          }
         />
       )}
-      
+
       <video autoPlay muted loop className="login-background">
         <source src={Login} type="video/mp4" />
       </video>
@@ -274,12 +285,12 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
       <div className="login-form-container">
         <div className="login-form-card">
           <div className="login-header">
-            <h1 className="login-title">Chào Mừng Trở Lại</h1>
+            <h1 className="login-title">Chào mừng trở lại</h1>
             <p className="login-subtitle">
               Đăng nhập để khám phá tính cách của bạn
             </p>
           </div>
-          
+
           {!showOtpVerification ? (
             <form onSubmit={handleSubmit} className="login-form">
               <div className="form-group">
@@ -291,26 +302,48 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
                   required
                   className="login-form-input"
                 />
-                <div className="input-icon">📧</div>
+                <div className="input-icon">
+                  <FaMailBulk />
+                </div>
               </div>
 
               <div className="form-group">
                 <input
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   placeholder="Mật khẩu"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   className="login-form-input"
                 />
-                <div className="input-icon">🔒</div>
+                <div className="input-icon">
+                  <FaLock />
+                </div>
+                <button
+                  type="button"
+                  className="show-password-btn"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  tabIndex={-1}
+                  style={{
+                    position: "absolute",
+                    right: "1.2rem",
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    color: "#94a3b8",
+                    fontSize: "1.2rem",
+                    zIndex: 10,
+                  }}
+                  aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                >
+                  {showPassword ? <FaEyeSlash /> : <FaEye />}
+                </button>
               </div>
 
               <div className="form-options">
-                <label className="remember-me">
-                  <input type="checkbox" />
-                  <span>Ghi nhớ đăng nhập</span>
-                </label>
+                {/* Removed 'Ghi nhớ đăng nhập' and 'Xác thực tài khoản?' as requested */}
                 <div
                   style={{
                     display: "flex",
@@ -322,32 +355,6 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
                   <Link to="/forgot-password" className="forgot-password">
                     Quên mật khẩu?
                   </Link>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (email) {
-                        setUnverifiedEmail(email);
-                        setShowOtpVerification(true);
-                      } else {
-                        setAlert({
-                          show: true,
-                          type: "error",
-                          message: "Vui lòng nhập email trước",
-                          description: "Nhập email để xác thực tài khoản",
-                        });
-                      }
-                    }}
-                    className="forgot-password"
-                    style={{
-                      background: "none",
-                      border: "none",
-                      padding: 0,
-                      fontSize: "0.9rem",
-                      cursor: "pointer",
-                    }}
-                  >
-                    Xác thực tài khoản?
-                  </button>
                 </div>
               </div>
 
@@ -430,7 +437,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
               </form>
             </div>
           )}
-          
+
           {!showOtpVerification && (
             <div className="social-login">
               <div className="divider">
@@ -450,7 +457,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
               </div>
             </div>
           )}
-          
+
           <div className="register-link">
             Chưa có tài khoản? <Link to="/register">Đăng ký ngay</Link>
           </div>

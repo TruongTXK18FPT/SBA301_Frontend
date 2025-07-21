@@ -5,6 +5,8 @@ import { EventStatus, EventOverviewResponse } from '../components/event/dto/even
 import LoadingSpinner from '../components/LoadingSpinner';
 import Alert from '../components/Alert';
 import '../styles/EventManagerDashboard.css';
+import { useAtomValue } from 'jotai';
+import { userAtom } from '@/atom/atom';
 
 const EventManagerDashboard: React.FC = () => {
   const [events, setEvents] = useState<EventOverviewResponse[]>([]);
@@ -13,34 +15,50 @@ const EventManagerDashboard: React.FC = () => {
   const [alert, setAlert] = useState<{ type: 'success' | 'error' | 'warning' | 'info'; message: string } | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+
+  // Debounce search
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 400);
+    return () => clearTimeout(handler);
+  }, [searchTerm]);
+
+  const [statusFilter, setStatusFilter] = useState<string>('PENDING'); // Default: all
   const [sortBy, setSortBy] = useState<'name' | 'startTime' | 'status'>('startTime');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
-  
+  const user = useAtomValue(userAtom);
   const navigate = useNavigate();
 
   useEffect(() => {
+    if (!user?.id) return;
     fetchEvents();
-  }, [currentPage, searchTerm, statusFilter, sortBy, sortOrder]);
+    // eslint-disable-next-line
+  }, [user, currentPage, debouncedSearchTerm, statusFilter, sortBy, sortOrder]);
 
   const fetchEvents = async () => {
     try {
       setLoading(true);
-      const params = {
-        page: currentPage,
+      setError(null);
+      const params: any = {
+        page: currentPage - 1,
         size: 12,
-        name: searchTerm || undefined,
-        status: statusFilter as EventStatus || undefined,
-        sortBy: 'startTime',
-        sortDirection: sortOrder
+        name: debouncedSearchTerm || undefined,
+        sortBy,
+        sortDirection: sortOrder,
+        organizerId: user?.id || undefined,
       };
-      
+      // Chỉ truyền status nếu có filter
+      if (statusFilter) params.status = statusFilter as EventStatus;
+
       const response = await eventService.getEvents(params);
       setEvents(response.content || []);
       setTotalPages(response.totalPages || 1);
     } catch (err: any) {
       setError('Không thể tải danh sách sự kiện. Vui lòng thử lại.');
+      setEvents([]);
       console.error('Error fetching events:', err);
     } finally {
       setLoading(false);
@@ -48,23 +66,18 @@ const EventManagerDashboard: React.FC = () => {
   };
 
   const handleDeleteEvent = async (eventId: number) => {
-    if (!window.confirm('Bạn có chắc chắn muốn xóa sự kiện này?')) {
-      return;
-    }
-
+    if (!window.confirm('Bạn có chắc chắn muốn xóa sự kiện này?')) return;
     try {
       await eventService.deleteEvent(eventId);
       setAlert({ type: 'success', message: 'Đã xóa sự kiện thành công!' });
       fetchEvents();
     } catch (err: any) {
-      console.error('Delete error:', err);
       setAlert({ type: 'error', message: 'Không thể xóa sự kiện. Vui lòng thử lại.' });
     }
   };
 
   const getStatusBadge = (status: string) => {
     const statusMap = {
-      'DRAFT': { text: 'Bản nháp', class: 'draft' },
       'PENDING': { text: 'Chờ duyệt', class: 'pending' },
       'UPCOMING': { text: 'Sắp diễn ra', class: 'approved' },
       'ONGOING': { text: 'Đang diễn ra', class: 'ongoing' },
@@ -72,9 +85,7 @@ const EventManagerDashboard: React.FC = () => {
       'REJECTED': { text: 'Từ chối', class: 'rejected' },
       'CANCELLED': { text: 'Đã hủy', class: 'cancelled' }
     };
-    
     const statusInfo = statusMap[status as keyof typeof statusMap] || { text: status, class: 'draft' };
-    
     return (
       <span className={`event-manager-dashboard__status-badge event-manager-dashboard__status-badge--${statusInfo.class}`}>
         {statusInfo.text}
@@ -85,26 +96,17 @@ const EventManagerDashboard: React.FC = () => {
   const formatDate = (dateString?: string) => {
     if (!dateString) return 'Chưa có thông tin';
     const date = new Date(dateString);
-    return date.toLocaleDateString('vi-VN', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    const dayNames = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+    const dayName = dayNames[date.getDay()];
+    const time = date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false });
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = date.getMonth() + 1;
+    const year = date.getFullYear();
+    return `${time}, ${dayName}, ${day} tháng ${month.toString().padStart(2, '0')} ${year}`;
   };
 
-  const formatPrice = (price?: number) => {
-    if (!price) return 'Miễn phí';
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND'
-    }).format(price);
-  };
-
-  if (loading) {
-    return <LoadingSpinner />;
-  }
+  if (!user) return <LoadingSpinner message="Đang tải dữ liệu tài khoản..." />;
+  if (loading) return <LoadingSpinner />;
 
   return (
     <div className="event-manager-dashboard">
@@ -120,7 +122,7 @@ const EventManagerDashboard: React.FC = () => {
               Quản lý và theo dõi tất cả các sự kiện của bạn một cách dễ dàng
             </p>
           </div>
-          <button 
+          <button
             className="event-manager-dashboard__create-btn"
             onClick={() => navigate('/event-manager/create')}
           >
@@ -142,7 +144,7 @@ const EventManagerDashboard: React.FC = () => {
         {error && (
           <div className="event-manager-dashboard__error-message">
             <p>{error}</p>
-            <button 
+            <button
               onClick={fetchEvents}
               className="event-manager-dashboard__retry-button"
             >
@@ -161,7 +163,7 @@ const EventManagerDashboard: React.FC = () => {
                   type="text"
                   placeholder="Tìm kiếm sự kiện..."
                   value={searchTerm}
-                  onChange={(e) => {
+                  onChange={e => {
                     setSearchTerm(e.target.value);
                     setCurrentPage(1);
                   }}
@@ -169,18 +171,15 @@ const EventManagerDashboard: React.FC = () => {
                 />
               </div>
             </div>
-            
             <div className="event-manager-dashboard__filter-group">
               <select
                 value={statusFilter}
-                onChange={(e) => {
+                onChange={e => {
                   setStatusFilter(e.target.value);
                   setCurrentPage(1);
                 }}
                 className="event-manager-dashboard__filter-select"
               >
-                <option value="">Tất cả trạng thái</option>
-                <option value="DRAFT">Bản nháp</option>
                 <option value="PENDING">Chờ duyệt</option>
                 <option value="UPCOMING">Sắp diễn ra</option>
                 <option value="ONGOING">Đang diễn ra</option>
@@ -189,11 +188,10 @@ const EventManagerDashboard: React.FC = () => {
                 <option value="CANCELLED">Đã hủy</option>
               </select>
             </div>
-
             <div className="event-manager-dashboard__sort-group">
               <select
                 value={`${sortBy}-${sortOrder}`}
-                onChange={(e) => {
+                onChange={e => {
                   const [field, order] = e.target.value.split('-');
                   setSortBy(field as 'name' | 'startTime' | 'status');
                   setSortOrder(order as 'asc' | 'desc');
@@ -205,41 +203,7 @@ const EventManagerDashboard: React.FC = () => {
                 <option value="startTime-asc">Cũ nhất</option>
                 <option value="name-asc">Tên A-Z</option>
                 <option value="name-desc">Tên Z-A</option>
-                <option value="status-asc">Trạng thái A-Z</option>
-                <option value="status-desc">Trạng thái Z-A</option>
               </select>
-            </div>
-          </div>
-        </div>
-
-        {/* Stats Cards */}
-        <div className="event-manager-dashboard__stats-grid">
-          <div className="event-manager-dashboard__stat-card">
-            <div className="event-manager-dashboard__stat-icon">📊</div>
-            <div className="event-manager-dashboard__stat-content">
-              <h3>{events.length}</h3>
-              <p>Tổng số sự kiện</p>
-            </div>
-          </div>
-          <div className="event-manager-dashboard__stat-card">
-            <div className="event-manager-dashboard__stat-icon">✅</div>
-            <div className="event-manager-dashboard__stat-content">
-              <h3>{events.filter(e => e.status === 'UPCOMING' || e.status === 'ONGOING').length}</h3>
-              <p>Đang hoạt động</p>
-            </div>
-          </div>
-          <div className="event-manager-dashboard__stat-card">
-            <div className="event-manager-dashboard__stat-icon">⏳</div>
-            <div className="event-manager-dashboard__stat-content">
-              <h3>{events.filter(e => e.status === 'PENDING').length}</h3>
-              <p>Chờ duyệt</p>
-            </div>
-          </div>
-          <div className="event-manager-dashboard__stat-card">
-            <div className="event-manager-dashboard__stat-icon">📝</div>
-            <div className="event-manager-dashboard__stat-content">
-              <h3>{events.filter(e => e.status === 'DRAFT').length}</h3>
-              <p>Bản nháp</p>
             </div>
           </div>
         </div>
@@ -248,8 +212,12 @@ const EventManagerDashboard: React.FC = () => {
         {events.length > 0 ? (
           <>
             <div className="event-manager-dashboard__events-grid">
-              {events.map((event) => (
-                <div key={event.id} className="event-manager-dashboard__event-card">
+              {events.map(event => (
+                <div
+                  key={event.id}
+                  className="event-manager-dashboard__event-card"
+                  onClick={() => navigate(`/organizer/events/${event.id}`)}
+                >
                   <div className="event-manager-dashboard__event-image">
                     {event.bannerUrl ? (
                       <img src={event.bannerUrl} alt={event.name} />
@@ -258,14 +226,9 @@ const EventManagerDashboard: React.FC = () => {
                         <span>🎪</span>
                       </div>
                     )}
-                    <div className="event-manager-dashboard__status-overlay">
-                      {getStatusBadge(event.status)}
-                    </div>
                   </div>
-                  
                   <div className="event-manager-dashboard__event-content">
                     <h3 className="event-manager-dashboard__event-title">{event.name}</h3>
-                    
                     <div className="event-manager-dashboard__event-meta">
                       {event.startTime && (
                         <div className="event-manager-dashboard__meta-item">
@@ -273,42 +236,13 @@ const EventManagerDashboard: React.FC = () => {
                           <span>{formatDate(event.startTime)}</span>
                         </div>
                       )}
-                      {event.price && (
-                        <div className="event-manager-dashboard__meta-item">
-                          <span className="event-manager-dashboard__meta-icon">💰</span>
-                          <span>{formatPrice(event.price)}</span>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="event-manager-dashboard__event-actions">
-                      <button
-                        onClick={() => navigate(`/event-details/${event.slug}`)}
-                        className="event-manager-dashboard__btn event-manager-dashboard__btn--outline"
-                      >
-                        <span>👁️</span>
-                        Xem
-                      </button>
-                      <button
-                        onClick={() => navigate(`/event-manager/edit/${event.id}`)}
-                        className="event-manager-dashboard__btn event-manager-dashboard__btn--primary"
-                      >
-                        <span>✏️</span>
-                        Chỉnh sửa
-                      </button>
-                      <button
-                        onClick={() => handleDeleteEvent(event.id)}
-                        className="event-manager-dashboard__btn event-manager-dashboard__btn--danger"
-                      >
-                        <span>🗑️</span>
-                        Xóa
-                      </button>
                     </div>
                   </div>
+                  {/* Add a delete button per event if needed */}
+                  {/* <button onClick={e => {e.stopPropagation(); handleDeleteEvent(event.id)}}>Xóa</button> */}
                 </div>
               ))}
             </div>
-
             {/* Pagination */}
             {totalPages > 1 && (
               <div className="event-manager-dashboard__pagination">
@@ -319,7 +253,6 @@ const EventManagerDashboard: React.FC = () => {
                 >
                   ← Trước
                 </button>
-                
                 <div className="event-manager-dashboard__pagination-numbers">
                   {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
                     <button
@@ -331,7 +264,6 @@ const EventManagerDashboard: React.FC = () => {
                     </button>
                   ))}
                 </div>
-                
                 <button
                   onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                   disabled={currentPage === totalPages}
@@ -347,7 +279,7 @@ const EventManagerDashboard: React.FC = () => {
             <div className="event-manager-dashboard__no-events-icon">📭</div>
             <h3>Chưa có sự kiện nào</h3>
             <p>Bạn chưa tạo sự kiện nào. Hãy bắt đầu bằng cách tạo sự kiện đầu tiên!</p>
-            <button 
+            <button
               onClick={() => navigate('/event-manager/create')}
               className="event-manager-dashboard__btn event-manager-dashboard__btn--primary"
             >

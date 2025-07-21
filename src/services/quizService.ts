@@ -62,13 +62,16 @@ export interface QuizSubmissionData {
 }
 
 export interface QuizResult {
+  id: number;
   personalityCode: string;
   nickname?: string;
   keyTraits?: string;
   description: string;
   careerRecommendations?: string;
-  scores?: Record<string, number>;
   universityRecommendations?: string;
+  scores?: Record<string, number>;
+  submittedAt: string;
+  quizType: string;
 }
 
 // Quiz Management Types
@@ -81,14 +84,7 @@ export interface QuizData {
   categoryName?: string;
 }
 
-export interface QuizCreateRequest {
-  title: string;
-  categoryId: number;
-  description: string;
-  questionQuantity: number;
-}
-
-export interface QuizUpdateRequest {
+export interface QuizRequestDTO {
   title: string;
   categoryId: number;
   description: string;
@@ -123,6 +119,22 @@ export interface QuizOptionResponse {
   optionText: string;
   targetTrait?: string;
   scoreValue: number;
+  questionId: number;
+}
+
+// Add new interfaces for quiz options management
+export interface QuizOptionsDTO {
+  id?: number;
+  optionText: string;
+  targetTrait?: string;
+  scoreValue: 'NEGATIVE_ONE' | 'ZERO' | 'POSITIVE_ONE' | 'DISC_TWO';
+  questionId: number;
+}
+
+export interface QuizOptionUpdateRequest {
+  optionText: string;
+  targetTrait?: string;
+  scoreValue: 'NEGATIVE_ONE' | 'ZERO' | 'POSITIVE_ONE' | 'DISC_TWO';
   questionId: number;
 }
 
@@ -482,7 +494,6 @@ class QuizService {
       if (!response) {
         throw new Error('No response received from server');
       }
-
       // Transform the response to match expected format
       return {
         userId: response.userId,
@@ -504,7 +515,105 @@ class QuizService {
       throw error;
     }
   }
+  // Get quiz results by ID for management
+  async getMyQuizResults(): Promise<{
+  userId: string;
+  email: string;
+  fullName: string;
+  results: Array<{
+    id: number;
+    personalityCode: string;
+    nickname?: string;
+    keyTraits?: string;
+    description: string;
+    careerRecommendations?: string;
+    universityRecommendations?: string;
+    scores?: Record<string, number>;
+    submittedAt: string;
+    quizType: string;
+  }>;
+}> {
+  try {
+    const response = await this.fetchAPI<{
+      userId: string;
+      email: string;
+      fullName: string;
+      quizResults: Array<{
+        resultId: number;
+        personalityCode?: string;
+        resultType: string;
+        personalityName?: string;
+        personalityDescription?: string;
+        timeSubmit: string;
+        resultJson?: string;
+      }>;
+    }>('/quiz-results/user/me');
 
+    if (!response) {
+      throw new Error('No response received from server');
+    }
+    return {
+      userId: response.userId,
+      email: response.email,
+      fullName: response.fullName,
+      results: response.quizResults?.map(result => ({
+        id: result.resultId,
+        personalityCode: result.personalityCode || result.resultType,
+        nickname: result.personalityName,
+        description: result.personalityDescription || '',
+        submittedAt: result.timeSubmit,
+        quizType: result.resultType,
+        ...(result.resultJson ? JSON.parse(result.resultJson) : {})
+      })) || []
+    };
+  } catch (error) {
+    console.error('API request failed:', error);
+    throw error;
+  }
+}
+  /**
+   * Get detailed quiz result by ID
+   * @param resultId The ID of the quiz result to fetch
+   * @returns A promise that resolves to the quiz result details
+   */
+  async getQuizResultById(resultId: number): Promise<QuizResult> {
+    try {
+      // Fetch the detailed result from the backend
+      const response = await this.fetchAPI<{
+        resultId: number;
+        personalityCode?: string;
+        resultType: string;
+        personalityName?: string;
+        personalityDescription?: string;
+        timeSubmit: string;
+        resultJson?: string;
+      }>(`/quiz-results/${resultId}`);
+
+      if (!response) {
+        throw new Error('No response received from server');
+      }
+
+      // Parse the resultJson if it exists
+      const jsonData = response.resultJson ? JSON.parse(response.resultJson) : {};
+      
+      // Map the response to the QuizResult interface
+      return {
+        id: response.resultId,
+        personalityCode: response.personalityCode || response.resultType || 'N/A',
+        nickname: response.personalityName || jsonData.nickname || 'N/A',
+        keyTraits: jsonData.keyTraits || jsonData.traits || 'N/A',
+        description: response.personalityDescription || jsonData.description || 'No description available',
+        careerRecommendations: jsonData.careerRecommendations || jsonData.careers || 'N/A',
+        universityRecommendations: jsonData.universityRecommendations || jsonData.universities || 'N/A',
+        scores: jsonData.scores || {},
+        submittedAt: response.timeSubmit,
+        quizType: response.resultType
+      };
+    } catch (error) {
+      console.error('Failed to fetch quiz result details:', error);
+      throw error;
+    }
+  }
   // Get all quizzes for management
   async getAllQuizzes(): Promise<QuizData[]> {
     return this.fetchAPI<QuizData[]>('/quiz', {}, this.DEFAULT_CACHE_TTL);
@@ -522,32 +631,13 @@ class QuizService {
     }
   }
 
-  // Create new quiz
-  async createQuiz(quizData: QuizCreateRequest): Promise<QuizData> {
-    // Clear cache after creating
-    this.cache.clear();
-    return this.fetchAPI<QuizData>('/quiz', {
-      method: 'POST',
-      data: quizData
-    });
-  }
-
   // Update existing quiz
-  async updateQuiz(quizId: number, quizData: QuizUpdateRequest): Promise<QuizData> {
+  async updateQuiz(quizId: number, quizData: QuizRequestDTO): Promise<QuizData> {
     // Clear cache after updating
     this.cache.clear();
     return this.fetchAPI<QuizData>(`/quiz/${quizId}`, {
       method: 'PUT',
       data: quizData
-    });
-  }
-
-  // Delete quiz
-  async deleteQuiz(quizId: number): Promise<void> {
-    // Clear cache after deleting
-    this.cache.clear();
-    return this.fetchAPI<void>(`/quiz/${quizId}`, {
-      method: 'DELETE'
     });
   }
 
@@ -571,6 +661,10 @@ class QuizService {
     return this.fetchAPI<QuizQuestionResponse[]>(`/quiz-questions/quiz/${quizId}`, {}, this.DEFAULT_CACHE_TTL);
   }
 
+  async getQuizQuestionById(questionId: number): Promise<QuizQuestionResponse> {
+  return quizService.fetchAPI<QuizQuestionResponse>(`/quiz-questions/${questionId}`);
+}
+
   // Update quiz question
   async updateQuizQuestion(questionId: number, questionData: QuizQuestionCreateRequest): Promise<QuizQuestionResponse> {
     this.cache.clear();
@@ -586,6 +680,141 @@ class QuizService {
     return this.fetchAPI<void>(`/quiz-questions/${questionId}`, {
       method: 'DELETE'
     });
+  }
+
+  // === Quiz Options Management Functions ===
+
+  // Get options by question ID
+  async getOptionsByQuestionId(questionId: number): Promise<QuizOptionsDTO[]> {
+    return this.fetchAPI<QuizOptionsDTO[]>(`/quiz-options/question/${questionId}`, {}, this.DEFAULT_CACHE_TTL);
+  }
+
+  // Get options by multiple question IDs
+  async getOptionsByQuestionIds(questionIds: number[]): Promise<QuizOptionsDTO[]> {
+    return this.fetchAPI<QuizOptionsDTO[]>(`/quiz-options/questions?questionIds=${questionIds.join(',')}`, {}, this.DEFAULT_CACHE_TTL);
+  }
+
+  // Get specific option by ID
+  async getOptionById(optionId: number): Promise<QuizOptionsDTO> {
+    return this.fetchAPI<QuizOptionsDTO>(`/quiz-options/${optionId}`, {}, this.DEFAULT_CACHE_TTL);
+  }
+
+  // Create a new quiz option
+  async createQuizOption(optionData: QuizOptionsDTO): Promise<QuizOptionsDTO> {
+    this.cache.clear();
+    return this.fetchAPI<QuizOptionsDTO>('/quiz-options', {
+      method: 'POST',
+      data: optionData
+    });
+  }
+
+  // Create multiple quiz options
+  async createQuizOptions(optionsData: QuizOptionsDTO[]): Promise<QuizOptionsDTO[]> {
+    this.cache.clear();
+    return this.fetchAPI<QuizOptionsDTO[]>('/quiz-options/bulk', {
+      method: 'POST',
+      data: optionsData
+    });
+  }
+
+  // Update a quiz option
+  async updateQuizOption(optionId: number, optionData: QuizOptionUpdateRequest): Promise<QuizOptionsDTO> {
+    this.cache.clear();
+    return this.fetchAPI<QuizOptionsDTO>(`/quiz-options/${optionId}`, {
+      method: 'PUT',
+      data: optionData
+    });
+  }
+
+  // Delete a quiz option
+  async deleteQuizOption(optionId: number): Promise<void> {
+    this.cache.clear();
+    return this.fetchAPI<void>(`/quiz-options/${optionId}`, {
+      method: 'DELETE'
+    });
+  }
+
+  // Delete all options for a question
+  async deleteOptionsByQuestionId(questionId: number): Promise<void> {
+    this.cache.clear();
+    return this.fetchAPI<void>(`/quiz-options/question/${questionId}`, {
+      method: 'DELETE'
+    });
+  }
+
+  // Get options by target trait
+  async getOptionsByTargetTrait(targetTrait: string): Promise<QuizOptionsDTO[]> {
+    return this.fetchAPI<QuizOptionsDTO[]>(`/quiz-options/target-trait/${targetTrait}`, {}, this.DEFAULT_CACHE_TTL);
+  }
+
+  // Get options by score value
+  async getOptionsByScoreValue(scoreValue: 'NEGATIVE_ONE' | 'ZERO' | 'POSITIVE_ONE' | 'DISC_TWO'): Promise<QuizOptionsDTO[]> {
+    return this.fetchAPI<QuizOptionsDTO[]>(`/quiz-options/score-value/${scoreValue}`, {}, this.DEFAULT_CACHE_TTL);
+  }
+
+  // Count options for a question
+  async countOptionsByQuestionId(questionId: number): Promise<{ count: number }> {
+    return this.fetchAPI<{ count: number }>(`/quiz-options/question/${questionId}/count`, {}, this.DEFAULT_CACHE_TTL);
+  }
+
+  // Check if option exists
+  async optionExists(optionId: number): Promise<{ exists: boolean }> {
+    return this.fetchAPI<{ exists: boolean }>(`/quiz-options/${optionId}/exists`, {}, this.DEFAULT_CACHE_TTL);
+  }
+
+  // Get available score values
+  async getAvailableScoreValues(): Promise<('NEGATIVE_ONE' | 'ZERO' | 'POSITIVE_ONE' | 'DISC_TWO')[]> {
+    return this.fetchAPI<('NEGATIVE_ONE' | 'ZERO' | 'POSITIVE_ONE' | 'DISC_TWO')[]>('/quiz-options/score-values', {}, this.DEFAULT_CACHE_TTL);
+  }
+
+  // === Helper Functions for Quiz Types ===
+
+  // Get appropriate score values based on quiz type
+  getScoreValuesForQuizType(isDiscQuiz: boolean): { value: 'NEGATIVE_ONE' | 'ZERO' | 'POSITIVE_ONE' | 'DISC_TWO', label: string, numericValue: number }[] {
+    if (isDiscQuiz) {
+      return [
+        { value: 'DISC_TWO', label: 'Most Like Me (2)', numericValue: 2 }
+      ];
+    } else {
+      // MBTI quiz
+      return [
+        { value: 'NEGATIVE_ONE', label: 'Disagree (-1)', numericValue: -1 },
+        { value: 'ZERO', label: 'Neutral (0)', numericValue: 0 },
+        { value: 'POSITIVE_ONE', label: 'Agree (1)', numericValue: 1 }
+      ];
+    }
+  }
+
+  // Get appropriate traits based on quiz type
+  getTraitsForQuizType(isDiscQuiz: boolean): string[] {
+    if (isDiscQuiz) {
+      return ['D', 'I', 'S', 'C'];
+    } else {
+      // MBTI quiz
+      return ['E', 'I', 'S', 'N', 'T', 'F', 'J', 'P'];
+    }
+  }
+
+  // Convert score value enum to numeric value
+  convertScoreValueToNumber(scoreValue: 'NEGATIVE_ONE' | 'ZERO' | 'POSITIVE_ONE' | 'DISC_TWO'): number {
+    switch (scoreValue) {
+      case 'NEGATIVE_ONE': return -1;
+      case 'ZERO': return 0;
+      case 'POSITIVE_ONE': return 1;
+      case 'DISC_TWO': return 2;
+      default: return 0;
+    }
+  }
+
+  // Convert numeric value to score value enum
+  convertNumberToScoreValue(numericValue: number): 'NEGATIVE_ONE' | 'ZERO' | 'POSITIVE_ONE' | 'DISC_TWO' {
+    switch (numericValue) {
+      case -1: return 'NEGATIVE_ONE';
+      case 0: return 'ZERO';
+      case 1: return 'POSITIVE_ONE';
+      case 2: return 'DISC_TWO';
+      default: return 'ZERO';
+    }
   }
 }
 

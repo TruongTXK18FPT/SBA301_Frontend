@@ -362,12 +362,12 @@ const TicketPage: React.FC = () => {
 
             {/* Ticket Footer */}
             <div className="ticket-footer">
-              <div className="footer-content">
-                <p className="footer-text">
+              <div className="ticket-footer-content">
+                <p className="ticket-footer-text">
                   Cảm ơn bạn đã đăng ký tham gia sự kiện! 
                   Chúng tôi rất mong được gặp bạn tại sự kiện.
                 </p>
-                <div className="footer-branding">
+                <div className="ticket-footer-branding">
                   <span>🎪 PersonalityQuiz Events</span>
                 </div>
               </div>

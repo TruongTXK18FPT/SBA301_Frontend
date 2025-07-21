@@ -20,7 +20,8 @@ import EventManagerDashboard from "./pages/EventManagerDashboard";
 import EventCreationForm from "./components/event/EventCreationForm";
 import EventDetails from "./pages/EventDetails";
 import Ticket from "./pages/Ticket";
-
+import Order from "./pages/Order";
+import PremiumGuard from "./components/PremiumGuard";
 import { getToken, removeToken } from "./services/localStorageService";
 import { getCurrentUser } from "./services/userService";
 import ChatAi from "./pages/ChatAi";
@@ -28,7 +29,19 @@ import { logOut } from "./services/authService";
 import { useSetAtom } from "jotai";
 import { subscriptionAtom, userAtom } from "./atom/atom";
 import { getSubscriptions } from "./services/premiumService";
-
+import PersonalityPage from "./pages/PersonalityPages";
+import MyResult from "./pages/MyResult";
+import EventPublicDetail from "./components/event/EventPublicDetail";
+import EventPrivateDetail from "./components/event/EventPrivateDetail";
+import ShowtimeTickets from "./components/event/ShowtimeTickets";
+import About from "./pages/About";
+import Careers from "./pages/Careers";
+import Contact from "./pages/Contact";
+import Products from "./pages/Products";
+import Solutions from "./pages/Solutions";
+import Support from "./pages/Support";
+import QuizTakingPage from "./pages/QuizTakingPage";
+import QuizResultPage from "./pages/QuizResultPage";
 interface User {
   id: string;
   email: string;
@@ -64,14 +77,12 @@ function App() {
           // Try to fetch user data directly instead of validating token first
           const userData = await getCurrentUser();
           
-          console.log("User data retrieved:", userData);
-          console.log("User role:", userData?.role);
           setUser(userData);
           setUserAtom(userData);
           setIsAuthenticated(true);
           
           // Try to fetch subscription data only for non-admin users
-          if (userData?.role?.toLowerCase() !== 'admin') {
+          if (userData?.role?.toLowerCase() == 'student') {
             try {
               const subscriptionData = await getSubscriptions(
                 { 
@@ -81,12 +92,10 @@ function App() {
               );
               setSubscriptionAtom(subscriptionData);
             } catch (subscriptionError) {
-              console.warn("Could not fetch subscription data:", subscriptionError);
               // Don't break authentication flow if subscription fails
             }
           }
         } catch (error) {
-          console.error("Failed to initialize authentication:", error);
           // Only remove token if the error indicates invalid authentication
           if (error instanceof Error && (error.message.includes('401') || error.message.includes('403'))) {
             removeToken();
@@ -95,7 +104,6 @@ function App() {
           setUser(null);
         }
       } else {
-        console.log("No token found, user not authenticated");
         setIsAuthenticated(false);
         setUser(null);
       }
@@ -111,7 +119,8 @@ function App() {
     try {
       await logOut();
     } catch (error) {
-      console.error("Logout failed on backend", error);
+      // Logout failed silently
+      // Error is not critical as we're still proceeding with client-side logout
     } finally {
       removeToken();
       setIsAuthenticated(false);
@@ -137,7 +146,6 @@ function App() {
       setUser(userData);
       setIsAuthenticated(true);
     } catch (error) {
-      console.error("Failed to fetch user data after login:", error);
       throw new Error("Failed to fetch user data after login");
     }
   };
@@ -180,10 +188,20 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/register" element={<Register />} />
           <Route path="/premium" element={<PremiumPage isAuthenticated={isAuthenticated} />} />
+          <Route path="/personality" element={<PersonalityPage />} />
+          <Route path="/my-result" element={<MyResult />} />
+          {/* Public Routes */}
+          <Route path="/about" element={<About />} />
+          <Route path="/careers" element={<Careers />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/products" element={<Products />} />
+          <Route path="/solutions" element={<Solutions />} />
+          <Route path="/support" element={<Support />} />
           
           {/* Event Routes */}
           <Route path="/events" element={<Event />} />
-          <Route path="/event-details/:id" element={<EventDetails />} />
+          <Route path="/events/:slug" element={<EventPublicDetail />} />
+          <Route path="/events/:slug/showtimes/:showtimeId/tickets" element={<ShowtimeTickets />} />
           <Route path="/ticket/:eventId" element={<Ticket />} />
           
           {/* Event Manager Routes */}
@@ -237,24 +255,70 @@ function App() {
           <Route path="/moderator/events/:id" element={<EventPrivateDetail />} />
           <Route path="/moderator/events/:id" element={<EventPrivateDetail />} /> */}
           
+          <Route path="/organizer/events/:id" element={<EventPrivateDetail />} />  
+          <Route path="/moderator/events/:id" element={<EventPrivateDetail />} />
           <Route path="/admin/premium" />
           <Route path="/admin/premiums/:id" />
           
           {/* Public Routes */}
           {/* Protected Routes */}
-          <Route
+          {/* <Route
             path="/quiz"
             element={
               <ProtectedRoute isAuthenticated={isAuthenticated}>
                 <Quiz />
               </ProtectedRoute>
             }
-          />
+          /> */}
+          <Route
+  path="/quiz"
+  element={
+    <ProtectedRoute isAuthenticated={isAuthenticated}>
+      <Quiz />
+    </ProtectedRoute>
+  }
+/>
+<Route
+  path="/quiz/:type"
+  element={
+    <ProtectedRoute isAuthenticated={isAuthenticated}>
+      <Quiz />
+    </ProtectedRoute>
+  }
+/>
+
+{/* Quiz taking page */}
+<Route
+  path="/quiz/take/:type"
+  element={
+    <ProtectedRoute isAuthenticated={isAuthenticated}>
+      <QuizTakingPage />
+    </ProtectedRoute>
+  }
+/>
+
+{/* Quiz result page */}
+<Route
+  path="/quiz/result/:type"
+  element={
+    <ProtectedRoute isAuthenticated={isAuthenticated}>
+      <QuizResultPage />
+    </ProtectedRoute>
+  }
+/>
           <Route
             path="/profile"
             element={
               <ProtectedRoute isAuthenticated={isAuthenticated}>
                 <Profile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/order"
+            element={
+              <ProtectedRoute isAuthenticated={isAuthenticated}>
+                <Order />
               </ProtectedRoute>
             }
           />
@@ -288,7 +352,9 @@ function App() {
             path="/chat-ai"
             element={
               <ProtectedRoute isAuthenticated={isAuthenticated}>
-                <ChatAi />
+                <PremiumGuard>
+                  <ChatAi />
+                </PremiumGuard>
               </ProtectedRoute>
             }
           />

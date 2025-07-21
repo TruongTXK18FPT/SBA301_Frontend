@@ -36,7 +36,7 @@ const NavBar = ({ isAuthenticated, onLogout, userRole }: NavBarProps) => {
         {/* Logo Section */}
         <Link to="/" className="navbar-brand">
           <img src={Logo} alt="Logo" className="navbar-logo" />
-          <span className="brand-text">PersonalityQuiz</span>
+          <span className="brand-text">UrPersonality</span>
         </Link>
 
         {/* Mobile Menu Button */}
@@ -112,13 +112,6 @@ const NavBar = ({ isAuthenticated, onLogout, userRole }: NavBarProps) => {
                   <FaBrain />
                   <span className="nav-text">Trắc Nghiệm</span>
                 </Link>
-                <Link 
-                  to="/blog" 
-                  className={`nav-item ${location.pathname === '/blog' ? 'active' : ''}`}
-                >
-                  <FaNewspaper />
-                  <span className="nav-text">Bài Viết</span>
-                </Link>
                 {isAuthenticated && (
                   <Link 
                     to="/chat-ai" 
@@ -149,11 +142,11 @@ const NavBar = ({ isAuthenticated, onLogout, userRole }: NavBarProps) => {
                   <span className="nav-text">Trắc Nghiệm</span>
                 </Link>
                 <Link 
-                  to="/blog" 
-                  className={`nav-item ${location.pathname === '/blog' ? 'active' : ''}`}
+                  to="/personality" 
+                  className={`nav-item ${location.pathname === '/personality' ? 'active' : ''}`}
                 >
-                  <FaNewspaper />
-                  <span className="nav-text">Bài Viết</span>
+                  <FaBrain />
+                  <span className="nav-text">Loại Tính Cách</span>
                 </Link>
                 {isAuthenticated && (
                   <Link 

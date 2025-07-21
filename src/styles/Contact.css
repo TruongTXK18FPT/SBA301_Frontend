@@ -1,0 +1,113 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Poppins:wght@400;600&display=swap');
+:root {
+  --primary-indigo: #3730a3;
+  --electric-blue: #2563eb;
+  --glass-bg: rgba(255,255,255,0.08);
+  --glass-border: rgba(255,255,255,0.15);
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+}
+.contact-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 3rem 1rem 4rem 1rem;
+  font-family: 'Poppins', sans-serif;
+}
+.contact-hero {
+  text-align: center;
+  margin-bottom: 2.5rem;
+}
+.contact-hero h1 {
+  font-family: 'Orbitron', monospace;
+  font-size: 2.5rem;
+  color: var(--electric-blue);
+  margin-bottom: 1rem;
+}
+.contact-hero p {
+  color: var(--text-secondary);
+  font-size: 1.2rem;
+  line-height: 1.7;
+}
+.contact-info {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 18px;
+  padding: 1.5rem 1.2rem;
+  margin-bottom: 2.5rem;
+  box-shadow: 0 8px 32px rgba(37,99,235,0.08);
+  text-align: center;
+  color: var(--text-primary);
+  font-size: 1.08rem;
+}
+.contact-info a {
+  color: var(--electric-blue);
+  text-decoration: underline;
+  font-weight: 600;
+}
+.contact-form-section {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 18px;
+  padding: 2rem 1.5rem;
+  box-shadow: 0 8px 32px rgba(37,99,235,0.08);
+  text-align: center;
+}
+.contact-form-section h2 {
+  color: var(--primary-indigo);
+  font-size: 1.2rem;
+  margin-bottom: 1.2rem;
+}
+.contact-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  align-items: center;
+  margin-top: 1rem;
+}
+.contact-form input,
+.contact-form textarea {
+  width: 100%;
+  max-width: 420px;
+  padding: 0.9rem 1.1rem;
+  border-radius: 10px;
+  border: 1px solid var(--glass-border);
+  background: rgba(255,255,255,0.12);
+  color: var(--text-primary);
+  font-size: 1rem;
+  font-family: 'Poppins', sans-serif;
+  outline: none;
+  transition: border 0.2s;
+}
+.contact-form input:focus,
+.contact-form textarea:focus {
+  border: 1.5px solid var(--electric-blue);
+}
+.btn-primary {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 0.9rem 2.2rem;
+  font-size: 1.1rem;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(37,99,235,0.12);
+  transition: background 0.2s, transform 0.1s;
+}
+.btn-primary:hover {
+  background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
+  transform: translateY(-2px);
+}
+.contact-success {
+  color: #22c55e;
+  font-size: 1.1rem;
+  margin-top: 1.5rem;
+  font-weight: 600;
+}
+@media (max-width: 700px) {
+  .contact-form input,
+  .contact-form textarea {
+    max-width: 100%;
+  }
+} 

@@ -1,0 +1,89 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Poppins:wght@400;600&display=swap');
+:root {
+  --primary-indigo: #3730a3;
+  --electric-blue: #2563eb;
+  --glass-bg: rgba(255,255,255,0.08);
+  --glass-border: rgba(255,255,255,0.15);
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+}
+.about-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 3rem 1rem 4rem 1rem;
+  font-family: 'Poppins', sans-serif;
+}
+.about-hero {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+.about-hero h1 {
+  font-family: 'Orbitron', monospace;
+  font-size: 2.5rem;
+  color: var(--electric-blue);
+  margin-bottom: 1rem;
+}
+.about-hero p {
+  color: var(--text-secondary);
+  font-size: 1.2rem;
+  line-height: 1.7;
+}
+.about-mission-vision {
+  display: flex;
+  gap: 2rem;
+  justify-content: center;
+  margin-bottom: 3rem;
+  flex-wrap: wrap;
+}
+.about-card {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 18px;
+  padding: 2rem 1.5rem;
+  min-width: 240px;
+  flex: 1 1 260px;
+  box-shadow: 0 8px 32px rgba(37,99,235,0.08);
+  text-align: center;
+}
+.about-card h2 {
+  color: var(--electric-blue);
+  font-size: 1.3rem;
+  margin-bottom: 0.7rem;
+  font-family: 'Orbitron', monospace;
+}
+.about-card p {
+  color: var(--text-secondary);
+  font-size: 1.05rem;
+}
+.about-cta {
+  text-align: center;
+  margin-top: 3rem;
+}
+.about-cta h2 {
+  color: var(--primary-indigo);
+  font-size: 1.5rem;
+  margin-bottom: 1.2rem;
+}
+.btn-primary {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 0.9rem 2.2rem;
+  font-size: 1.1rem;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(37,99,235,0.12);
+  transition: background 0.2s, transform 0.1s;
+}
+.btn-primary:hover {
+  background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
+  transform: translateY(-2px);
+}
+@media (max-width: 700px) {
+  .about-mission-vision {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+} 

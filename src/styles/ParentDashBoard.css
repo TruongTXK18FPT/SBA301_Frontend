@@ -641,7 +641,6 @@
     #4facfe 80%, 
     #667eea 100%);
   background-size: 300% 100%;
-  animation: gradientShift 4s ease infinite;
 }
 
 .parent-dashboard .modal-header {
@@ -1085,7 +1084,6 @@
     #f5576c 75%, 
     #4facfe 100%);
   background-size: 300% 100%;
-  animation: gradientShift 3s ease infinite;
 }
 
 .parent-dashboard .result-card::after {
@@ -1115,11 +1113,6 @@
     0 0 30px rgba(102, 126, 234, 0.2),
     inset 0 1px 0 rgba(255, 255, 255, 0.2);
   background: rgba(255, 255, 255, 0.06);
-}
-
-@keyframes gradientShift {
-  0%, 100% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
 }
 
 /* Result Card Header */

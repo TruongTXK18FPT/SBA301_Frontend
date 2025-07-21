@@ -1,0 +1,269 @@
+/* Display styles for read-only fields */
+.event-creation-form__display {
+    padding: 0.875rem 1rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    background: #f7fafc;
+    color: #2d3748;
+    font-size: 1rem;
+    min-height: 2.75rem;
+    display: flex;
+    align-items: center;
+    word-break: break-word;
+}
+
+/* No image placeholder */
+.event-creation-form__no-image {
+    padding: 3rem 2rem;
+    text-align: center;
+    color: #718096;
+    background: #f7fafc;
+    border: 2px dashed #cbd5e0;
+    border-radius: 16px;
+    font-size: 0.9rem;
+}
+
+/* Admin actions */
+.event-creation-form__admin-actions {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+/* Additional button styles */
+.event-creation-form__btn {
+    font-weight: 700;
+    font-size: 1rem;
+    border-radius: 8px;
+    border: none;
+    padding: 0.75rem 2rem;
+    min-width: 120px;
+    transition: background 0.18s, color 0.18s, box-shadow 0.18s;
+    cursor: pointer;
+    outline: none;
+    box-shadow: 0 2px 8px rgba(24,27,35,0.08);
+    margin: 0;
+}
+
+.event-creation-form__btn--secondary {
+    background: #f3f4f6;
+    color: #181B23;
+    border: 1.5px solid #e2e8f0;
+}
+
+.event-creation-form__btn--secondary:hover:not(:disabled) {
+    background: #e5e7eb;
+    color: #0f172a;
+}
+
+.event-creation-form__btn--primary,
+.event-creation-form__btn--success {
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.16);
+}
+
+.event-creation-form__btn--primary:hover:not(:disabled),
+.event-creation-form__btn--success:hover:not(:disabled) {
+    background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+    filter: brightness(1.09);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.19);
+}
+
+.event-creation-form__btn--danger {
+    background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(245, 101, 101, 0.19);
+}
+
+.event-creation-form__btn--danger:hover:not(:disabled) {
+    background: linear-gradient(135deg, #e53e3e 0%, #f87171 100%);
+    filter: brightness(1.09);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(245, 101, 101, 0.19);
+}
+
+.event-creation-form__btn:disabled {
+    opacity: 0.65;
+    pointer-events: none;
+}
+
+/* Dialog styles */
+.event-creation-form__dialog-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(16, 18, 27, 0.70);
+    backdrop-filter: blur(3.5px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.event-creation-form__dialog {
+    background: #fff;
+    border-radius: 20px;
+    padding: 2.5rem 2rem 2rem 2rem;
+    min-width: 370px;
+    max-width: 95vw;
+    max-height: 92vh;
+    overflow-y: auto;
+    box-shadow: 0 16px 56px 0 rgba(30,41,59,0.15);
+    animation: dialogSlideIn 0.25s cubic-bezier(0.23, 1, 0.32, 1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.event-creation-form__dialog h3 {
+    font-size: 1.35rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: #181B23;
+    letter-spacing: 0.2px;
+}
+
+.event-creation-form__dialog p {
+    color: #4a5568;
+    font-size: 1rem;
+    line-height: 1.7;
+    margin-bottom: 1rem;
+}
+
+.event-creation-form__textarea {
+    width: 100%;
+    min-height: 100px;
+    padding: 0.875rem 1rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-family: inherit;
+    background: #f9fafb;
+    resize: vertical;
+    transition: border 0.18s, box-shadow 0.18s;
+    margin-bottom: 0.5rem;
+}
+.event-creation-form__textarea:focus {
+    outline: none;
+    border-color: #6366f1;
+    box-shadow: 0 0 0 2px #a5b4fc55;
+}
+
+.event-creation-form__dialog-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    margin-top: 2rem;
+    width: 100%;
+    flex-wrap: wrap;
+}
+
+@media (max-width: 500px) {
+    .event-creation-form__dialog {
+        min-width: unset;
+        max-width: 98vw;
+        padding: 1.5rem 0.5rem;
+    }
+    .event-creation-form__dialog-actions {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.75rem;
+    }
+    .event-creation-form__btn {
+        min-width: unset;
+        width: 100%;
+        padding: 0.85rem 1rem;
+        font-size: 1rem;
+    }
+}
+
+/* Status badges */
+.badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: #f3f4f6;
+    color: #22223b;
+    box-shadow: 0 1px 3px rgba(30,41,59,0.09);
+}
+.badge-pending {
+    background: #fed7aa;
+    color: #ea580c;
+}
+.badge-approved {
+    background: #bbf7d0;
+    color: #16a34a;
+}
+.badge-rejected {
+    background: #fecaca;
+    color: #dc2626;
+}
+
+/* Showtime and ticket specific styles */
+.event-creation-form__showtime {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: #f8fafc;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 2px 10px rgba(30,41,59,0.03);
+}
+.event-creation-form__showtime:last-child {
+    margin-bottom: 0;
+}
+.event-creation-form__tickets {
+    margin-top: 1rem;
+}
+.event-creation-form__ticket {
+    margin-bottom: 1rem;
+    padding: 1rem;
+    background: white;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 4px rgba(30,41,59,0.03);
+}
+.event-creation-form__ticket:last-child {
+    margin-bottom: 0;
+}
+.event-creation-form__no-data {
+    padding: 2rem;
+    text-align: center;
+    color: #718096;
+    background: #f7fafc;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+}
+
+/* Animation */
+@keyframes dialogSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .event-creation-form__admin-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+    .event-creation-form__dialog {
+        min-width: auto;
+        margin: 1rem;
+        padding: 1.5rem;
+    }
+    .event-creation-form__dialog-actions {
+        flex-direction: column;
+    }
+}
+
+/* ----------- Add more improvement below as needed ----------- */

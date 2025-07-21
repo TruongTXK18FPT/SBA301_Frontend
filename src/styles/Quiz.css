@@ -1327,9 +1327,12 @@
   word-break: break-word;
   hyphens: auto;
   line-height: 1.6;
-  min-height: auto;
+  min-height: auto; /* Đảm bảo chiều cao tự động điều chỉnh theo nội dung */
   position: relative;
   overflow: hidden;
+  /* Thêm thuộc tính để hỗ trợ multiline */
+  flex-direction: column; /* Đổi sang column để hỗ trợ các dòng văn bản xếp chồng */
+  align-items: stretch; /* Đảm bảo nội dung kéo dài toàn chiều rộng */
 }
 
 .recommendation-item::before {
@@ -1372,7 +1375,7 @@
   transform: scale(1.1);
   filter: drop-shadow(0 0 12px rgba(59, 130, 246, 0.5));
 }
-
+/* Deprecated: Replaced by .recommendation-text in QuizResult.tsx */
 .recommendation-item span {
   flex: 1;
   overflow-wrap: break-word;
@@ -1388,6 +1391,37 @@
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.recommendation-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  hyphens: auto;
+  line-height: 1.6;
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.9);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.8) 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.recommendation-line {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.9);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.8) 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  white-space: pre-wrap;
 }
 
 /* Action Buttons */
@@ -1613,10 +1647,21 @@
     max-height: 300px;
     padding: 0.8rem;
   }
-  
+
   .recommendation-item {
     padding: 1.2rem;
     gap: 0.8rem;
+    flex-direction: column; /* Đảm bảo xếp dọc trên mobile */
+  }
+
+  .recommendation-text {
+    font-size: 0.9rem;
+    gap: 0.4rem; /* Giảm khoảng cách giữa các dòng trên mobile */
+  }
+
+  .recommendation-line {
+    font-size: 0.9rem;
+    line-height: 1.5;
   }
   
   .recommendation-item .item-icon {
@@ -1667,15 +1712,25 @@
     max-height: 250px;
     padding: 0.6rem;
   }
-  
+
   .recommendation-item {
     padding: 1rem;
     gap: 0.6rem;
-    border-radius: 12px;
+    flex-direction: column;
   }
   
   .recommendation-item span {
     font-size: 0.85rem;
+  }
+
+  .recommendation-text {
+    font-size: 0.85rem;
+    gap: 0.3rem;
+  }
+
+  .recommendation-line {
+    font-size: 0.85rem;
+    line-height: 1.4;
   }
 }
 
