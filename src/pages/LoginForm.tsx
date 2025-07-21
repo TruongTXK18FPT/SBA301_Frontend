@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { FaGoogle, FaEye, FaEyeSlash } from "react-icons/fa";
+import { FaGoogle, FaEye, FaEyeSlash,FaLock,FaMailBulk } from "react-icons/fa";
 import { useNavigate, Link } from "react-router-dom";
 import Button from "../components/Button";
 import Alert from "../components/Alert";
@@ -42,7 +42,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
   React.useEffect(() => {
     const token = getToken();
     if (token) {
-      navigate("/home", { replace: true }); // prevent going back to /login
+      navigate("/", { replace: true }); // prevent going back to /login
     }
   }, []);
 
@@ -285,7 +285,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
       <div className="login-form-container">
         <div className="login-form-card">
           <div className="login-header">
-            <h1 className="login-title">Chào Mừng Trở Lại</h1>
+            <h1 className="login-title">Chào mừng trở lại</h1>
             <p className="login-subtitle">
               Đăng nhập để khám phá tính cách của bạn
             </p>
@@ -302,7 +302,9 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
                   required
                   className="login-form-input"
                 />
-                <div className="input-icon">📧</div>
+                <div className="input-icon">
+                  <FaMailBulk />
+                </div>
               </div>
 
               <div className="form-group">
@@ -314,7 +316,9 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
                   required
                   className="login-form-input"
                 />
-                <div className="input-icon">🔒</div>
+                <div className="input-icon">
+                  <FaLock />
+                </div>
                 <button
                   type="button"
                   className="show-password-btn"

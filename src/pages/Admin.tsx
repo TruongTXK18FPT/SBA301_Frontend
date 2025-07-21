@@ -9,23 +9,18 @@ import UserManagement from '../components/admin/UserManagement';
 import QuizManagement from '../components/admin/QuizManagement';
 import '../styles/Admin.css';
 import EventPrivateList from '@/components/event/EventPrivateList';
+import UniversityManagementPage from '@/components/admin/UniversityManagementPage';
+import CareerManagement from '@/components/admin/CareerManagement';
 
 
 type AlertType = 'success' | 'info' | 'warning' | 'error';
-type ActiveView = 'dashboard' | 'users' | 'quizzes' | 'events' | 'analytics' | 'settings' | 
-                 'premium' | 'calendar' | 'notifications';
+type ActiveView = 'users' | 'quizzes' | 'events' |
+                  'universities'| 'careers';
 
 const Admin = () => {
   const [activeView, setActiveView] = useState<ActiveView>('users');
   const [alerts, setAlerts] = useState<Array<{ id: number; type: AlertType; message: string }>>([]);
   const [showScrollTop, setShowScrollTop] = useState(false);
-
-  const navItems = [
-    { id: 'users', icon: <FaUsers />, label: 'Users', notification: 2 },
-    { id: 'quizzes', icon: <FaQuestionCircle />, label: 'Quizzes', notification: 3 },
-    { id: 'events', icon: <FaCalendarAlt />, label: 'Events', notification: 5 },
-  ];
-
   useEffect(() => {
     // Simulate loading stats with counting animation
 
@@ -63,8 +58,10 @@ const Admin = () => {
         return <QuizManagement onAlert={showAlert} />;
       case 'events':
         return <EventPrivateList />;
-      case 'premium':
-        return <div>Premium Management Coming Soon</div>;
+      case 'universities':
+        return <UniversityManagementPage/>;
+      case 'careers':
+        return <CareerManagement/>;
     }
   };
 

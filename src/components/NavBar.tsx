@@ -36,7 +36,7 @@ const NavBar = ({ isAuthenticated, onLogout, userRole }: NavBarProps) => {
         {/* Logo Section */}
         <Link to="/" className="navbar-brand">
           <img src={Logo} alt="Logo" className="navbar-logo" />
-          <span className="brand-text">PersonalityQuiz</span>
+          <span className="brand-text">UrPersonality</span>
         </Link>
 
         {/* Mobile Menu Button */}

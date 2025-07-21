@@ -96,51 +96,6 @@ const ParentDashBoard: React.FC = () => {
   const [downloadAllLoading, setDownloadAllLoading] = useState(false);
   
   // Seminar and transaction data (would come from API in real implementation)
-  const [seminars] = useState<SeminarTicket[]>([
-    {
-      id: 1,
-      title: 'Hướng dẫn chọn ngành nghề phù hợp',
-      description: 'Seminar giúp phụ huynh hiểu cách định hướng nghề nghiệp cho con',
-      date: '2024-12-20',
-      time: '14:00',
-      location: 'Hội trường A - Đại học Bách Khoa',
-      price: 150000,
-      speaker: 'TS. Nguyễn Văn A',
-      category: 'Định hướng nghề nghiệp'
-    },
-    {
-      id: 2,
-      title: 'Tâm lý học phát triển con em',
-      description: 'Hiểu về tâm lý và cách nuôi dạy con hiệu quả',
-      date: '2024-12-25',
-      time: '09:00',
-      location: 'Trung tâm Hội nghị Quốc gia',
-      price: 200000,
-      speaker: 'ThS. Trần Thị B',
-      category: 'Tâm lý học'
-    }
-  ]);
-
-  const [transactions] = useState<Transaction[]>([
-    {
-      id: 1,
-      type: 'seminar',
-      title: 'Seminar Định hướng nghề nghiệp',
-      amount: 150000,
-      date: '2024-12-15',
-      status: 'completed',
-      description: 'Vé tham gia seminar hướng dẫn chọn ngành nghề'
-    },
-    {
-      id: 2,
-      type: 'premium',
-      title: 'Gói Premium 1 tháng',
-      amount: 99000,
-      date: '2024-12-10',
-      status: 'completed',
-      description: 'Nâng cấp tài khoản Premium'
-    }
-  ]);
 
   // Helper functions
   const checkAuthentication = () => {
@@ -244,7 +199,18 @@ const ParentDashBoard: React.FC = () => {
     if (!searchResults) return;
 
     setDownloadLoading(result.id);
-    try {
+    const careerText = Array.isArray(result.careerRecommendations)
+    ? result.careerRecommendations.join('\n\n')
+    : result.careerRecommendations || '';
+
+  const universityText = Array.isArray(result.universityRecommendations)
+    ? result.universityRecommendations.join('\n\n')
+    : result.universityRecommendations || '';
+    try {await pdfService.downloadQuizResultPDF(searchResults, {
+      ...result,
+      careerRecommendations: careerText,
+      universityRecommendations: universityText,
+    });
       await pdfService.downloadQuizResultPDF(searchResults, result);
       // You could show a success message here if needed
     } catch (error) {
@@ -268,19 +234,6 @@ const ParentDashBoard: React.FC = () => {
     } finally {
       setDownloadAllLoading(false);
     }
-  };
-
-  const openChatModal = (chat: UniversityChat) => {
-    setSelectedChat(chat);
-    // Initialize with some sample messages for the selected university
-    setChatMessages([
-      {
-        id: 1,
-        sender: 'university',
-        message: `Xin chào! Cảm ơn bạn đã liên hệ với ${chat.universityName}. Chúng tôi có thể hỗ trợ gì cho bạn?`,
-        timestamp: new Date().toISOString()
-      }
-    ]);
   };
 
   const closeChatModal = () => {
@@ -339,13 +292,6 @@ const ParentDashBoard: React.FC = () => {
             >
               <FaSearch />
               <span>Tìm Kiếm Kết Quả</span>
-            </button>
-            <button 
-              className={`nav-tab ${activeTab === 'seminars' ? 'active' : ''}`}
-              onClick={() => setActiveTab('seminars')}
-            >
-              <FaTicketAlt />
-              <span>Seminar</span>
             </button>
           </div>
         </div>
@@ -509,117 +455,7 @@ const ParentDashBoard: React.FC = () => {
             </div>
           )}
 
-          {activeTab === 'seminars' && (
-            <div className="tab-content">
-              <div className="seminars-section">
-                <div className="section-header">
-                  <h2>
-                    <FaTicketAlt className="section-icon seminar-section-icon" />
-                    Seminar Dành Cho Phụ Huynh
-                  </h2>
-                  <p>Các buổi seminar giúp bạn hiểu rõ hơn về con em</p>
-                </div>
-
-                <div className="seminars-grid">
-                  {seminars.map((seminar) => (
-                    <div
-                      key={seminar.id}
-                      className="seminar-card"
-                    >
-                      <div className="seminar-header">
-                        <div className="seminar-category">
-                          {seminar.category}
-                        </div>
-                        <div className="seminar-price">
-                          {formatCurrency(seminar.price)}
-                        </div>
-                      </div>
-                      <div className="seminar-content">
-                        <h3>{seminar.title}</h3>
-                        <p>{seminar.description}</p>
-                        <div className="seminar-details">
-                          <div className="detail-item">
-                            <FaCalendarAlt />
-                            <span>{new Date(seminar.date).toLocaleDateString('vi-VN')} - {seminar.time}</span>
-                          </div>
-                          <div className="detail-item">
-                            <FaUniversity />
-                            <span>{seminar.location}</span>
-                          </div>
-                          <div className="detail-item">
-                            <FaUserGraduate />
-                            <span>{seminar.speaker}</span>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="seminar-actions">
-                        <button className="buy-button">
-                          <FaShoppingCart />
-                          Mua Vé
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'transactions' && (
-            <div className="tab-content">
-              <div className="transactions-section">
-                <div className="section-header">
-                  <h2>
-                    <FaHistory className="section-icon transaction-section-icon" />
-                    Lịch Sử Giao Dịch
-                  </h2>
-                  <p>Theo dõi tất cả các giao dịch và thanh toán</p>
-                </div>
-
-                <div className="transactions-list">
-                  {transactions.map((transaction) => (
-                    <div
-                      key={transaction.id}
-                      className="transaction-item"
-                    >
-                      <div className="transaction-icon">
-                        {transaction.type === 'seminar' ? <FaTicketAlt /> : <FaCreditCard />}
-                      </div>
-                      <div className="transaction-content">
-                        <div className="transaction-header">
-                          <h3>{transaction.title}</h3>
-                          <span className="transaction-amount">
-                            {formatCurrency(transaction.amount)}
-                          </span>
-                        </div>
-                        <p className="transaction-description">{transaction.description}</p>
-                        <div className="transaction-footer">
-                          <span className="transaction-date">
-                            {formatDate(transaction.date)}
-                          </span>
-                          <span className={`transaction-status ${transaction.status}`}>
-                            {transaction.status === 'completed' && <FaCheckCircle />}
-                            {transaction.status === 'pending' && <FaSpinner />}
-                            {transaction.status === 'failed' && <FaTimesCircle />}
-                            {(() => {
-                              switch (transaction.status) {
-                                case 'completed':
-                                  return 'Thành công';
-                                case 'pending':
-                                  return 'Đang xử lý';
-                                default:
-                                  return 'Thất bại';
-                              }
-                            })()}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
+          
         
       </div>
 

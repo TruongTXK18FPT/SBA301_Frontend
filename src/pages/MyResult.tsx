@@ -34,6 +34,7 @@ const MyResult: React.FC = () => {
   const [search, setSearch] = useState('');
   const [downloadLoading, setDownloadLoading] = useState<number | null>(null);
   const [downloadAllLoading, setDownloadAllLoading] = useState(false);
+  
 
   useEffect(() => {
     const fetchMyResults = async () => {
@@ -82,12 +83,24 @@ const MyResult: React.FC = () => {
         r.description?.toLowerCase().includes(searchLower)
     );
   }) || [];
-
+  
+  
   const downloadQuizResult = async (result: QuizResult) => {
     if (!userResultsData) return;
     setDownloadLoading(result.id);
+     const careerText = Array.isArray(result.careerRecommendations)
+    ? result.careerRecommendations.join('\n\n')
+    : result.careerRecommendations || '';
+
+  const universityText = Array.isArray(result.universityRecommendations)
+    ? result.universityRecommendations.join('\n\n')
+    : result.universityRecommendations || '';
     try {
-      await pdfService.downloadQuizResultPDF(userResultsData, result);
+    await pdfService.downloadQuizResultPDF(userResultsData, {
+      ...result,
+      careerRecommendations: careerText,
+      universityRecommendations: universityText,
+    });
     } catch (error) {
       setError('Không thể tải file PDF. Vui lòng thử lại.');
     } finally {

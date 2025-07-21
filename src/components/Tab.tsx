@@ -1,13 +1,9 @@
 import { useState } from 'react';
 import { 
-  FaHome, 
   FaUsers, 
-  FaChartBar, 
-  FaCog, 
   FaCalendar, 
-  FaBell,
   FaQuestionCircle,
-  FaCrown,
+  FaDev,
   FaChevronLeft,
   FaChevronRight
 } from 'react-icons/fa';
@@ -17,7 +13,6 @@ interface TabItem {
   id: string;
   icon: React.ReactNode;
   label: string;
-  notification?: number;
 }
 
 interface TabProps {
@@ -29,10 +24,11 @@ const Tab: React.FC<TabProps> = ({ activeTab: externalActiveTab, onTabChange }) 
   const [isExpanded, setIsExpanded] = useState(true);
 
   const tabs: TabItem[] = [
-    { id: 'users', icon: <FaUsers />, label: 'Users', notification: 3 },
-    { id: 'quizzes', icon: <FaQuestionCircle />, label: 'Quizzes', notification: 4 },
-    { id: 'events', icon: <FaCalendar />, label: 'Events', notification: 1 },
-    { id: 'premium', icon: <FaCrown />, label: 'Premium', notification: 2 },
+    { id: 'users', icon: <FaUsers />, label: 'Users' },
+    { id: 'quizzes', icon: <FaQuestionCircle />, label: 'Quizzes',  },
+    { id: 'events', icon: <FaCalendar />, label: 'Events' },
+    {id: 'universities', icon: <FaUsers />, label: 'Universities' },
+    { id: 'careers', icon: <FaDev />, label: 'Careers' },
   ];
 
   const toggleSidebar = () => {
@@ -72,11 +68,6 @@ const Tab: React.FC<TabProps> = ({ activeTab: externalActiveTab, onTabChange }) 
             {isExpanded && (
               <>
                 <span className="tab-label">{tab.label}</span>
-                {tab.notification && (
-                  <span className="notification-badge">
-                    {tab.notification}
-                  </span>
-                )}
               </>
             )}
             <div className="tab-highlight"></div>
