@@ -55,10 +55,6 @@ const QuizResultPage: React.FC = () => {
     navigate('/quiz');
   };
 
-  const handleTakeAnotherQuiz = () => {
-    navigate('/quiz');
-  };
-
   return (
     <div className="quiz-container">
       <QuizResult
