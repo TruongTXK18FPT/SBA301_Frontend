@@ -622,6 +622,9 @@ const EventPublicDetail = () => {
                           <span className="text-white font-medium">
                             {formatTime(showtime.startTime)} - {formatTime(showtime.endTime)}, {formatDate(showtime.startTime)}
                           </span>
+                          
+
+                          { (showtime.endTime > new Date().toISOString() && !hasValidTicket) && (
                           <div onClick={(e) => {
                             e.stopPropagation(); // Prevent parent button click
                             navigate(`/events/${slug}/showtimes/${showtime.id}/tickets`);
@@ -630,6 +633,7 @@ const EventPublicDetail = () => {
                               Mua vé
                             </div>
                           </div>
+                          )}
                         </div>
                       </div>
                     </button>

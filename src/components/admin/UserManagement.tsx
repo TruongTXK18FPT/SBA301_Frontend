@@ -20,7 +20,7 @@ import {
   CreateUserRequest,
 } from "../../services/userService";
 import "../../styles/UserManagement.css";
-
+import Pagination from "../Pagination";
 interface LocationData {
   code: string;
   name: string;
@@ -38,7 +38,8 @@ const UserManagement: React.FC<UserManagementProps> = ({ onAlert }) => {
   const [loading, setLoading] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [provinces, setProvinces] = useState<LocationData[]>([]);
-  const [districts, setDistricts] = useState<LocationData[]>([]);
+const [districts, setDistricts] = useState<LocationData[]>([]);
+const [currentPage, setCurrentPage] = useState(1);
   const [formData, setFormData] = useState<CreateUserRequest>({
     email: "",
     password: "",
@@ -139,24 +140,30 @@ const UserManagement: React.FC<UserManagementProps> = ({ onAlert }) => {
     setDistricts([]); // Clear districts when canceling
   };
 
-const handleToggleStatus = async (userId: string, currentStatus: boolean) => {
-  try {
-    await toggleUserActiveStatus(userId, !currentStatus);
-    setUsers((prev) =>
-      prev.map((user) =>
-        user.id === userId ? { ...user, active: !currentStatus } : user
-      )
-    );
-    onAlert(
-      "success",
-      `User ${!currentStatus ? "activated" : "deactivated"} successfully`
-    );
-  } catch (error: any) {
-    console.error("Failed to toggle user status:", error);
-    onAlert("error", "Failed to toggle user status");
-  }
-};
+  const handleToggleStatus = async (userId: string, currentStatus: boolean) => {
+    try {
+      await toggleUserActiveStatus(userId, !currentStatus);
+      setUsers((prev) =>
+        prev.map((user) =>
+          user.id === userId ? { ...user, active: !currentStatus } : user
+        )
+      );
+      onAlert(
+        "success",
+        `User ${!currentStatus ? "activated" : "deactivated"} successfully`
+      );
+    } catch (error: any) {
+      console.error("Failed to toggle user status:", error);
+      onAlert("error", "Failed to toggle user status");
+    }
+  };
+const USERS_PER_PAGE = 5;
+const totalPages = Math.ceil(users.length / USERS_PER_PAGE);
 
+const paginatedUsers = users.slice(
+  (currentPage - 1) * USERS_PER_PAGE,
+  currentPage * USERS_PER_PAGE
+);
   return (
     <div className="management-container">
       <div className="management-header">
@@ -181,11 +188,12 @@ const handleToggleStatus = async (userId: string, currentStatus: boolean) => {
                 <th>Email</th>
                 <th>Email Verified</th>
                 <th>Status</th>
+                <th>Role</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {users.map((user) => (
+              {paginatedUsers.map((user) => (
                 <tr key={user.id}>
                   <td>{user.email}</td>
                   <td>
@@ -206,6 +214,21 @@ const handleToggleStatus = async (userId: string, currentStatus: boolean) => {
                       {user.active ? "Active" : "Inactive"}
                     </span>
                   </td>
+                  <span
+                    className={`badge ${
+                      user.role === "STUDENT"
+                        ? "role-student"
+                        : user.role === "ADMIN"
+                        ? "role-admin"
+                        : user.role === "EVENT_MANAGER"
+                        ? "role-event_manager"
+                        : user.role === "PARENT"
+                        ? "role-parent"
+                        : ""
+                    }`}
+                  >
+                    {user.role}
+                  </span>
                   <td>
                     <div className="action-buttons">
                       <Button
@@ -224,6 +247,11 @@ const handleToggleStatus = async (userId: string, currentStatus: boolean) => {
           </table>
         </div>
       )}
+      <Pagination
+  currentPage={currentPage}
+  totalPages={totalPages}
+  onPageChange={setCurrentPage}
+/>
 
       {/* Create User Modal */}
       {showCreateModal && (

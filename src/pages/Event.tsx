@@ -218,14 +218,6 @@ const Event: React.FC = () => {
                         <FaEye />
                         Xem Chi Tiết
                       </button>
-                      <button
-                        onClick={() => handleBookNow(event)}
-                        className="event-page__btn event-page__btn--primary"
-                        disabled={event.status !== 'UPCOMING' && event.status !== 'ONGOING'}
-                      >
-                        <FaTicketAlt />
-                        Book Ngay
-                      </button>
                     </div>
                   </div>
                 </div>
