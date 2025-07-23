@@ -417,8 +417,14 @@ const EventPublicDetail = () => {
                   </div>
                 </div>
                 <div className="px-4">
-                  <button className="w-full !bg-[#2dc275] hover:bg-green-600 font-bold py-4 px-12 rounded-xl text-lg !text-white transition-colors duration-200 shadow-lg border-none">
-                    <a href="#tickets" className='!text-white'>Mua vé ngay</a>
+                  <button className={`w-full !bg-[#2dc275] hover:bg-green-600 font-bold py-4 px-12 rounded-xl text-lg !text-white transition-colors duration-200 shadow-lg border-none ${ event.status == 'COMPLETED' && 'opacity-50 cursor-not-allowed bg-slate-400' }`}
+                  >
+                    
+                    <a href="#tickets" className='!text-white'>
+                      {
+                        event.status == 'COMPLETED' ? 'Sự kiện đã kết thúc' : 'Mua vé ngay'
+                      }
+                    </a>
                   </button>
                 </div>
               </div>
