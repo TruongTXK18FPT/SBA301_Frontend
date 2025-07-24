@@ -5,7 +5,9 @@ import {
   FaQuestionCircle,
   FaDev,
   FaChevronLeft,
-  FaChevronRight
+  FaChevronRight,
+  FaUniversity,
+  FaCalculator
 } from 'react-icons/fa';
 import '../styles/Tab.css';
 import Admin from '../assets/Admin.jpeg'; // Assuming you have an admin icon
@@ -24,10 +26,11 @@ const Tab: React.FC<TabProps> = ({ activeTab: externalActiveTab, onTabChange }) 
   const [isExpanded, setIsExpanded] = useState(true);
 
   const tabs: TabItem[] = [
+    { id: 'dashboard', icon: <FaCalculator />, label: 'Dashboard' },
     { id: 'users', icon: <FaUsers />, label: 'Users' },
     { id: 'quizzes', icon: <FaQuestionCircle />, label: 'Quizzes',  },
     { id: 'events', icon: <FaCalendar />, label: 'Events' },
-    {id: 'universities', icon: <FaUsers />, label: 'Universities' },
+    {id: 'universities', icon: <FaUniversity />, label: 'Universities' },
     { id: 'careers', icon: <FaDev />, label: 'Careers' },
   ];
 

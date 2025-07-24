@@ -17,6 +17,7 @@ const Profile: React.FC = () => {
   const [provinceName, setProvinceName] = useState<string>("");
   const [districtName, setDistrictName] = useState<string>("");
   const [locationLoading, setLocationLoading] = useState(false);
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
 const subscriptions = useAtomValue(subscriptionAtom) as SubscriptionResponse[]
 const activeSubscription = subscriptions.find(
   (s) =>
@@ -287,7 +288,40 @@ const isPremium = !!activeSubscription;
             onClose={() => setAlert((prev) => ({ ...prev, show: false }))}
           />
         )}
-        
+              {showSubscriptionModal && (
+        <div className="subscription-modal-overlay" onClick={() => setShowSubscriptionModal(false)}>
+          <div className="subscription-modal" onClick={e => e.stopPropagation()}>
+            <h2>Thông tin Premium</h2>
+            {subscriptions.length === 0 ? (
+              <p>Bạn chưa có gói Premium nào.</p>
+            ) : (
+              <table className="subscription-table">
+                <thead>
+                  <tr>
+                    <th>Tên gói</th>
+                    <th>Ngày bắt đầu</th>
+                    <th>Ngày kết thúc</th>
+                    <th>Trạng thái</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {subscriptions.map(sub => (
+                    <tr key={sub.id}>
+                      <td>{sub.premiumName}</td>
+                      <td>{new Date(sub.startDate).toLocaleDateString()}</td>
+                      <td>{new Date(sub.endDate).toLocaleDateString()}</td>
+                      <td>{sub.status}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+            <button className="subscription-close-modal-btn" onClick={() => setShowSubscriptionModal(false)}>
+              Đóng
+            </button>
+          </div>
+        </div>
+      )}
         <div className="profile-header">
           <div className="profile-banner">
             <div className="banner-overlay"></div>
@@ -349,6 +383,13 @@ const isPremium = !!activeSubscription;
                   <FaUser />
                   <span>Kết quả</span>
                 </button>
+                <button
+  className="edit-profile-btn"
+  onClick={() => setShowSubscriptionModal(true)}
+>
+  <FaCrown />
+  <span>Thông tin Premium</span>
+</button>
               </div>
             </div>
           </div>

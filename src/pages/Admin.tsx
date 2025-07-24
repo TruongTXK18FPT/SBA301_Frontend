@@ -11,14 +11,14 @@ import '../styles/Admin.css';
 import EventPrivateList from '@/components/event/EventPrivateList';
 import UniversityManagementPage from '@/components/admin/UniversityManagementPage';
 import CareerManagement from '@/components/admin/CareerManagement';
-
+import AdminDashboard from '@/components/admin/AdminDashboard';
 
 type AlertType = 'success' | 'info' | 'warning' | 'error';
-type ActiveView = 'users' | 'quizzes' | 'events' |
+type ActiveView = 'dashboard'|'users' | 'quizzes' | 'events' |
                   'universities'| 'careers';
 
 const Admin = () => {
-  const [activeView, setActiveView] = useState<ActiveView>('users');
+  const [activeView, setActiveView] = useState<ActiveView>('dashboard');
   const [alerts, setAlerts] = useState<Array<{ id: number; type: AlertType; message: string }>>([]);
   const [showScrollTop, setShowScrollTop] = useState(false);
   useEffect(() => {
@@ -52,6 +52,8 @@ const Admin = () => {
 
   const renderContent = () => {
     switch (activeView) {
+      case 'dashboard':
+        return <AdminDashboard />;
       case 'users':
         return <UserManagement onAlert={showAlert} />;
       case 'quizzes':
