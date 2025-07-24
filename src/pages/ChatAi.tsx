@@ -5,11 +5,10 @@ import '../styles/ChatAi.css';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
-// Helper function to get color based on trait score
 const getTraitColor = (score: number): string => {
-    if (score >= 8) return '#10b981'; // Green for high scores
-    if (score >= 5) return '#f59e0b'; // Yellow for medium scores
-    return '#ef4444'; // Red for low scores
+    if (score >= 8) return '#10b981';
+    if (score >= 5) return '#f59e0b';
+    return '#ef4444';
 };
 
 const ChatAi: React.FC = () => {
@@ -59,11 +58,8 @@ const ChatAi: React.FC = () => {
             setActiveSessionId(newSession.sessionId);
         } catch (error) {
 
-            
-            // Handle the error message from the service
             const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred while creating a new chat.';
-            
-            // Check if this is a session limit error
+
             if (errorMessage.includes('maximum') || errorMessage.includes('session limit')) {
                 setSessionLimitError(errorMessage);
             } else {
