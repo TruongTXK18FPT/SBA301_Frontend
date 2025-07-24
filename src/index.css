@@ -6,7 +6,7 @@
 
   color-scheme: light dark;
   color: #213547;
-  background-color: #ffffff;
+
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -25,9 +25,9 @@ html, body {
   min-height: 100%;
 }
 
-html {
+/* html {
   overflow-y: scroll !important;
-}
+} */
 
 body {
   margin: 0;
