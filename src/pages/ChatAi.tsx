@@ -1,9 +1,8 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { chatAiService, Message, AnalysisResult } from '../services/chatAiService';
 // I've added FiArrowRight to the import list
-import { FiSend, FiPlus, FiMessageSquare, FiTrash2, FiUser, FiAward, FiClock, FiLoader, FiStar, FiArrowRight, FiEdit2 } from 'react-icons/fi';
+import { FiSend, FiPlus, FiMessageSquare, FiTrash2, FiUser, FiAward, FiClock, FiLoader, FiStar, FiArrowRight, FiEdit2,FiChevronRight,FiChevronLeft } from 'react-icons/fi';
 import '../styles/ChatAi.css';
-import { FaPlane } from 'react-icons/fa';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -197,7 +196,7 @@ const ChatAi: React.FC = () => {
     return (
         <div className="chat-ai-layout">
              <div className="background-effects"></div>
-            <div className="sidebar">
+             <div className="sidebar">
                 <div className="sidebar-header">
                     <h3>Conversations</h3>
                     <button onClick={handleNewChat} className="new-chat-button" title="New Chat" disabled={loading}>

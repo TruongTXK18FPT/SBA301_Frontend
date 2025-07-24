@@ -520,10 +520,10 @@ body {
 }
 
 /* --- Scrollbar --- */
-/* ::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar { width: 8px; }
 ::-webkit-scrollbar-track { background: var(--bg-dark-secondary); }
 ::-webkit-scrollbar-thumb { background: var(--accent-primary); border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: #00c5cc; } */
+::-webkit-scrollbar-thumb:hover { background: #00c5cc; }
 
 /* --- Keyframe Animations --- */
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
