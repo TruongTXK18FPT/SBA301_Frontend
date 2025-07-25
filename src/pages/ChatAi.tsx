@@ -1,15 +1,15 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { chatAiService, Message, AnalysisResult } from '../services/chatAiService';
-import { FiSend, FiPlus, FiMessageSquare, FiTrash2, FiUser, FiAward, FiClock, FiLoader } from 'react-icons/fi';
+// I've added FiArrowRight to the import list
+import { FiSend, FiPlus, FiMessageSquare, FiTrash2, FiUser, FiAward, FiClock, FiLoader, FiStar, FiArrowRight, FiEdit2,FiChevronRight,FiChevronLeft } from 'react-icons/fi';
 import '../styles/ChatAi.css';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
-// Helper function to get color based on trait score
 const getTraitColor = (score: number): string => {
-    if (score >= 8) return '#10b981'; // Green for high scores
-    if (score >= 5) return '#f59e0b'; // Yellow for medium scores
-    return '#ef4444'; // Red for low scores
+    if (score >= 8) return '#00f6ff'; // Bright Cyan
+    if (score >= 5) return '#7d2cff'; // Vibrant Purple
+    return '#ef4444'; // Red for low scores remains
 };
 
 const ChatAi: React.FC = () => {
@@ -18,28 +18,51 @@ const ChatAi: React.FC = () => {
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState('');
     const [result, setResult] = useState<AnalysisResult | null>(null);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
     const [sending, setSending] = useState(false);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [sessionLimitError, setSessionLimitError] = useState<string | null>(null);
     const [showAnalysis, setShowAnalysis] = useState(true);
+    const [showWelcomeScreen, setShowWelcomeScreen] = useState(true);
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLTextAreaElement>(null);
 
-    const switchSession = useCallback(async (sessionId: string) => {
+    const loadInitialSessions = useCallback(async () => {
+        setLoading(true);
+        try {
+            const userSessions = await chatAiService.getUserSessions();
+            if (userSessions.length > 0) {
+                setSessions(userSessions);
+                await switchSession(userSessions[0], false); 
+                setShowWelcomeScreen(false);
+            } else {
+                setShowWelcomeScreen(true);
+            }
+        } catch {
+            setError('Could not load your conversations. Please try refreshing.');
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        loadInitialSessions();
+    }, [loadInitialSessions]);
+
+    const switchSession = useCallback(async (sessionId: string, hideWelcome = true) => {
         if (loading || activeSessionId === sessionId) return;
         setLoading(true);
         setError(null);
         setResult(null);
+        if (hideWelcome) setShowWelcomeScreen(false);
         try {
             const history = await chatAiService.getChatHistory(sessionId);
             setMessages(history);
             setActiveSessionId(sessionId);
         } catch {
             setError('Failed to load chat history. Please try again.');
-
         } finally {
             setLoading(false);
         }
@@ -53,17 +76,13 @@ const ChatAi: React.FC = () => {
         
         try {
             const newSession = await chatAiService.startNewSession();
-            const history = await chatAiService.getChatHistory(newSession.sessionId);
             setSessions(prev => [newSession.sessionId, ...prev]);
-            setMessages(history);
+            setMessages([]);
             setActiveSessionId(newSession.sessionId);
+            setResult(null);
+            setShowWelcomeScreen(false);
         } catch (error) {
-
-            
-            // Handle the error message from the service
-            const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred while creating a new chat.';
-            
-            // Check if this is a session limit error
+            const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
             if (errorMessage.includes('maximum') || errorMessage.includes('session limit')) {
                 setSessionLimitError(errorMessage);
             } else {
@@ -84,40 +103,19 @@ const ChatAi: React.FC = () => {
             const updatedSessions = sessions.filter(id => id !== sessionIdToDelete);
             setSessions(updatedSessions);
             if (activeSessionId === sessionIdToDelete) {
-                setActiveSessionId(null);
-                setMessages([]);
-                setResult(null);
                 if (updatedSessions.length > 0) {
                     await switchSession(updatedSessions[0]);
                 } else {
-                    await handleNewChat();
+                    setActiveSessionId(null);
+                    setMessages([]);
+                    setResult(null);
+                    setShowWelcomeScreen(true);
                 }
             }
         } catch {
             setError('Failed to delete the session.');
-
         }
-    }, [activeSessionId, sessions, switchSession, handleNewChat]);
-
-    useEffect(() => {
-        const loadUserSessions = async () => {
-            try {
-                const userSessions = await chatAiService.getUserSessions();
-                setSessions(userSessions);
-                if (userSessions.length > 0) {
-                    await switchSession(userSessions[0]);
-                } else {
-                    await handleNewChat();
-                }
-            } catch {
-                setError('Could not load your conversations. Please try refreshing.');
-    
-            } finally {
-                setLoading(false);
-            }
-        };
-        loadUserSessions();
-    }, []);
+    }, [activeSessionId, sessions, switchSession]);
 
     const sendMessage = async () => {
         if (!input.trim() || !activeSessionId || sending) return;
@@ -151,12 +149,12 @@ const ChatAi: React.FC = () => {
     const analyzeConversation = async () => {
         if (!activeSessionId || isAnalyzing) return;
         setIsAnalyzing(true);
+        setShowAnalysis(true);
         try {
             const analysis = await chatAiService.analyzeConversation(activeSessionId);
             setResult(analysis);
         } catch {
             setError('Failed to analyze conversation.');
-
         } finally {
             setIsAnalyzing(false);
         }
@@ -176,19 +174,33 @@ const ChatAi: React.FC = () => {
     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
-            if (input.trim()) {
-                sendMessage();
-            }
+            sendMessage();
         }
     };
 
+    // if (showWelcomeScreen) {
+    //     return (
+    //         <div className="welcome-overlay">
+    //             <div className="welcome-content">
+    //                 <div className="welcome-logo"><FiStar /></div>
+    //                 <h1 className="welcome-title">Personality AI</h1>
+    //                 <p className="welcome-subtitle">Start a conversation to analyze your personality.</p>
+    //                 <button onClick={handleNewChat} className="start-chat-button" disabled={loading}>
+    //                     {loading ? <FiLoader className="spin" /> : 'Start New Session'}
+    //                 </button>
+    //             </div>
+    //         </div>
+    //     );
+    // }
+    
     return (
         <div className="chat-ai-layout">
-            <div className="sidebar">
+             <div className="background-effects"></div>
+             <div className="sidebar">
                 <div className="sidebar-header">
                     <h3>Conversations</h3>
                     <button onClick={handleNewChat} className="new-chat-button" title="New Chat" disabled={loading}>
-                        <FiPlus />
+                        <FiEdit2 />
                     </button>
                 </div>
                 <div className="session-list">
@@ -199,7 +211,7 @@ const ChatAi: React.FC = () => {
                             onClick={() => switchSession(sid)}
                         >
                             <FiMessageSquare className="session-icon" />
-                            <span className="session-id">{`Chat ${sid.substring(5, 11)}...`}</span>
+                            <span className="session-id">{`Session ${sid.substring(5, 11)}`}</span>
                             <button
                                 className="delete-session-button"
                                 onClick={(e) => handleDeleteSession(e, sid)}
@@ -216,13 +228,7 @@ const ChatAi: React.FC = () => {
                     <div className="session-limit-notification">
                         <div className="notification-content">
                             <span>{sessionLimitError}</span>
-                            <button 
-                                className="close-notification"
-                                onClick={() => setSessionLimitError(null)}
-                                aria-label="Close notification"
-                            >
-                                &times;
-                            </button>
+                            <button onClick={() => setSessionLimitError(null)}>&times;</button>
                         </div>
                     </div>
                 )}
@@ -241,67 +247,85 @@ const ChatAi: React.FC = () => {
                     </button>
                 </div>
                 {error && <div className="error-banner">{error}</div>}
-                <div className="chat-messages">
-                    {loading && messages.length === 0 ? (
-                        <div className="full-page-loader"><FiLoader className="spin" /></div>
-                    ) : (
-                        messages.map((msg, index) => (
-                            <div key={`${msg.role}-${index}-${msg.timestamp}`} className={`message ${msg.role}`}>
-                                <div className="message-avatar">
-                                    {msg.role === 'user' ? <FiUser /> : <FiMessageSquare />}
-                                </div>
-                                <div className="message-content">
-                                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
-                                    <div className="message-timestamp">
-                                        <FiClock size={12} />
-                                        {new Date(msg.timestamp || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                
+         {showWelcomeScreen ? (
+                <div className="welcome-container"> {/* Note the class name change */}
+                    <div className="welcome-content">
+                        <div className="welcome-logo"><FiStar /></div>
+                        <h1 className="welcome-title">Personality AI</h1>
+                        <p className="welcome-subtitle">Start a conversation to analyze your personality.</p>
+                        <button onClick={handleNewChat} className="start-chat-button" disabled={loading}>
+                            {loading ? <FiLoader className="spin" /> : 'Start New Session'}
+                        </button>
+                    </div>
+                </div>
+            ) : (
+                <>
+                    <div className="chat-messages">
+                        {loading && messages.length === 0 ? (
+                             <div className="full-page-loader"><FiLoader className="spin-large" /></div>
+                        ) : (
+                            messages.map((msg, index) => (
+                                <div key={`${msg.role}-${index}-${msg.timestamp}`} className={`message ${msg.role}`}>
+                                    <div className="message-avatar">
+                                        {msg.role === 'user' ? <FiUser /> : <FiStar />}
+                                    </div>
+                                    <div className="message-content">
+                                        <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
+                                        <div className="message-timestamp">
+                                            <FiClock size={12} />
+                                            {new Date(msg.timestamp || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        ))
-                    )}
-                    {sending && (
-                        <div className="typing-indicator">
-                            <div className="typing-dot"></div><div className="typing-dot"></div><div className="typing-dot"></div>
+                            ))
+                        )}
+{sending && (
+  <div className="typing-indicator">
+    <span className="ai-thinking-icon">
+      <FiStar />
+    </span>
+    <span className="ai-thinking-text">AI đang suy nghĩ</span>
+    <span className="typing-dots">
+      <span className="dot"></span>
+      <span className="dot"></span>
+      <span className="dot"></span>
+    </span>
+  </div>
+)}
+                        <div ref={messagesEndRef} />
+                    </div>
+                    <div className="chat-input-container">
+                        <div className="chat-input-wrapper">
+                            <textarea
+                                ref={inputRef}
+                                className="chat-input"
+                                value={input}
+                                onChange={(e) => setInput(e.target.value)}
+                                onKeyDown={handleKeyDown}
+                                placeholder="Message Personality AI..."
+                                disabled={sending || loading || !activeSessionId}
+                                rows={1}
+                            />
+                            <button
+                                className="send-button"
+                                onClick={sendMessage}
+                                disabled={!input.trim() || sending || loading || !activeSessionId}
+                            >
+                                <FiSend />
+                            </button>
                         </div>
-                    )}
-                    <div ref={messagesEndRef} />
-                </div>
-                <div className="chat-input-container">
-                    <div className="chat-input-wrapper">
-                        <textarea
-                            ref={inputRef}
-                            className="chat-input"
-                            value={input}
-                            onChange={(e) => setInput(e.target.value)}
-                            onKeyDown={handleKeyDown}
-                            placeholder="Message Personality AI..."
-                            disabled={sending || loading || !activeSessionId}
-                            rows={1}
-                        />
-                        <button
-                            className="send-button"
-                            onClick={sendMessage}
-                            disabled={!input.trim() || sending || loading || !activeSessionId}
-                        >
-                            <FiSend />
-                        </button>
+                        <div className="input-footer">
+                            <small>Personality AI can make mistakes. Consider checking important information.</small>
+                        </div>
                     </div>
-                    <div className="input-footer">
-                        <small>Personality AI may produce inaccurate information.</small>
-                    </div>
-                </div>
+                </>
+            )}
                 {result && showAnalysis && (
-                    <div className="analysis-result">
+                   <div className="analysis-result">
                     <div className="analysis-header">
                         <h3>Personality Analysis</h3>
-                        <button 
-                            className="close-analysis" 
-                            onClick={() => setShowAnalysis(false)}
-                            aria-label="Close analysis"
-                        >
-                            &times;
-                        </button>
+                        <button className="close-analysis" onClick={() => setShowAnalysis(false)}>&times;</button>
                     </div>
                     <div className="result-grid">
                         <div className="result-card">
@@ -314,8 +338,7 @@ const ChatAi: React.FC = () => {
                         </div>
                         <div className="result-card full-width">
                             <h4>Key Traits</h4>
-                            <div className="traits-grid">
-                                {/* First, check if we have keyTraits (array of strings) */}
+                            <div className="traits-display">
                                 {result.keyTraits && Array.isArray(result.keyTraits) && result.keyTraits.length > 0 ? (
                                     <div className="key-traits-container">
                                         {result.keyTraits.map((trait, index) => (
@@ -325,47 +348,35 @@ const ChatAi: React.FC = () => {
                                             </div>
                                         ))}
                                     </div>
-                                ) : (
-                                    // If no keyTraits, fall back to the traits array (if it exists)
-                                    result.traits && Array.isArray(result.traits) ? (
-                                        result.traits.length > 0 ? (
-                                            result.traits.map((trait, index) => {
-                                                // Safely extract values with defaults
-                                                const name = trait?.name ? String(trait.name) : `Trait ${index + 1}`;
-                                                const score = typeof trait?.score === 'number' ? Math.min(10, Math.max(0, trait.score)) : 0;
-                                                const description = trait?.description ? String(trait.description) : undefined;
-                                                
-                                                return (
-                                                    <div key={index} className="trait-card">
-                                                        <div className="trait-header">
-                                                            <span className="trait-name">{name}</span>
-                                                            <span className="trait-score">{score}/10</span>
-                                                        </div>
-                                                        {description && (
-                                                            <div className="trait-description">{description}</div>
-                                                        )}
-                                                        <div className="trait-bar">
-                                                            <div 
-                                                                className="trait-bar-fill"
-                                                                style={{
-                                                                    width: `${score * 10}%`,
-                                                                    backgroundColor: getTraitColor(score)
-                                                                }}
-                                                            ></div>
-                                                        </div>
+                                ) : result.traits && Array.isArray(result.traits) && result.traits.length > 0 ? (
+                                    <div className="traits-grid">
+                                        {result.traits.map((trait, index) => {
+                                            const name = trait?.name ? String(trait.name) : `Trait ${index + 1}`;
+                                            const score = typeof trait?.score === 'number' ? Math.min(10, Math.max(0, trait.score)) : 0;
+                                            return (
+                                                <div key={index} className="trait-card">
+                                                    <div className="trait-header">
+                                                        <span className="trait-name">{name}</span>
+                                                        <span className="trait-score" style={{ color: getTraitColor(score) }}>{score}/10</span>
                                                     </div>
-                                                );
-                                            })
-                                        ) : (
-                                            <div className="no-traits">
-                                                <p>No personality traits available for analysis.</p>
-                                            </div>
-                                        )
-                                    ) : (
-                                        <div className="no-traits">
-                                            <p>No personality analysis data available.</p>
-                                        </div>
-                                    )
+                                                    {trait?.description && (
+                                                        <div className="trait-description">{String(trait.description)}</div>
+                                                    )}
+                                                    <div className="trait-bar">
+                                                        <div 
+                                                            className="trait-bar-fill"
+                                                            style={{
+                                                                width: `${score * 10}%`,
+                                                                backgroundColor: getTraitColor(score)
+                                                            }}
+                                                        ></div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                ) : (
+                                    <div className="no-traits"><p>No personality traits could be analyzed.</p></div>
                                 )}
                             </div>
                         </div>

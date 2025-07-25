@@ -17,7 +17,7 @@ import {
   FaStar
 } from 'react-icons/fa';
 import '../styles/PremiumPage.css';
-import loginVideo from '../assets/Login.mp4';
+
 
 interface PremiumPageProps {
   isAuthenticated?: boolean;
@@ -166,19 +166,6 @@ const PremiumPage: React.FC<PremiumPageProps> = ({ isAuthenticated = false }) =>
       )}
 
       {/* Background Video */}
-      <div className="premium-video-container">
-        <video
-          autoPlay
-          muted
-          loop
-          playsInline
-          className="premium-video-background"
-        >
-          <source src={loginVideo} type="video/mp4" />
-          Your browser does not support the video tag.
-        </video>
-        <div className="premium-video-overlay" />
-      </div>
 
       {/* Content */}
       <div className="premium-content">

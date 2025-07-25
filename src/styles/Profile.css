@@ -420,7 +420,52 @@
   animation: spin 1s linear infinite;
   margin: 0 auto 1rem;
 }
-
+.subscription-modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(30,27,75,0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.subscription-modal {
+  background: var(--bg-darker);
+  border-radius: 18px;
+  padding: 2rem;
+  min-width: 320px;
+  max-width: 90vw;
+  box-shadow: 0 8px 32px rgba(37,99,235,0.18);
+  position: relative;
+  color: var(--text-primary);
+}
+.subscription-modal h2 {
+  margin-bottom: 1rem;
+  color: var(--electric-blue);
+}
+.subscription-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1.5rem;
+}
+.subscription-table th, .subscription-table td {
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid var(--glass-border);
+  text-align: left;
+}
+.subscription-close-modal-btn {
+  background: var(--electric-gradient);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.7rem 1.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 1rem;
+}
+.subscription-close-modal-btn:hover {
+  background: var(--blue-gradient);
+}
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }

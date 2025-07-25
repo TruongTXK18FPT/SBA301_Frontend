@@ -591,67 +591,7 @@ const ParentDashBoard: React.FC = () => {
       
       {/* Chat Modal */}
       
-        {selectedChat && (
-          <div className="modal-overlay chat-modal-overlay" onClick={closeChatModal}>
-            <div className="modal-content chat-modal-content" onClick={(e) => e.stopPropagation()}>
-              <div className="modal-header chat-modal-header">
-                <div className="chat-modal-title">
-                  <div className="chat-modal-avatar">
-                    {selectedChat.avatar}
-                  </div>
-                  <div>
-                    <h2>{selectedChat.universityName}</h2>
-                    <span className="chat-status">Đang hoạt động</span>
-                  </div>
-                </div>
-                <button 
-                  className="modal-close"
-                  onClick={closeChatModal}
-                >
-                  ×
-                </button>
-              </div>
-              
-              <div className="chat-modal-body">
-                <div className="chat-messages">
-                  {chatMessages.map((msg) => (
-                    <div key={msg.id} className={`chat-message-item ${msg.sender}`}>
-                      <div className="chat-message-content">
-                        <p>{msg.message}</p>
-                        <span className="chat-message-time">
-                          {new Date(msg.timestamp).toLocaleTimeString('vi-VN', {
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              
-              <div className="chat-modal-footer">
-                <div className="chat-input-group">
-                  <input
-                    type="text"
-                    placeholder="Nhập tin nhắn..."
-                    value={chatMessage}
-                    onChange={(e) => setChatMessage(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
-                    className="chat-input"
-                  />
-                  <button 
-                    className="chat-send-button"
-                    onClick={sendMessage}
-                    disabled={!chatMessage.trim()}
-                  >
-                    <FaArrowRight />
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+        
       
       </div>
     </div>

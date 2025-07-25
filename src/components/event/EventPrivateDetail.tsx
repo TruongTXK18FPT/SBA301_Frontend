@@ -461,7 +461,11 @@ const EventPrivateDetail = () => {
                 <div className="event-creation-form__header">
                     <button
                         className="event-creation-form__back-btn"
-                        onClick={() => navigate('/event-manager')}
+                        onClick={() => {
+  const path = user.role === 'event_manager' ? '/event-manager' : '/admin';
+  navigate(path);
+}}
+
                     >
                         <span>←</span>
                         Quay lại

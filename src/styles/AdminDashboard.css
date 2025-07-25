@@ -1,0 +1,161 @@
+/* --- Import a Modern Font --- */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+
+/* --- Global & Layout Styles --- */
+.admin-dashboard-container {
+  font-family: 'Poppins', sans-serif;
+  padding: 2rem;
+  background-color: #f4f7fc; /* A light, clean background */
+  min-height: 100vh;
+}
+
+.admin-dashboard-header {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 2rem;
+  color: #1a202c;
+  /* A subtle gradient text effect */
+  background: linear-gradient(135deg, #4a5568, #1a202c);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-fill-color: transparent;
+}
+
+.admin-dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+/* --- Stat Card Styling --- */
+.admin-dashboard-card {
+  background-color: #ffffff;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+/* --- Card Hover Effect --- */
+.admin-dashboard-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+  border-color: #a0aec0;
+}
+
+.admin-dashboard-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.admin-dashboard-card-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #4a5568;
+  margin: 0;
+}
+
+.admin-dashboard-count {
+  font-size: 2.75rem;
+  font-weight: 700;
+  color: #2d3748;
+  margin: 0;
+  line-height: 1;
+  align-self: flex-start;
+}
+
+/* --- Icon Styling with Coordinated Colors --- */
+.admin-dashboard-card-icon {
+  font-size: 1.25rem;
+  color: #fff;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: transform 0.3s ease;
+}
+
+.admin-dashboard-card:hover .admin-dashboard-card-icon {
+  transform: scale(1.1) rotate(5deg);
+}
+
+/* Match these colors to your chart's 'backgroundColor' */
+.icon-users { background-color: rgba(33, 150, 243, 0.8); }
+.icon-quizzes { background-color: rgba(255, 152, 0, 0.8); }
+.icon-universities { background-color: rgba(156, 39, 176, 0.8); }
+.icon-careers { background-color: rgba(0, 188, 212, 0.8); }
+
+/* --- Chart Container Styling --- */
+.admin-dashboard-chart-container {
+  grid-column: 1 / -1; /* Make chart span full width */
+  background-color: #ffffff;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e2e8f0;
+}
+
+/* --- Loading and Error State Styling --- */
+.admin-dashboard-status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 80vh;
+  font-size: 1.2rem;
+  color: #4a5568;
+}
+
+/* CSS Spinner for Loading State */
+.admin-dashboard-status:contains("Loading")::before {
+  content: "";
+  display: block;
+  width: 50px;
+  height: 50px;
+  margin-bottom: 1.5rem;
+  border: 5px solid #e2e8f0;
+  border-top-color: #2563eb;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* --- Responsive Design --- */
+@media (max-width: 992px) {
+  .admin-dashboard-grid {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  }
+  .admin-dashboard-header {
+    font-size: 2rem;
+  }
+  .admin-dashboard-count {
+    font-size: 2.25rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .admin-dashboard-container {
+    padding: 1rem;
+  }
+  .admin-dashboard-grid {
+    grid-template-columns: 1fr; /* Stack cards on top of each other */
+  }
+  .admin-dashboard-header {
+    font-size: 1.75rem;
+    text-align: center;
+  }
+}

@@ -22,7 +22,6 @@ const Event: React.FC = () => {
       setLoading(true);
       const response: PageEventOverviewResponse = await getEvents({
         name: searchTerm || undefined,
-        status: statusFilter || 'UPCOMING',
       });
       setEvents(response.content);
       setTotalPages(response.totalPages);
@@ -38,18 +37,13 @@ const Event: React.FC = () => {
 
   useEffect(() => {
     loadEvents(0);
-  }, [searchTerm, statusFilter]);
+  }, [searchTerm]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     loadEvents(0);
   };
 
-  const handleBookNow = (event: EventOverviewResponse) => {
-    console.log("slug event", event);
-    // Navigate to booking page (you can implement this later)
-    // navigate(`/events/${eventSlug}/book`);
-  };
 
   const handleViewDetails = (eventSlug: string) => {
     navigate(`/events/${eventSlug}`);
@@ -134,18 +128,6 @@ const Event: React.FC = () => {
                   className="event-page__search-input"
                 />
               </div>
-              <div className="event-page__filter-group">
-                <FaFilter className="event-page__filter-icon" />
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value as EventStatus | '')}
-                  className="event-page__filter-select"
-                >
-                  <option value="UPCOMING">Sắp diễn ra</option>
-                  <option value="ONGOING">Đang diễn ra</option>
-                  <option value="COMPLETED">Đã hoàn thành</option>
-                </select>
-              </div>
             </div>
           </form>
         </div>
@@ -217,14 +199,6 @@ const Event: React.FC = () => {
                       >
                         <FaEye />
                         Xem Chi Tiết
-                      </button>
-                      <button
-                        onClick={() => handleBookNow(event)}
-                        className="event-page__btn event-page__btn--primary"
-                        disabled={event.status !== 'UPCOMING' && event.status !== 'ONGOING'}
-                      >
-                        <FaTicketAlt />
-                        Book Ngay
                       </button>
                     </div>
                   </div>
