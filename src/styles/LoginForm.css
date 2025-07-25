@@ -98,7 +98,7 @@
 /* Form Card */
 .login-form-card {
   width: 100%;
-  max-width: 480px;
+  max-width: 1080px;
   background: var(--glass-bg);
   backdrop-filter: blur(20px);
   border: 1px solid var(--glass-border);
